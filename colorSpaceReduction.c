@@ -3,7 +3,8 @@
 //  GLTC
 //
 //  Created by Michael Kwasnicki on 24.01.12.
-//  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
+//  Copyright (c) 2014 Michael Kwasnicki. All rights reserved.
+//  This content is released under the MIT License.
 //
 
 #include "colorSpaceReduction.h"

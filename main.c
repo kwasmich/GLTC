@@ -1,9 +1,10 @@
 //
 //  main.c
-//  PNG
+//  GLTC
 //
 //  Created by Michael Kwasnicki on 19.03.11.
-//  Copyright 2011 __MyCompanyName__. All rights reserved.
+//  Copyright (c) 2014 Michael Kwasnicki. All rights reserved.
+//  This content is released under the MIT License.
 //
 
 #include "PNG.h"
