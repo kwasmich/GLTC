@@ -3,7 +3,8 @@
 //  GLTC
 //
 //  Created by Michael Kwasnicki on 04.04.13.
-//  Copyright (c) 2013 __MyCompanyName__. All rights reserved.
+//  Copyright (c) 2014 Michael Kwasnicki. All rights reserved.
+//	This content is released under the MIT License.
 //
 
 #ifndef GLTC_ETC_Compress_Common_h
