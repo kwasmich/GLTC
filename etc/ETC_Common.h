@@ -4,7 +4,7 @@
 //
 //  Created by Michael Kwasnicki on 04.01.13.
 //  Copyright (c) 2014 Michael Kwasnicki. All rights reserved.
-//	This content is released under the MIT License.
+//  This content is released under the MIT License.
 //
 
 #ifndef GLTC_ETC_Common_h
