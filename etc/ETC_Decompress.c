@@ -18,7 +18,7 @@
 #warning rename p -> palette
 #warning rename x, y -> bx, by if it relates to a block
 
-void computeAlphaPalette( uint8_t out_alphaPalette[8], const uint8_t in_BASE, const uint8_t in_TABLE, const uint8_t in_MUL ) {
+static void computeAlphaPalette( uint8_t out_alphaPalette[8], const uint8_t in_BASE, const uint8_t in_TABLE, const uint8_t in_MUL ) {
 	const int *LUT = ETC_ALPHA_MODIFIER_TABLE[in_TABLE];
 	//assert( in_MUL > 0 ); // An encoder is not allowed to produce a multiplier of zero, but the decoder should still be able to handle also this case (and produce 0× modifier = 0 in that case).
 	// etcpack violates this
@@ -30,7 +30,7 @@ void computeAlphaPalette( uint8_t out_alphaPalette[8], const uint8_t in_BASE, co
 
 
 
-void computeBaseColorsDifferential( rgb8_t * out_c0, rgb8_t * out_c1, const rgb5_t in_C0, const rgb3_t in_C1 ) {
+static void computeBaseColorsDifferential( rgb8_t * out_c0, rgb8_t * out_c1, const rgb5_t in_C0, const rgb3_t in_C1 ) {
 	int temp[3];
 	out_c0->r = extend5to8bits( in_C0.r );
 	out_c0->g = extend5to8bits( in_C0.g );

@@ -300,7 +300,7 @@ static uint32_t analytical( rgb676_t * out_c0, rgb676_t * out_cH, rgb676_t * out
 
 
 
-uint32_t compressP( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4] ) {
+uint32_t compressP( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4], const Strategy_t in_STRATEGY ) {
 	rgb676_t c0, cH, cV;
 	uint32_t blockError = 0xFFFFFFFF;
 	

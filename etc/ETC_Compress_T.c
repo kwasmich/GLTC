@@ -18,7 +18,7 @@
 
 
 
-static ETCUniformColorComposition_t ETC_UNIFORM_COLOR_LUT_4[ETC_DISTANCE_TABLE_COUNT][ETC_PALETTE_SIZE][256];
+static ETCUniformColorComposition_t ETC_UNIFORM_COLOR_LUT_T[ETC_DISTANCE_TABLE_COUNT][ETC_PALETTE_SIZE][256];
 
 
 
@@ -54,7 +54,7 @@ static void buildBlock( ETCBlockColor_t * out_block, const rgb4_t in_C0, const r
 static uint32_t uniformColor( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, uint8_t out_modulation[4][4], const rgb8_t in_BLOCK_RGB[4][4] ) {
 	rgb8_t cMin, cMax, cAvg, cACM[3];
 	int t0, t1;
-	rgb4_t c = { 0, 0, 0 };
+	rgb4_t col4 = { 0, 0, 0 };
 	uint32_t error = 0;
 	uint32_t bestError = 0xFFFFFFFF;
 	uint32_t bestT = 0;
@@ -67,16 +67,16 @@ static uint32_t uniformColor( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, uin
 	for ( int t = 0; t < ETC_DISTANCE_TABLE_COUNT; t++ ) {
 		for ( int p = 1; p < ETC_PALETTE_SIZE; p++ ) { // intentionally starting at 1 as we get the same results with 0 as with 2
 			error = 0;
-			error += ETC_UNIFORM_COLOR_LUT_4[t][p][cAvg.r].error;
-			error += ETC_UNIFORM_COLOR_LUT_4[t][p][cAvg.g].error;
-			error += ETC_UNIFORM_COLOR_LUT_4[t][p][cAvg.b].error;
-			c.r = ETC_UNIFORM_COLOR_LUT_4[t][p][cAvg.r].c;
-			c.g = ETC_UNIFORM_COLOR_LUT_4[t][p][cAvg.g].c;
-			c.b = ETC_UNIFORM_COLOR_LUT_4[t][p][cAvg.b].c;
+			error += ETC_UNIFORM_COLOR_LUT_T[t][p][cAvg.r].error;
+			error += ETC_UNIFORM_COLOR_LUT_T[t][p][cAvg.g].error;
+			error += ETC_UNIFORM_COLOR_LUT_T[t][p][cAvg.b].error;
+			col4.r = ETC_UNIFORM_COLOR_LUT_T[t][p][cAvg.r].c;
+			col4.g = ETC_UNIFORM_COLOR_LUT_T[t][p][cAvg.g].c;
+			col4.b = ETC_UNIFORM_COLOR_LUT_T[t][p][cAvg.b].c;
 			
 			if ( error < bestError ) {
 				bestError = error;
-				bestC = c;
+				bestC = col4;
 				bestT = t;
 				//bestP = p;
 			}
@@ -357,7 +357,7 @@ earlyExit:
 
 
 
-uint32_t compressT( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4] ) {
+uint32_t compressT( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4], const Strategy_t in_STRATEGY ) {
 	rgb4_t c0, c1;
 	int d;
 	uint8_t modulation[4][4];
@@ -382,7 +382,7 @@ void computeUniformColorLUTT() {
 	for ( int t = 0; t < ETC_DISTANCE_TABLE_COUNT; t++ ) {
 		for ( int p = 0; p < ETC_PALETTE_SIZE; p++ ) {
 			for ( int c = 0; c < 256; c++ ) {
-				ETC_UNIFORM_COLOR_LUT_4[t][p][c] = tmp;
+				ETC_UNIFORM_COLOR_LUT_T[t][p][c] = tmp;
 			}
 		}
 	}
@@ -393,17 +393,17 @@ void computeUniformColorLUTT() {
 		
 		for ( int t = 0; t < ETC_DISTANCE_TABLE_COUNT; t++ ) {
 			col = col8;
-			ETC_UNIFORM_COLOR_LUT_4[t][0][col] = (ETCUniformColorComposition_t){ col4, 0 };
-			ETC_UNIFORM_COLOR_LUT_4[t][2][col] = (ETCUniformColorComposition_t){ col4, 0 };
+			ETC_UNIFORM_COLOR_LUT_T[t][0][col] = (ETCUniformColorComposition_t){ col4, 0 };
+			ETC_UNIFORM_COLOR_LUT_T[t][2][col] = (ETCUniformColorComposition_t){ col4, 0 };
 			col = clampi( col8 + ETC_DISTANCE_TABLE[t], 0, 255 );
-			ETC_UNIFORM_COLOR_LUT_4[t][1][col] = (ETCUniformColorComposition_t){ col4, 0 };
+			ETC_UNIFORM_COLOR_LUT_T[t][1][col] = (ETCUniformColorComposition_t){ col4, 0 };
 			col = clampi( col8 - ETC_DISTANCE_TABLE[t], 0, 255 );
-			ETC_UNIFORM_COLOR_LUT_4[t][3][col] = (ETCUniformColorComposition_t){ col4, 0 };
+			ETC_UNIFORM_COLOR_LUT_T[t][3][col] = (ETCUniformColorComposition_t){ col4, 0 };
 		}
 	}
 	
 	// fill the gaps with the nearest color
-	_fillUniformColorLUTGaps( ETC_UNIFORM_COLOR_LUT_4 );
+	_fillUniformColorLUTGaps( ETC_UNIFORM_COLOR_LUT_T );
 }
 
 

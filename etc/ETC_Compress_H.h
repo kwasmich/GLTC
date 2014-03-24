@@ -11,14 +11,16 @@
 #define GLTC_ETC_Compress_H_h
 
 
-#include "colorSpaceReduction.h"
 #include "ETC_Common.h"
+
+#include "blockCompressionCommon.h"
+#include "colorSpaceReduction.h"
 
 #include <stdlib.h>
 
 
 
-uint32_t compressH( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4] );
+uint32_t compressH( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4], const Strategy_t in_STRATEGY );
 
 void printInfoH( ETCBlockColor_t * in_BLOCK );
 

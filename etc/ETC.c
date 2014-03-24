@@ -232,7 +232,7 @@ bool etcReadRGBCompare( const char in_FILE_I[], const char in_FILE_D[], const ch
 //			printf( "%s ", bla( bestBlockType ) );
 //			puts( "" );
 			
-			compressETC1BlockRGB( &block[0][blockIndex], (const rgb8_t(*)[4])blockRGBReference );
+			compressETC1BlockRGB( &block[0][blockIndex], (const rgb8_t(*)[4])blockRGBReference, kBRUTE_FORCE );
 			
 			blockIndex++;
         }
@@ -311,7 +311,7 @@ bool etcResumeWriteETC1RGB( const char in_FILE[], const rgb8_t * in_IMAGE, const
             }
             
 			if ( blockPtr->b64 == 0 ) {
-				compressETC1BlockRGB( blockPtr, (const rgb8_t(*)[4])blockRGB );
+				compressETC1BlockRGB( blockPtr, (const rgb8_t(*)[4])blockRGB, kBRUTE_FORCE );
 				switchEndianness( REINTERPRET(endian64*)blockPtr );
 			} else {
 				puts( "skipping" );
@@ -353,7 +353,7 @@ bool etcWriteETC1RGB( const char in_FILE[], const rgb8_t * in_IMAGE, const uint3
                 }
             }
             
-			compressETC1BlockRGB( blockPtr, (const rgb8_t(*)[4])blockRGB );
+			compressETC1BlockRGB( blockPtr, (const rgb8_t(*)[4])blockRGB, kBRUTE_FORCE );
 			switchEndianness( REINTERPRET(endian64*)blockPtr );
             blockPtr++;
         }

@@ -316,7 +316,7 @@ earlyExit:
 
 
 
-uint32_t compressH( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4] ) {
+uint32_t compressH( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4], const Strategy_t in_STRATEGY ) {
 	rgb4_t c0, c1;
 	int d;
 	uint8_t modulation[4][4];

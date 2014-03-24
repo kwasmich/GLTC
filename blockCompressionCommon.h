@@ -30,4 +30,11 @@ typedef union {
 void twiddleBlocksRGB( rgb8_t * in_out_image, const uint32_t in_WIDTH, const uint32_t in_HEIGHT, const bool in_REVERSE );
 void twiddleBlocksRGBA( rgba8_t * in_out_image, const uint32_t in_WIDTH, const uint32_t in_HEIGHT, const bool in_REVERSE );
 
+
+typedef enum {
+    kBRUTE_FORCE,
+    kFAST
+} Strategy_t;
+
+
 #endif

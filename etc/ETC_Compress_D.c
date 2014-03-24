@@ -19,7 +19,7 @@
 
 
 
-static ETCUniformColorComposition_t ETC_UNIFORM_COLOR_LUT_5[ETC_TABLE_COUNT][ETC_PALETTE_SIZE][256];
+static ETCUniformColorComposition_t ETC_UNIFORM_COLOR_LUT_D[ETC_TABLE_COUNT][ETC_PALETTE_SIZE][256];
 
 
 
@@ -46,10 +46,10 @@ static void buildBlock( ETCBlockColor_t * out_block, const rgb5_t in_C, const rg
 static uint32_t uniformColor( rgb5_t * out_c, int * out_tableIndex, uint8_t out_modulation[2][4], const rgb8_t in_BLOCK_RGB[2][4] ) {
 	rgb8_t cMin, cMax, cAvg, cACM[3];
 	int bestP, dummy;
-	rgb5_t c = { 0, 0, 0 };
+	rgb5_t col5 = { 0, 0, 0 };
 	uint32_t error = 0;
 	uint32_t bestError = 0xFFFFFFFF;
-	uint32_t bestT = 0;
+	int bestT = 0;
 	rgb5_t bestC = { 0, 0, 0 };
 	
 	computeMinMaxAvgCenterMedian( &cMin, &cMax, cACM, &dummy, &dummy, in_BLOCK_RGB );
@@ -58,16 +58,16 @@ static uint32_t uniformColor( rgb5_t * out_c, int * out_tableIndex, uint8_t out_
 	for ( int t = 0; t < ETC_TABLE_COUNT; t++ ) {
 		for ( int p = 0; p < ETC_PALETTE_SIZE; p++ ) {
 			error = 0;
-			error += ETC_UNIFORM_COLOR_LUT_5[t][p][cAvg.r].error;
-			error += ETC_UNIFORM_COLOR_LUT_5[t][p][cAvg.g].error;
-			error += ETC_UNIFORM_COLOR_LUT_5[t][p][cAvg.b].error;
-			c.r = ETC_UNIFORM_COLOR_LUT_5[t][p][cAvg.r].c;
-			c.g = ETC_UNIFORM_COLOR_LUT_5[t][p][cAvg.g].c;
-			c.b = ETC_UNIFORM_COLOR_LUT_5[t][p][cAvg.b].c;
+			error += ETC_UNIFORM_COLOR_LUT_D[t][p][cAvg.r].error;
+			error += ETC_UNIFORM_COLOR_LUT_D[t][p][cAvg.g].error;
+			error += ETC_UNIFORM_COLOR_LUT_D[t][p][cAvg.b].error;
+			col5.r = ETC_UNIFORM_COLOR_LUT_D[t][p][cAvg.r].c;
+			col5.g = ETC_UNIFORM_COLOR_LUT_D[t][p][cAvg.g].c;
+			col5.b = ETC_UNIFORM_COLOR_LUT_D[t][p][cAvg.b].c;
 			
 			if ( error < bestError ) {
 				bestError = error;
-				bestC = c;
+				bestC = col5;
 				bestT = t;
 				bestP = p;
 			}
@@ -287,7 +287,7 @@ earlyExit:
 
 
 
-uint32_t compressD( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4] ) {
+uint32_t compressD( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4], const Strategy_t in_STRATEGY ) {
 	rgb5_t c0, c1, bestC0;
 	rgb3_t bestD1;
 	int d[3], t0, t1, bestT0, bestT1, bestFlip;
@@ -315,33 +315,56 @@ uint32_t compressD( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4]
 			}
 		}
         
-//        blockError = 0;
-//        
-//        for ( int sb = 0; sb < 2; sb++ ) {
-//            if ( isUniformColorSubBlock( &blockRGB[sb * 2] ) ) {
-//                blockError += uniformColor( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
-//            } else {
-//                //blockError += quick( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
-//                //blockError += brute( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
-//                
-//                subBlockError = 0xFFFFFFFF;
-//                bestSubBlockError = 0xFFFFFFFF;
-//                
-//                subBlockError = uniformColor( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
-//                //subBlockError = quick( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
-//                //subBlockError = quick2( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
-//                //subBlockError = modest( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
-//                uint32_t bruteError = brute( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
-//                
-//                if ( subBlockError > bruteError ) {
-//                    puts( "fail" );
-//                } else {
-//                    puts( "win" );
-//                }
-//                
-//                blockError += bruteError;
-//            }
-//        }
+        blockError = 0;
+        
+        if ( isUniformColorBlock( blockRGB ) ) {
+            uniformColor( &c0, &t0, &modulation[0], &blockRGB[0] );
+            uniformColor( &c1, &t1, &modulation[2], &blockRGB[2] );
+        } else {
+            switch ( in_STRATEGY ) {
+                case kBRUTE_FORCE:
+                    subBlockError = bruteBlock( &c0, &c1, &t0, &t1, modulation, blockRGB );
+                    break;
+                    
+                case kFAST:
+                default:
+                    subBlockError = quick( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
+                    break;
+            }
+        }
+        
+        for ( int sb = 0; sb < 2; sb++ ) {
+            if ( isUniformColorSubBlock( &blockRGB[sb * 2] ) ) {
+                blockError += uniformColor( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
+            } else {
+                subBlockError = 0xFFFFFFFF;
+                bestSubBlockError = 0xFFFFFFFF;
+                
+                switch ( in_STRATEGY ) {
+                    case kBRUTE_FORCE:
+                        subBlockError = brute( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
+                        break;
+                        
+                    case kFAST:
+                    default:
+                        subBlockError = quick( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
+                        break;
+                }
+                //subBlockError = uniformColor( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
+                //subBlockError = quick( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
+                //subBlockError = quick2( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
+                //subBlockError = modest( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
+                //uint32_t bruteError = brute( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
+                
+                //if ( subBlockError > bruteError ) {
+                //    puts( "fail" );
+                //} else {
+                //    puts( "win" );
+                //}
+                
+                blockError += subBlockError;
+            }
+        }
         
 		
 		blockError  = uniformColor( &c0, &t0, &modulation[0], (const rgb8_t(*)[4])&blockRGB[0] );
@@ -420,7 +443,7 @@ void computeUniformColorLUTD() {
 	for ( int t = 0; t < ETC_TABLE_COUNT; t++ ) {
 		for ( int p = 0; p < ETC_PALETTE_SIZE; p++ ) {
 			for ( int c = 0; c < 256; c++ ) {
-				ETC_UNIFORM_COLOR_LUT_5[t][p][c] = tmp;
+				ETC_UNIFORM_COLOR_LUT_D[t][p][c] = tmp;
 			}
 		}
 	}
@@ -432,13 +455,13 @@ void computeUniformColorLUTD() {
 		for ( int t = 0; t < ETC_TABLE_COUNT; t++ ) {
 			for ( int p = 0; p < ETC_PALETTE_SIZE; p++ ) {
 				col = clampi( col8 + ETC_MODIFIER_TABLE[t][p], 0, 255 );
-				ETC_UNIFORM_COLOR_LUT_5[t][p][col] = (ETCUniformColorComposition_t){ col5, 0 };
+				ETC_UNIFORM_COLOR_LUT_D[t][p][col] = (ETCUniformColorComposition_t){ col5, 0 };
 			}
 		}
 	}
 	
 	// fill the gaps with the nearest color
-	_fillUniformColorLUTGaps( ETC_UNIFORM_COLOR_LUT_5 );
+	_fillUniformColorLUTGaps( ETC_UNIFORM_COLOR_LUT_D );
 }
 
 
