@@ -4,8 +4,8 @@ GLTC
 Comprehensive Texture Compression Utility for OpenGL
 
 
-Support Texture Compression Formats
-===================================
+Supported Texture Compression Formats
+=====================================
 
 * ETC
 * DXTC (S3TC)
@@ -30,7 +30,7 @@ ETC2 supports RGB, RGB with punch-thru alpha and full RGBA. The modes are:
 ETC is historically derived from another format called PACKMAN which encoded images in 2x4 blocks. ETC expands it to use
 4x4 blocks. So in the first Individual-Mode it is technically identical to PACKMAN while it is not binary compatible.
 Those are two PACKMAN blocks next to each other or on top of each other. This _Flipping_ is a new degree of freedom
-introduced by ETC. The pixels are encoded in column first order as illustrated here:
+introduced by ETC. The pixels are encoded in column major order as illustrated here:
 
  no flip         flip
 +-----+-----+   +---------+
