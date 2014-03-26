@@ -136,3 +136,20 @@ The same straight forward approach as for the individual mode can be used but wi
 be rejected if the sub-block _Color_s differ too much.
 
 
+
+
+
+
+Coding Conventions
+==================
+
+w   width of the input image
+h   height of the input image
+x   absolute x-coordinate within the input image
+y   absolute y-coordiante within the image image
+
+bx  x-coordinate within a block
+by  y-coordinate within a block
+
+sbx x-coordinate within a sub-block
+sby y-coordinate within a sub-block

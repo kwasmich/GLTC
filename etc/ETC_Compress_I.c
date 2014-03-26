@@ -13,13 +13,7 @@
 #include "ETC_Decompress.h"
 #include "lib.h"
 
-#include <assert.h>
-#include <iso646.h>
-#include <math.h>
-#include <stdbool.h>
 #include <stdio.h>
-#include <string.h>
-#include <search.h>
 
 
 

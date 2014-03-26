@@ -19,7 +19,7 @@
 
 
 static inline uint8_t computePlaneColor( const int in_BX, const int in_BY, const uint8_t in_CO, const uint8_t in_CH, const uint8_t in_CV ) {
-	return clampi( ( ( in_BX * ( in_CH - in_CO ) ) + ( in_BY * ( in_CV - in_CO ) ) + 4 * in_CO + 2 ) >> 2, 0, 255 );
+	return (uint8_t)clampi( ( ( in_BX * ( in_CH - in_CO ) ) + ( in_BY * ( in_CV - in_CO ) ) + 4 * in_CO + 2 ) >> 2, 0, 255 );
 }
 
 

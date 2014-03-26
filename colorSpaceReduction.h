@@ -100,20 +100,20 @@ typedef union {
 
 void fillLUT();
 
-inline static int extend4to8bits( const int in_C4 ) {
-	return ( in_C4 << 4 ) bitor in_C4;
+inline static uint8_t extend4to8bits( const int in_C4 ) {
+	return (uint8_t)( ( in_C4 << 4 ) bitor in_C4 );
 }
 
-inline static int extend5to8bits( const int in_C5 ) {
-	return ( in_C5 << 3 ) bitor ( in_C5 >> 2 );
+inline static uint8_t extend5to8bits( const int in_C5 ) {
+	return (uint8_t)( ( in_C5 << 3 ) bitor ( in_C5 >> 2 ) );
 }
 
-inline static int extend6to8bits( const int in_C6 ) {
-	return ( in_C6 << 2 ) bitor ( in_C6 >> 4 );
+inline static uint8_t extend6to8bits( const int in_C6 ) {
+	return (uint8_t)( ( in_C6 << 2 ) bitor ( in_C6 >> 4 ) );
 }
 
-inline static int extend7to8bits( const int in_C7 ) {
-	return ( in_C7 << 1 ) bitor ( in_C7 >> 6 );
+inline static uint8_t extend7to8bits( const int in_C7 ) {
+	return (uint8_t)( ( in_C7 << 1 ) bitor ( in_C7 >> 6 ) );
 }
 
 int reduce8to7bits( const int in_c8 );

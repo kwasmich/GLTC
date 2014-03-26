@@ -13,8 +13,6 @@
 #include "ETC_Decompress.h"
 #include "lib.h"
 
-#include <iso646.h>
-#include <stdbool.h>
 #include <stdio.h>
 
 
@@ -43,27 +41,24 @@ static void buildBlock( ETCBlockColor_t * out_block, const rgb5_t in_C, const rg
 
 
 
-static uint32_t uniformColor( rgb5_t * out_c, int * out_tableIndex, uint8_t out_modulation[2][4], const rgb8_t in_BLOCK_RGB[2][4] ) {
-	rgb8_t cMin, cMax, cAvg, cACM[3];
-	int dummy;
+static uint32_t uniformColor( rgb5_t * out_c, int * out_t, uint8_t out_modulation[2][4], const rgb8_t in_SUB_BLOCK_RGB[2][4] ) {
+	rgb8_t col8, palette[4];
 	rgb5_t col5 = { 0, 0, 0 };
 	uint32_t error = 0;
 	uint32_t bestError = 0xFFFFFFFF;
 	int bestT = 0;
 	rgb5_t bestC = { 0, 0, 0 };
 	
-	computeMinMaxAvgCenterMedian( &cMin, &cMax, cACM, &dummy, &dummy, in_BLOCK_RGB );
-	cAvg = cACM[0];
+	computeSubBlockCenter( &col8, in_SUB_BLOCK_RGB );
 	
 	for ( int t = 0; t < ETC_TABLE_COUNT; t++ ) {
 		for ( int p = 0; p < ETC_PALETTE_SIZE; p++ ) {
-			error = 0;
-			error += ETC_UNIFORM_COLOR_LUT_D[t][p][cAvg.r].error;
-			error += ETC_UNIFORM_COLOR_LUT_D[t][p][cAvg.g].error;
-			error += ETC_UNIFORM_COLOR_LUT_D[t][p][cAvg.b].error;
-			col5.r = ETC_UNIFORM_COLOR_LUT_D[t][p][cAvg.r].c;
-			col5.g = ETC_UNIFORM_COLOR_LUT_D[t][p][cAvg.g].c;
-			col5.b = ETC_UNIFORM_COLOR_LUT_D[t][p][cAvg.b].c;
+			error  = ETC_UNIFORM_COLOR_LUT_D[t][p][col8.r].error;
+			error += ETC_UNIFORM_COLOR_LUT_D[t][p][col8.g].error;
+			error += ETC_UNIFORM_COLOR_LUT_D[t][p][col8.b].error;
+			col5.r = ETC_UNIFORM_COLOR_LUT_D[t][p][col8.r].c;
+			col5.g = ETC_UNIFORM_COLOR_LUT_D[t][p][col8.g].c;
+			col5.b = ETC_UNIFORM_COLOR_LUT_D[t][p][col8.b].c;
 			
 			if ( error < bestError ) {
 				bestError = error;
@@ -79,12 +74,11 @@ static uint32_t uniformColor( rgb5_t * out_c, int * out_tableIndex, uint8_t out_
 earlyExit:
 	
 	*out_c = bestC;
-	*out_tableIndex = bestT;
+	*out_t = bestT;
 	
-	rgb8_t col8, palette[4];
 	convert555to888( &col8, bestC );
 	computeRGBColorPaletteCommonID( palette, col8, bestT, ETC_MODIFIER_TABLE );
-	return computeSubBlockError( out_modulation, in_BLOCK_RGB, palette );
+	return computeSubBlockError( out_modulation, in_SUB_BLOCK_RGB, palette );
 }
 
 
@@ -93,7 +87,7 @@ static uint32_t quick( rgb5_t * out_c, int * out_t, uint8_t out_modulation[2][4]
 	rgb5_t col5;
 	rgb8_t center, palette[4];
 	int t;
-	computeSubBlockCenter( &center, in_SUB_BLOCK_RGB );
+	computeSubBlockMedian( &center, in_SUB_BLOCK_RGB );
 	computeSubBlockWidth( &t, in_SUB_BLOCK_RGB );
 	convert888to555( &col5, center );
 	convert555to888( &center, col5 );
@@ -281,7 +275,7 @@ earlyExit:
 uint32_t compressD( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4], const Strategy_t in_STRATEGY ) {
 	rgb5_t c[2], bestC0;
 	rgb3_t bestD1;
-	int d[3], t[2], bestT0, bestT1, bestFlip;
+	int d[3], t[2], bestT[2], bestFlip;
 	rgb8_t blockRGB[4][4];
 	uint8_t modulation[4][4];
 	uint8_t outModulation[4][4];
@@ -291,8 +285,8 @@ uint32_t compressD( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4]
     uint32_t bestSubBlockError = 0xFFFFFFFF;
 	
     if ( isUniformColorBlock( in_BLOCK_RGB ) ) {
-        bestBlockError  = uniformColor( &bestC0, &bestT0, &outModulation[0], &in_BLOCK_RGB[0] );
-        bestBlockError += uniformColor( &bestC0, &bestT1, &outModulation[2], &in_BLOCK_RGB[2] );
+        bestBlockError  = uniformColor( &bestC0, &bestT[0], &outModulation[0], &in_BLOCK_RGB[0] );
+        bestBlockError += uniformColor( &bestC0, &bestT[1], &outModulation[2], &in_BLOCK_RGB[2] );
         bestD1 = (rgb3_t){ 0, 0, 0 };
         bestFlip = 0;
     } else {
@@ -362,8 +356,8 @@ uint32_t compressD( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4]
                 bestBlockError = blockError;
                 bestC0 = c[0];
                 bestD1 = (rgb3_t){ d[2], d[1], d[0] };
-                bestT0 = t[0];
-                bestT1 = t[1];
+                bestT[0] = t[0];
+                bestT[1] = t[1];
                 bestFlip = flip;
                 
                 for ( int by = 0; by < 4; by++ ) {
@@ -376,7 +370,7 @@ uint32_t compressD( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4]
 	}
 	
 	if ( bestBlockError < 0xFFFFFFFF )
-		buildBlock( out_block, bestC0, bestD1, bestT0, bestT1, bestFlip, (const uint8_t(*)[4])outModulation );
+		buildBlock( out_block, bestC0, bestD1, bestT[0], bestT[1], bestFlip, (const uint8_t(*)[4])outModulation );
 	else
 		out_block->b64 = 0x0ULL;
 	
