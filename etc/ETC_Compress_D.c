@@ -45,7 +45,7 @@ static void buildBlock( ETCBlockColor_t * out_block, const rgb5_t in_C, const rg
 
 static uint32_t uniformColor( rgb5_t * out_c, int * out_tableIndex, uint8_t out_modulation[2][4], const rgb8_t in_BLOCK_RGB[2][4] ) {
 	rgb8_t cMin, cMax, cAvg, cACM[3];
-	int bestP, dummy;
+	int dummy;
 	rgb5_t col5 = { 0, 0, 0 };
 	uint32_t error = 0;
 	uint32_t bestError = 0xFFFFFFFF;
@@ -69,7 +69,6 @@ static uint32_t uniformColor( rgb5_t * out_c, int * out_tableIndex, uint8_t out_
 				bestError = error;
 				bestC = col5;
 				bestT = t;
-				bestP = p;
 			}
 			
 			if ( bestError == 0 )
@@ -81,14 +80,6 @@ earlyExit:
 	
 	*out_c = bestC;
 	*out_tableIndex = bestT;
-	
-	//for ( int by = 0; by < 2; by++ ) {
-	//	for ( int bx = 0; bx < 4; bx++ ) {
-	//		out_modulation[by][bx] = bestP;
-	//	}
-	//}
-	
-	//return bestError;
 	
 	rgb8_t col8, palette[4];
 	convert555to888( &col8, bestC );
@@ -115,7 +106,7 @@ static uint32_t quick( rgb5_t * out_c, int * out_t, uint8_t out_modulation[2][4]
 }
 
 
-
+/*
 static uint32_t bruteSubBlock( rgb5_t * out_c, int * out_t, uint8_t out_modulation[2][4], const rgb8_t in_SUB_BLOCK_RGB[2][4] ) {
 	rgb8_t palette[4];
 	rgb8_t center;
@@ -166,7 +157,7 @@ earlyExit:
 	computeRGBColorPaletteCommonID( palette, col8, bestT, ETC_MODIFIER_TABLE );
 	return computeSubBlockError( out_modulation, &in_SUB_BLOCK_RGB[0], palette );
 }
-
+*/
 
 
 static uint32_t bruteBlock( rgb5_t * out_c0, rgb5_t * out_c1, int * out_t0, int * out_t1, uint8_t out_modulation[4][4], const rgb8_t in_BLOCK_RGB[4][4] ) {
@@ -288,9 +279,9 @@ earlyExit:
 
 
 uint32_t compressD( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4], const Strategy_t in_STRATEGY ) {
-	rgb5_t c0, c1, bestC0;
+	rgb5_t c[2], bestC0;
 	rgb3_t bestD1;
-	int d[3], t0, t1, bestT0, bestT1, bestFlip;
+	int d[3], t[2], bestT0, bestT1, bestFlip;
 	rgb8_t blockRGB[4][4];
 	uint8_t modulation[4][4];
 	uint8_t outModulation[4][4];
@@ -299,129 +290,89 @@ uint32_t compressD( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4]
     uint32_t subBlockError = 0xFFFFFFFF;
     uint32_t bestSubBlockError = 0xFFFFFFFF;
 	
-	//  flip          no flip
-	// +---------+   +-----+-----+
-	// | a e i m |   | a e | i m |
-	// | b f j n |   | b f | j n |
-	// +---------+   | c g | k o |
-	// | c g k o |   | d h | l p |
-	// | d h l p |   +-----+-----+
-	// +---------+
-	
-	for ( int flip = 0; flip < 2; flip++ ) {
-		for ( int by = 0; by < 4; by++ ) {
-			for ( int bx = 0; bx < 4; bx++ ) {
-				blockRGB[by][bx] = ( flip ) ? in_BLOCK_RGB[by][bx] : in_BLOCK_RGB[bx][by];
-			}
-		}
+    if ( isUniformColorBlock( in_BLOCK_RGB ) ) {
+        bestBlockError  = uniformColor( &bestC0, &bestT0, &outModulation[0], &in_BLOCK_RGB[0] );
+        bestBlockError += uniformColor( &bestC0, &bestT1, &outModulation[2], &in_BLOCK_RGB[2] );
+        bestD1 = (rgb3_t){ 0, 0, 0 };
+        bestFlip = 0;
+    } else {
         
-        blockError = 0;
+        //  flip          no flip
+        // +---------+   +-----+-----+
+        // | a e i m |   | a e | i m |
+        // | b f j n |   | b f | j n |
+        // +---------+   | c g | k o |
+        // | c g k o |   | d h | l p |
+        // | d h l p |   +-----+-----+
+        // +---------+
         
-        if ( isUniformColorBlock( blockRGB ) ) {
-            uniformColor( &c0, &t0, &modulation[0], &blockRGB[0] );
-            uniformColor( &c1, &t1, &modulation[2], &blockRGB[2] );
-        } else {
-            switch ( in_STRATEGY ) {
-                case kBRUTE_FORCE:
-                    subBlockError = bruteBlock( &c0, &c1, &t0, &t1, modulation, blockRGB );
-                    break;
-                    
-                case kFAST:
-                default:
-                    subBlockError = quick( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
-                    break;
-            }
-        }
-        
-        for ( int sb = 0; sb < 2; sb++ ) {
-            if ( isUniformColorSubBlock( &blockRGB[sb * 2] ) ) {
-                blockError += uniformColor( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
-            } else {
-                subBlockError = 0xFFFFFFFF;
-                bestSubBlockError = 0xFFFFFFFF;
-                
-                switch ( in_STRATEGY ) {
-                    case kBRUTE_FORCE:
-                        subBlockError = brute( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
-                        break;
-                        
-                    case kFAST:
-                    default:
-                        subBlockError = quick( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
-                        break;
+        for ( int flip = 0; flip < 2; flip++ ) {
+            for ( int by = 0; by < 4; by++ ) {
+                for ( int bx = 0; bx < 4; bx++ ) {
+                    blockRGB[by][bx] = ( flip ) ? in_BLOCK_RGB[by][bx] : in_BLOCK_RGB[bx][by];
                 }
-                //subBlockError = uniformColor( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
-                //subBlockError = quick( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
-                //subBlockError = quick2( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
-                //subBlockError = modest( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
-                //uint32_t bruteError = brute( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
+            }
+            
+            blockError = 0;
+            
+            if ( in_STRATEGY == kBRUTE_FORCE ) {
+                blockError = bruteBlock( &c[0], &c[1], &t[0], &t[1], modulation, blockRGB );
+            } else {
+                for ( int sb = 0; sb < 2; sb++ ) {
+                    if ( isUniformColorSubBlock( &blockRGB[sb * 2] ) ) {
+                        blockError += uniformColor( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
+                    } else {
+                        subBlockError = 0xFFFFFFFF;
+                        bestSubBlockError = 0xFFFFFFFF;
+                        
+                        switch ( in_STRATEGY ) {
+                            case kBRUTE_FORCE:
+                                break;
+                                
+                            case kFAST:
+                                subBlockError = quick( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
+                                break;
+                        }
+
+                        blockError += subBlockError;
+                    }
+                }
+            }
+            
+            d[0] = c[1].r - c[0].r;
+            d[1] = c[1].g - c[0].g;
+            d[2] = c[1].b - c[0].b;
+            
+            if ( ( d[0] < -4 ) or ( d[0] > 3 ) )
+                blockError = 0xFFFFFFFF;
+            
+            if ( ( d[1] < -4 ) or ( d[1] > 3 ) )
+                blockError = 0xFFFFFFFF;
+            
+            if ( ( d[2] < -4 ) or ( d[2] > 3 ) )
+                blockError = 0xFFFFFFFF;
+            
+//            if ( blockError == 0xFFFFFFFF ) {
+//                puts( "fail" );
+//            } else {
+//                puts( "win" );
+//            }
+            
+            if ( blockError < bestBlockError ) {
+                bestBlockError = blockError;
+                bestC0 = c[0];
+                bestD1 = (rgb3_t){ d[2], d[1], d[0] };
+                bestT0 = t[0];
+                bestT1 = t[1];
+                bestFlip = flip;
                 
-                //if ( subBlockError > bruteError ) {
-                //    puts( "fail" );
-                //} else {
-                //    puts( "win" );
-                //}
-                
-                blockError += subBlockError;
+                for ( int by = 0; by < 4; by++ ) {
+                    for ( int bx = 0; bx < 4; bx++ ) {
+                        outModulation[by][bx] = ( flip ) ? modulation[by][bx] : modulation[bx][by];
+                    }
+                }
             }
         }
-        
-		
-		blockError  = uniformColor( &c0, &t0, &modulation[0], (const rgb8_t(*)[4])&blockRGB[0] );
-		blockError += uniformColor( &c1, &t1, &modulation[2], (const rgb8_t(*)[4])&blockRGB[2] );
-		
-		blockError  = quick( &c0, &t0, &modulation[0], (const rgb8_t(*)[4])&blockRGB[0] );
-		blockError += quick( &c1, &t1, &modulation[2], (const rgb8_t(*)[4])&blockRGB[2] );
-		
-		blockError  = bruteSubBlock( &c0, &t0, &modulation[0], (const rgb8_t(*)[4])&blockRGB[0] );
-		blockError += bruteSubBlock( &c1, &t1, &modulation[2], (const rgb8_t(*)[4])&blockRGB[2] );
-		
-		d[0] = c1.r - c0.r;
-		d[1] = c1.g - c0.g;
-		d[2] = c1.b - c0.b;
-		
-		if ( ( d[0] < -4 ) or ( d[0] > 3 ) )
-			blockError = 0xFFFFFFFF;
-		
-		if ( ( d[1] < -4 ) or ( d[1] > 3 ) )
-			blockError = 0xFFFFFFFF;
-		
-		if ( ( d[2] < -4 ) or ( d[2] > 3 ) )
-			blockError = 0xFFFFFFFF;
-		
-		if ( blockError == 0xFFFFFFFF ) {
-            puts( "fail" );
-			//blockError = brute2( &c0, &c1, &t0, &t1, modulation, (const rgb8_t(*)[4])blockRGB );						// this is very hardcore - about every second flip falls into this
-			
-			d[0] = c1.r - c0.r;
-			d[1] = c1.g - c0.g;
-			d[2] = c1.b - c0.b;
-		} else {
-            puts( "win" );
-        }
-
-        //uint32_t bruteError = bruteBlock( &c0, &c1, &t0, &t1, modulation, (const rgb8_t(*)[4])blockRGB );
-        
-        
-//        if ( blockError != bruteError )
-//            printf( "%u %u\n", blockError, bruteError );
-//        else
-//            puts( "win" );
-
-		if ( blockError < bestBlockError ) {
-			bestBlockError = blockError;
-			bestC0 = c0;
-			bestD1 = (rgb3_t){ d[2], d[1], d[0] };
-			bestT0 = t0;
-			bestT1 = t1;
-			bestFlip = flip;
-			
-			for ( int by = 0; by < 4; by++ ) {
-				for ( int bx = 0; bx < 4; bx++ ) {
-					outModulation[by][bx] = ( flip ) ? modulation[by][bx] : modulation[bx][by];
-				}
-			}
-		}
 	}
 	
 	if ( bestBlockError < 0xFFFFFFFF )

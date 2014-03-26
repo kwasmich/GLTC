@@ -56,7 +56,7 @@ static void compressETCBlockRGB( ETCBlockColor_t * out_block, const rgb8_t in_BL
 
 void compressETC1BlockRGB( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4], const Strategy_t in_STRATEGY ) {
     uint32_t (*compressionMode[])( ETCBlockColor_t *, const rgb8_t[4][4], const Strategy_t) = {
-//        &compressI,
+        &compressI,
         &compressD
     };
     const int compressionModeCount = sizeof( compressionMode ) / sizeof( void * );

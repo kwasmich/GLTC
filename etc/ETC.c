@@ -56,7 +56,7 @@ static bool etcReadRGB( const char in_FILE[], rgb8_t ** out_image, uint32_t * ou
     ETCBlockColor_t * block = NULL;
     ETCBlockColor_t * blockPtr = NULL;
     rgb8_t * imageRGB = NULL;
-    linearBlock4x4RGB * imageRGB_ptr = NULL;
+    LinearBlock4x4RGB_t * imageRGB_ptr = NULL;
     
     FILE * inputETCFileStream = fopen( in_FILE, "rb" );
     assert( inputETCFileStream != NULL );
@@ -69,7 +69,7 @@ static bool etcReadRGB( const char in_FILE[], rgb8_t ** out_image, uint32_t * ou
     block = malloc( blockCount * sizeof( ETCBlockColor_t ) );
     blockPtr = block;
     imageRGB = malloc( w * h * sizeof( rgb8_t ) );
-    imageRGB_ptr = REINTERPRET(linearBlock4x4RGB*)imageRGB;
+    imageRGB_ptr = REINTERPRET(LinearBlock4x4RGB_t*)imageRGB;
     itemsRead = fread( block, sizeof( ETCBlockColor_t ), blockCount, inputETCFileStream );
     assert( itemsRead == blockCount );
     fclose( inputETCFileStream );
@@ -149,7 +149,7 @@ ETCBlockColor_t * blockOut( const char in_FILE[], const uint32_t in_WIDTH, const
 }
 
 
-char * bla( int type ) {
+static char * bla( int type ) {
 	switch ( type ) {
 		case 0:
 			return "I";
@@ -332,38 +332,29 @@ bool etcResumeWriteETC1RGB( const char in_FILE[], const rgb8_t * in_IMAGE, const
 
 bool etcWriteETC1RGB( const char in_FILE[], const rgb8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT ) {
 	computeUniformColorLUT();
-	
-	uint32_t w = in_WIDTH;
-    uint32_t h = in_HEIGHT;
-    uint32_t blockCount = 0;
+    const uint32_t blockCount = in_WIDTH * in_HEIGHT >> 4;    // FIXME : we have to round up w and h to multiple of 4
     ETCBlockColor_t * block = NULL;
     ETCBlockColor_t * blockPtr = NULL;
-    rgb8_t blockRGB[4][4];
+    rgb8_t * imageRGB = malloc( in_WIDTH * in_HEIGHT * sizeof( rgb8_t ) );
+    LinearBlock4x4RGB_t * imageRGB_ptr = REINTERPRET(LinearBlock4x4RGB_t*)imageRGB;
+    memcpy( imageRGB, in_IMAGE, in_WIDTH * in_HEIGHT * sizeof( rgb8_t ) );
+    twiddleBlocksRGB( imageRGB, in_WIDTH, in_HEIGHT, false );
     
-    blockCount = in_WIDTH * in_HEIGHT / 16;                                                                             // FIXME : we have to round up w and h to multiple of 4
     block = malloc( blockCount * sizeof( ETCBlockColor_t ) );
     blockPtr = block;
     
-    for ( int y = 0; y < h; y += 4 ) {
-        for ( int x = 0; x < w; x += 4 ) {
-            for ( int by = 0; by < 4; by++ ) {
-                for ( int bx = 0; bx < 4; bx++ ) {
-                    int arrayPosition = ( y + by ) * w + x + bx;
-                    blockRGB[by][bx] = in_IMAGE[arrayPosition];
-                }
-            }
-            
-			compressETC1BlockRGB( blockPtr, (const rgb8_t(*)[4])blockRGB, kBRUTE_FORCE );
-			switchEndianness( REINTERPRET(endian64*)blockPtr );
-            blockPtr++;
-        }
+    for ( uint32_t b = 0; b < blockCount; b++ ) {
+        compressETC1BlockRGB( blockPtr, imageRGB_ptr->block, kFAST );
+        switchEndianness( REINTERPRET(endian64*)blockPtr );
+        blockPtr++;
+        imageRGB_ptr++;
     }
 	
 	printCounter();
     
     FILE * outputETCFileStream = fopen( in_FILE, "wb" );
-    fwrite( &w, sizeof( uint32_t ), 1, outputETCFileStream );
-    fwrite( &h, sizeof( uint32_t ), 1, outputETCFileStream );
+    fwrite( &in_WIDTH, sizeof( uint32_t ), 1, outputETCFileStream );
+    fwrite( &in_HEIGHT, sizeof( uint32_t ), 1, outputETCFileStream );
     fwrite( block, sizeof( ETCBlockColor_t ), blockCount, outputETCFileStream );
     fclose( outputETCFileStream );
 	return true;
@@ -385,7 +376,7 @@ bool etcReadETC2RGBA( const char in_FILE[], rgba8_t ** out_image, uint32_t * out
     ETC2BlockRGBA_t * block = NULL;
     ETC2BlockRGBA_t * blockPtr = NULL;
     rgba8_t * imageRGBA = NULL;
-    linearBlock4x4RGBA * imageRGBA_ptr = NULL;
+    LinearBlock4x4RGBA_t * imageRGBA_ptr = NULL;
     
     FILE * inputETCFileStream = fopen( in_FILE, "rb" );
     assert( inputETCFileStream != NULL );
@@ -398,7 +389,7 @@ bool etcReadETC2RGBA( const char in_FILE[], rgba8_t ** out_image, uint32_t * out
     block = malloc( blockCount * sizeof( ETC2BlockRGBA_t ) );
     blockPtr = block;
     imageRGBA = malloc( w * h * sizeof( rgba8_t ) );
-    imageRGBA_ptr = REINTERPRET(linearBlock4x4RGBA*)imageRGBA;
+    imageRGBA_ptr = REINTERPRET(LinearBlock4x4RGBA_t*)imageRGBA;
     itemsRead = fread( block, sizeof( ETC2BlockRGBA_t ), blockCount, inputETCFileStream );
     assert( itemsRead == blockCount );
     fclose( inputETCFileStream );
@@ -435,7 +426,7 @@ bool etcReadETC2RGBAPunchThrough( const char in_FILE[], rgba8_t ** out_image, ui
     ETCBlockColor_t * block = NULL;
     ETCBlockColor_t * blockPtr = NULL;
     rgba8_t * imageRGBA = NULL;
-    linearBlock4x4RGBA * imageRGBA_ptr = NULL;
+    LinearBlock4x4RGBA_t * imageRGBA_ptr = NULL;
     
     FILE * inputETCFileStream = fopen( in_FILE, "rb" );
     assert( inputETCFileStream != NULL );
@@ -448,7 +439,7 @@ bool etcReadETC2RGBAPunchThrough( const char in_FILE[], rgba8_t ** out_image, ui
     block = malloc( blockCount * sizeof( ETCBlockColor_t ) );
     blockPtr = block;
     imageRGBA = malloc( w * h * sizeof( rgba8_t ) );
-    imageRGBA_ptr = REINTERPRET(linearBlock4x4RGBA*)imageRGBA;
+    imageRGBA_ptr = REINTERPRET(LinearBlock4x4RGBA_t*)imageRGBA;
     itemsRead = fread( block, sizeof( ETCBlockColor_t ), blockCount, inputETCFileStream );
     assert( itemsRead == blockCount );
     fclose( inputETCFileStream );

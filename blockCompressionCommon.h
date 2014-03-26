@@ -18,13 +18,13 @@
 typedef union {
 	rgb8_t linear[16];
     rgb8_t block[4][4];
-} linearBlock4x4RGB;
+} LinearBlock4x4RGB_t;
 
 
 typedef union {
 	rgba8_t linear[16];
     rgba8_t block[4][4];
-} linearBlock4x4RGBA;
+} LinearBlock4x4RGBA_t;
 
 
 void twiddleBlocksRGB( rgb8_t * in_out_image, const uint32_t in_WIDTH, const uint32_t in_HEIGHT, const bool in_REVERSE );
