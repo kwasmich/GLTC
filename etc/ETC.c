@@ -18,7 +18,6 @@
 #include "ETC_Compress_P.h"
 #include "ETC_Decompress.h"
 #include "lib.h"
-#include "blockCompressionCommon.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -74,8 +73,8 @@ static bool etcReadRGB( const char in_FILE[], rgb8_t ** out_image, uint32_t * ou
     assert( itemsRead == blockCount );
     fclose( inputETCFileStream );
     
-    for ( int y = 0; y < h; y += 4 ) {
-        for ( int x = 0; x < w; x += 4 ) {
+    for ( uint32_t y = 0; y < h; y += 4 ) {
+        for ( uint32_t x = 0; x < w; x += 4 ) {
 			switchEndianness( REINTERPRET(endian64*)blockPtr );
 			ETCMode_t mode = etcGetBlockMode( *blockPtr, false );
 			
@@ -124,124 +123,37 @@ static bool etcReadRGB( const char in_FILE[], rgb8_t ** out_image, uint32_t * ou
 }
 
 
-ETCBlockColor_t * blockOut( const char in_FILE[], const uint32_t in_WIDTH, const uint32_t in_HEIGHT ) {
-	uint32_t w = 0;
-    uint32_t h = 0;
-	size_t itemsRead = 0;
-	uint32_t blockCount = 0;
-	ETCBlockColor_t * block;
-	
-	FILE * inputETCFileStream = fopen( in_FILE, "rb" );
-    assert( inputETCFileStream != NULL );
-    itemsRead = fread( &w, sizeof( uint32_t ), 1, inputETCFileStream );
-    assert( itemsRead == 1 );
-    itemsRead = fread( &h, sizeof( uint32_t ), 1, inputETCFileStream );
-    assert( itemsRead == 1 );
-	assert( w == in_WIDTH );
-	assert( h == in_HEIGHT );
-    blockCount = w * h / 16;                                                                                            // FIXME : we have to round up w and h to multiple of 4
-    // w >> 2 + ( w & 0x3 ) ? 1 : 0;
+
+static bool etcWriteRGB( const char in_FILE[], const rgb8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT, const Strategy_t in_STRATEGY, void (*compressBlockRGB)( ETCBlockColor_t *, const rgb8_t[4][4], const Strategy_t ) ) {
+	computeUniformColorLUT();
+    const uint32_t blockCount = in_WIDTH * in_HEIGHT >> 4;    // FIXME : we have to round up w and h to multiple of 4
+    ETCBlockColor_t * block = NULL;
+    ETCBlockColor_t * blockPtr = NULL;
+    rgb8_t * imageRGB = malloc( in_WIDTH * in_HEIGHT * sizeof( rgb8_t ) );
+    LinearBlock4x4RGB_t * imageRGB_ptr = REINTERPRET(LinearBlock4x4RGB_t*)imageRGB;
+    memcpy( imageRGB, in_IMAGE, in_WIDTH * in_HEIGHT * sizeof( rgb8_t ) );
+    twiddleBlocksRGB( imageRGB, in_WIDTH, in_HEIGHT, false );
+    
     block = malloc( blockCount * sizeof( ETCBlockColor_t ) );
-    itemsRead = fread( block, sizeof( ETCBlockColor_t ), blockCount, inputETCFileStream );
-    assert( itemsRead == blockCount );
-    fclose( inputETCFileStream );
-	return block;
-}
-
-
-static char * bla( int type ) {
-	switch ( type ) {
-		case 0:
-			return "I";
-			
-		case 1:
-			return "D";
-			
-		case 2:
-			return "T";
-			
-		case 3:
-			return "H";
-			
-		case 4:
-			return "P";
-	}
-}
-
-bool etcReadRGBCompare( const char in_FILE_I[], const char in_FILE_D[], const char in_FILE_T[], const char in_FILE_H[], const char in_FILE_P[], const rgb8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT ) {
-    uint32_t w = in_WIDTH;
-    uint32_t h = in_HEIGHT;
-    uint32_t blockCount = 0;
+    blockPtr = block;
     
-    ETCBlockColor_t * block[5] = { NULL, NULL, NULL, NULL, NULL };
-	ETCBlockColor_t * blockPtr;
-	ETCBlockColor_t blockDummy;
-    uint32_t blockIndex = 0;
-	rgb8_t blockRGBReference[4][4];
-    rgb8_t blockRGB[4][4];
-	int dR, dG, dB;
-	uint32_t pixelError, blockError, bestBlockError;
-    
-    block[0] = blockOut( in_FILE_I, w, h );
-	block[1] = blockOut( in_FILE_D, w, h );
-	block[2] = blockOut( in_FILE_T, w, h );
-	block[3] = blockOut( in_FILE_H, w, h );
-	block[4] = blockOut( in_FILE_P, w, h );
-    
-    for ( int y = 0; y < h; y += 4 ) {
-        for ( int x = 0; x < w; x += 4 ) {
-            for ( int by = 0; by < 4; by++ ) {
-                for ( int bx = 0; bx < 4; bx++ ) {
-                    int arrayPosition = ( y + by ) * w + x + bx;
-                    blockRGBReference[by][bx] = in_IMAGE[arrayPosition];
-                }
-            }
-			
-			bestBlockError = 0xFFFFFFFF;
-			
-			for ( int i = 0; i < 5; i++ ) {
-				blockPtr = &block[i][blockIndex];
-				switchEndianness( REINTERPRET(endian64*)blockPtr );			
-				decompressETC2BlockRGB( blockRGB, block[i][blockIndex] );
-				
-				blockError = 0;
-				
-				for ( int by = 0; by < 4; by++ ) {
-					for ( int bx = 0; bx < 4; bx++ ) {
-						dR = blockRGB[by][bx].r - blockRGBReference[by][bx].r;
-						dG = blockRGB[by][bx].g - blockRGBReference[by][bx].g;
-						dB = blockRGB[by][bx].b - blockRGBReference[by][bx].b;
-						pixelError = dR * dR + dG * dG + dB * dB;
-						blockError += pixelError;
-					}
-				}
-				
-				if ( blockError < bestBlockError ) {
-					bestBlockError = blockError;
-				}
-				
-				//printf( "%s %i\n", bla( i ), blockError );
-			}
-			
-//			printInfoI( &block[0][blockIndex] );
-//			printInfoD( &block[1][blockIndex] );
-			printInfoT( &block[2][blockIndex] );
-//			printInfoH( &block[3][blockIndex] );
-//			printInfoP( &block[4][blockIndex] );
-			
-//			printf( "%s ", bla( bestBlockType ) );
-//			puts( "" );
-			
-			compressETC1BlockRGB( &block[0][blockIndex], (const rgb8_t(*)[4])blockRGBReference, kBRUTE_FORCE );
-			
-			blockIndex++;
-        }
-		
-		puts( "" );
+    for ( uint32_t b = 0; b < blockCount; b++ ) {
+        compressBlockRGB( blockPtr, imageRGB_ptr->block, in_STRATEGY );
+        switchEndianness( REINTERPRET(endian64*)blockPtr );
+        blockPtr++;
+        imageRGB_ptr++;
     }
+	
+	printCounter();
     
+    FILE * outputETCFileStream = fopen( in_FILE, "wb" );
+    fwrite( &in_WIDTH, sizeof( uint32_t ), 1, outputETCFileStream );
+    fwrite( &in_HEIGHT, sizeof( uint32_t ), 1, outputETCFileStream );
+    fwrite( block, sizeof( ETCBlockColor_t ), blockCount, outputETCFileStream );
+    fclose( outputETCFileStream );
 	return true;
 }
+
 
 
 #pragma mark - exposed interface
@@ -260,104 +172,14 @@ bool etcReadETC2RGB( const char in_FILE[], rgb8_t ** out_image, uint32_t * out_w
 
 
 
-bool etcResumeWriteETC1RGB( const char in_FILE[], const rgb8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT ) {
-	computeUniformColorLUT();
-	
-	uint32_t w = in_WIDTH;
-    uint32_t h = in_HEIGHT;
-    uint32_t blockCount = 0;
-    size_t itemsRead = 0;
-    ETCBlockColor_t * block = NULL;
-    ETCBlockColor_t * blockPtr = NULL;
-    rgb8_t blockRGB[4][4];
-    
-	blockCount = w * h / 16;                                                                                            // FIXME : we have to round up w and h to multiple of 4
-	// w >> 2 + ( w & 0x3 ) ? 1 : 0;
-	block = malloc( blockCount * sizeof( ETCBlockColor_t ) );
-	blockPtr = block;
-	
-	FILE * inputETCFileStream = fopen( in_FILE, "rb" );
-	
-	if ( inputETCFileStream ) {
-		assert( inputETCFileStream != NULL );
-		itemsRead = fread( &w, sizeof( uint32_t ), 1, inputETCFileStream );
-		assert( itemsRead == 1 );
-		assert( w == in_WIDTH );
-		itemsRead = fread( &h, sizeof( uint32_t ), 1, inputETCFileStream );
-		assert( itemsRead == 1 );
-		assert( h == in_HEIGHT );
-		itemsRead = fread( block, sizeof( ETCBlockColor_t ), blockCount, inputETCFileStream );
-		assert( itemsRead == blockCount );
-		fclose( inputETCFileStream );
-	} else {
-		memset( block, 0x0, blockCount * sizeof( ETCBlockColor_t ) );
-	}
-    
-	FILE * outputETCFileStream = fopen( in_FILE, "wb" );
-    fwrite( &w, sizeof( uint32_t ), 1, outputETCFileStream );
-    fwrite( &h, sizeof( uint32_t ), 1, outputETCFileStream );
-	fwrite( blockPtr, sizeof( ETCBlockColor_t ), blockCount, outputETCFileStream );
-	rewind( outputETCFileStream );
-	fwrite( &w, sizeof( uint32_t ), 1, outputETCFileStream );
-    fwrite( &h, sizeof( uint32_t ), 1, outputETCFileStream );
-	
-    for ( int y = 0; y < h; y += 4 ) {
-        for ( int x = 0; x < w; x += 4 ) {
-            for ( int by = 0; by < 4; by++ ) {
-                for ( int bx = 0; bx < 4; bx++ ) {
-                    int arrayPosition = ( y + by ) * w + x + bx;
-                    blockRGB[by][bx] = in_IMAGE[arrayPosition];
-                }
-            }
-            
-			if ( blockPtr->b64 == 0 ) {
-				compressETC1BlockRGB( blockPtr, (const rgb8_t(*)[4])blockRGB, kBRUTE_FORCE );
-				switchEndianness( REINTERPRET(endian64*)blockPtr );
-			} else {
-				puts( "skipping" );
-			}
-			
-			fwrite( blockPtr, sizeof( ETCBlockColor_t ), 1, outputETCFileStream );
-			fflush( outputETCFileStream );
-            blockPtr++;
-        }
-    }
-	
-	fclose( outputETCFileStream );
-	printCounter();
-	return true;
+bool etcWriteETC1RGB( const char in_FILE[], const rgb8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT, const Strategy_t in_STRATEGY ) {
+    return etcWriteRGB( in_FILE, in_IMAGE, in_WIDTH, in_HEIGHT, in_STRATEGY, compressETC1BlockRGB );
 }
 
 
 
-bool etcWriteETC1RGB( const char in_FILE[], const rgb8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT ) {
-	computeUniformColorLUT();
-    const uint32_t blockCount = in_WIDTH * in_HEIGHT >> 4;    // FIXME : we have to round up w and h to multiple of 4
-    ETCBlockColor_t * block = NULL;
-    ETCBlockColor_t * blockPtr = NULL;
-    rgb8_t * imageRGB = malloc( in_WIDTH * in_HEIGHT * sizeof( rgb8_t ) );
-    LinearBlock4x4RGB_t * imageRGB_ptr = REINTERPRET(LinearBlock4x4RGB_t*)imageRGB;
-    memcpy( imageRGB, in_IMAGE, in_WIDTH * in_HEIGHT * sizeof( rgb8_t ) );
-    twiddleBlocksRGB( imageRGB, in_WIDTH, in_HEIGHT, false );
-    
-    block = malloc( blockCount * sizeof( ETCBlockColor_t ) );
-    blockPtr = block;
-    
-    for ( uint32_t b = 0; b < blockCount; b++ ) {
-        compressETC1BlockRGB( blockPtr, imageRGB_ptr->block, kFAST );
-        switchEndianness( REINTERPRET(endian64*)blockPtr );
-        blockPtr++;
-        imageRGB_ptr++;
-    }
-	
-	printCounter();
-    
-    FILE * outputETCFileStream = fopen( in_FILE, "wb" );
-    fwrite( &in_WIDTH, sizeof( uint32_t ), 1, outputETCFileStream );
-    fwrite( &in_HEIGHT, sizeof( uint32_t ), 1, outputETCFileStream );
-    fwrite( block, sizeof( ETCBlockColor_t ), blockCount, outputETCFileStream );
-    fclose( outputETCFileStream );
-	return true;
+bool etcWriteETC2RGB( const char in_FILE[], const rgb8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT, const Strategy_t in_STRATEGY ) {
+    return etcWriteRGB( in_FILE, in_IMAGE, in_WIDTH, in_HEIGHT, in_STRATEGY, compressETC2BlockRGB );
 }
 
 
@@ -468,3 +290,178 @@ bool etcReadETC2RGBAPunchThrough( const char in_FILE[], rgba8_t ** out_image, ui
 void etcFreeRGBA( rgba8_t ** in_out_image ) {
     free_s( *in_out_image );
 }
+
+
+
+
+bool etcResumeWriteETC1RGB( const char in_FILE[], const rgb8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT ) {
+	computeUniformColorLUT();
+	
+	uint32_t w = in_WIDTH;
+    uint32_t h = in_HEIGHT;
+    uint32_t blockCount = 0;
+    size_t itemsRead = 0;
+    ETCBlockColor_t * block = NULL;
+    ETCBlockColor_t * blockPtr = NULL;
+    rgb8_t blockRGB[4][4];
+    
+	blockCount = w * h / 16;                                                                                            // FIXME : we have to round up w and h to multiple of 4
+	// w >> 2 + ( w & 0x3 ) ? 1 : 0;
+	block = malloc( blockCount * sizeof( ETCBlockColor_t ) );
+	blockPtr = block;
+	
+	FILE * inputETCFileStream = fopen( in_FILE, "rb" );
+	
+	if ( inputETCFileStream ) {
+		assert( inputETCFileStream != NULL );
+		itemsRead = fread( &w, sizeof( uint32_t ), 1, inputETCFileStream );
+		assert( itemsRead == 1 );
+		assert( w == in_WIDTH );
+		itemsRead = fread( &h, sizeof( uint32_t ), 1, inputETCFileStream );
+		assert( itemsRead == 1 );
+		assert( h == in_HEIGHT );
+		itemsRead = fread( block, sizeof( ETCBlockColor_t ), blockCount, inputETCFileStream );
+		assert( itemsRead == blockCount );
+		fclose( inputETCFileStream );
+	} else {
+		memset( block, 0x0, blockCount * sizeof( ETCBlockColor_t ) );
+	}
+    
+	FILE * outputETCFileStream = fopen( in_FILE, "wb" );
+    fwrite( &w, sizeof( uint32_t ), 1, outputETCFileStream );
+    fwrite( &h, sizeof( uint32_t ), 1, outputETCFileStream );
+	fwrite( blockPtr, sizeof( ETCBlockColor_t ), blockCount, outputETCFileStream );
+	rewind( outputETCFileStream );
+	fwrite( &w, sizeof( uint32_t ), 1, outputETCFileStream );
+    fwrite( &h, sizeof( uint32_t ), 1, outputETCFileStream );
+	
+    for ( int y = 0; y < h; y += 4 ) {
+        for ( int x = 0; x < w; x += 4 ) {
+            for ( int by = 0; by < 4; by++ ) {
+                for ( int bx = 0; bx < 4; bx++ ) {
+                    int arrayPosition = ( y + by ) * w + x + bx;
+                    blockRGB[by][bx] = in_IMAGE[arrayPosition];
+                }
+            }
+            
+			if ( blockPtr->b64 == 0 ) {
+				compressETC1BlockRGB( blockPtr, (const rgb8_t(*)[4])blockRGB, kBRUTE_FORCE );
+				switchEndianness( REINTERPRET(endian64*)blockPtr );
+			} else {
+				puts( "skipping" );
+			}
+			
+			fwrite( blockPtr, sizeof( ETCBlockColor_t ), 1, outputETCFileStream );
+			fflush( outputETCFileStream );
+            blockPtr++;
+        }
+    }
+	
+	fclose( outputETCFileStream );
+	printCounter();
+	return true;
+}
+
+
+
+static ETCBlockColor_t * blockOut( const char in_FILE[], const uint32_t in_WIDTH, const uint32_t in_HEIGHT ) {
+	uint32_t w = 0;
+    uint32_t h = 0;
+	size_t itemsRead = 0;
+	uint32_t blockCount = 0;
+	ETCBlockColor_t * block;
+	
+	FILE * inputETCFileStream = fopen( in_FILE, "rb" );
+    assert( inputETCFileStream != NULL );
+    itemsRead = fread( &w, sizeof( uint32_t ), 1, inputETCFileStream );
+    assert( itemsRead == 1 );
+    itemsRead = fread( &h, sizeof( uint32_t ), 1, inputETCFileStream );
+    assert( itemsRead == 1 );
+	assert( w == in_WIDTH );
+	assert( h == in_HEIGHT );
+    blockCount = w * h / 16;                                                                                            // FIXME : we have to round up w and h to multiple of 4
+    // w >> 2 + ( w & 0x3 ) ? 1 : 0;
+    block = malloc( blockCount * sizeof( ETCBlockColor_t ) );
+    itemsRead = fread( block, sizeof( ETCBlockColor_t ), blockCount, inputETCFileStream );
+    assert( itemsRead == blockCount );
+    fclose( inputETCFileStream );
+	return block;
+}
+
+
+
+bool etcReadRGBCompare( const char in_FILE_I[], const char in_FILE_D[], const char in_FILE_T[], const char in_FILE_H[], const char in_FILE_P[], const rgb8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT ) {
+    uint32_t w = in_WIDTH;
+    uint32_t h = in_HEIGHT;
+    
+    ETCBlockColor_t * block[5] = { NULL, NULL, NULL, NULL, NULL };
+	ETCBlockColor_t * blockPtr;
+	ETCBlockColor_t blockDummy;
+    uint32_t blockIndex = 0;
+	rgb8_t blockRGBReference[4][4];
+    rgb8_t blockRGB[4][4];
+	int dR, dG, dB;
+	uint32_t pixelError, blockError, bestBlockError;
+    
+    block[0] = blockOut( in_FILE_I, w, h );
+	block[1] = blockOut( in_FILE_D, w, h );
+	block[2] = blockOut( in_FILE_T, w, h );
+	block[3] = blockOut( in_FILE_H, w, h );
+	block[4] = blockOut( in_FILE_P, w, h );
+    
+    for ( int y = 0; y < h; y += 4 ) {
+        for ( int x = 0; x < w; x += 4 ) {
+            for ( int by = 0; by < 4; by++ ) {
+                for ( int bx = 0; bx < 4; bx++ ) {
+                    int arrayPosition = ( y + by ) * w + x + bx;
+                    blockRGBReference[by][bx] = in_IMAGE[arrayPosition];
+                }
+            }
+			
+			bestBlockError = 0xFFFFFFFF;
+			
+			for ( int i = 0; i < 5; i++ ) {
+				blockPtr = &block[i][blockIndex];
+				switchEndianness( REINTERPRET(endian64*)blockPtr );
+				decompressETC2BlockRGB( blockRGB, block[i][blockIndex] );
+				
+				blockError = 0;
+				
+				for ( int by = 0; by < 4; by++ ) {
+					for ( int bx = 0; bx < 4; bx++ ) {
+						dR = blockRGB[by][bx].r - blockRGBReference[by][bx].r;
+						dG = blockRGB[by][bx].g - blockRGBReference[by][bx].g;
+						dB = blockRGB[by][bx].b - blockRGBReference[by][bx].b;
+						pixelError = dR * dR + dG * dG + dB * dB;
+						blockError += pixelError;
+					}
+				}
+				
+				if ( blockError < bestBlockError ) {
+					bestBlockError = blockError;
+				}
+				
+				//printf( "%s %i\n", bla( i ), blockError );
+			}
+			
+            //			printInfoI( &block[0][blockIndex] );
+            //			printInfoD( &block[1][blockIndex] );
+			printInfoT( &block[2][blockIndex] );
+            //			printInfoH( &block[3][blockIndex] );
+            //			printInfoP( &block[4][blockIndex] );
+			
+            //			printf( "%s ", bla( bestBlockType ) );
+            //			puts( "" );
+			
+			compressETC1BlockRGB( &block[0][blockIndex], (const rgb8_t(*)[4])blockRGBReference, kBRUTE_FORCE );
+			
+			blockIndex++;
+        }
+		
+		puts( "" );
+    }
+    
+	return true;
+}
+
+

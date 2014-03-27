@@ -14,15 +14,17 @@
 #include "PVRTC.h"
 #include "lib.h"
 
-#include <stdlib.h>
-#include <math.h>
+
+#include <assert.h>
 #include <float.h>
 #include <iso646.h> //or and xor...
-#include <assert.h>
+#include <math.h>
 #include <unistd.h> //getopt
 #include <stdbool.h> //bool true false
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 
 
@@ -144,7 +146,7 @@ void testColorSpaceReduction() {
 }
 */
 
-void usage( const char in_EXEC[] ) {
+static void usage( const char in_EXEC[] ) {
     printf( "Usage:\n" );
     printf( "%s\n -qwertz\n", in_EXEC );
     exit( EXIT_FAILURE );
@@ -166,7 +168,7 @@ typedef enum {
 } tcType_t;
 
 
-int main1( int argc, char * argv[] ) {
+static int main1( int argc, char * argv[] ) {
     uint32_t w = 0;
     uint32_t h = 0;
     uint32_t c = 0;
@@ -214,7 +216,7 @@ int main1( int argc, char * argv[] ) {
     return 0;
 }
 
-int main2( int argc, char * argv[] ) {
+static int main2( int argc, char * argv[] ) {
 	int w = 4096 * 4;
 	int h = 4096 * 4;
 	int c = 3;
@@ -284,11 +286,12 @@ int main( int argc, char * argv[] ) {
     bool optF = false;
     bool optO = false;
 	bool optR = false;
+    int optStrategy = 0;
     char * optCDArg = NULL;
     char * optFArg = NULL;
 	char * optOArg = NULL;
 	
-	while ( ( ch = getopt( argc, argv, "c:d:f:o:rh?" ) ) != -1 ) {
+	while ( ( ch = getopt( argc, argv, "c:d:f:o:r0123456789h?" ) ) != -1 ) {
 		switch ( ch ) {
 			case 'c':
 				optC = true;
@@ -313,7 +316,47 @@ int main( int argc, char * argv[] ) {
 			case 'r':
 				optR = true;
 				break;
-				
+            
+            case '0':
+                optStrategy = 0;
+                break;
+                
+            case '1':
+                optStrategy = 1;
+                break;
+                
+            case '2':
+                optStrategy = 2;
+                break;
+                
+            case '3':
+                optStrategy = 3;
+                break;
+                
+            case '4':
+                optStrategy = 4;
+                break;
+                
+            case '5':
+                optStrategy = 5;
+                break;
+                
+            case '6':
+                optStrategy = 6;
+                break;
+                
+            case '7':
+                optStrategy = 7;
+                break;
+                
+            case '8':
+                optStrategy = 8;
+                break;
+                
+            case '9':
+                optStrategy = 9;
+                break;
+                
 			case 'h':
 			case '?':
 			default:
@@ -363,8 +406,16 @@ int main( int argc, char * argv[] ) {
         }
     }
 	
+    // determine compression strategy
+    Strategy_t strategy = kFAST;
+    
+    if ( optStrategy < 5 ) {
+        strategy = kFAST;
+    } else {
+        strategy = kBRUTE_FORCE;
+    }
+    
     // compress
-    for ( int i = 0; i < 1; i++ ) {
     if ( optC ) {
         uint32_t w = 0;
         uint32_t h = 0;
@@ -420,7 +471,7 @@ int main( int argc, char * argv[] ) {
 				if ( optR )
 					etcResumeWriteETC1RGB( optOArg, imageData, w, h );
 				else
-					etcWriteETC1RGB( optOArg, imageData, w, h );
+					etcWriteETC1RGB( optOArg, imageData, w, h, strategy );
                 
                 pngFree( (uint8_t **)&imageData );
             }
@@ -439,11 +490,11 @@ int main( int argc, char * argv[] ) {
 			case kRGB_ETC2:
 			case kRGBA_ETC2:
 			case kRGBA_ETC2_PUNCH_THROUGH:
-			default:
+            case kRGBA_PVR2BPP:
+            case kINVALID:
 				fprintf( stderr, "Invalid type %i\n", type );
 				exit( EXIT_FAILURE );
         }
-    }
     }
     
     // decompress

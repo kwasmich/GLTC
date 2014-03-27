@@ -98,7 +98,7 @@ typedef union {
     uint16_t b16;
 } rgba5551_t;
 
-void fillLUT();
+void fillLUT( void );
 
 inline static uint8_t extend4to8bits( const int in_C4 ) {
 	return (uint8_t)( ( in_C4 << 4 ) bitor in_C4 );
@@ -136,7 +136,7 @@ void convert5551to8888( rgba8_t * out_rgba, const rgba5551_t in_RGBA );
 
 typedef enum { kRGB565, kRGBA4444, kRGBA5551, kRGBA5551A } format_t;
 
-void prepareBayer();
+void prepareBayer( void );
 void ditherRGB( rgb8_t * in_out_rgb, const format_t in_FORMAT, const int in_X, const int in_Y );
 void ditherRGBA( rgba8_t * in_out_rgba, const format_t in_FORMAT, const int in_X, const int in_Y );
 
