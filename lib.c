@@ -20,10 +20,10 @@ char * expandTilde( const char in_PATH[] ) {
 	char * expanded = calloc( 1024, sizeof( char ) );
 	
 	if ( in_PATH[0] == '~' ) {
-		strncat( expanded, getenv( "HOME" ), 1024 );
-		strncat( expanded, &in_PATH[1], 1024 );
+		strncat( expanded, getenv( "HOME" ), 1023 );
+		strncat( expanded, &in_PATH[1], 1023 );
 	} else {
-		strncat( expanded, &in_PATH[0], 1024 );
+		strncat( expanded, &in_PATH[0], 1023 );
 	}
 	
 	return expanded;

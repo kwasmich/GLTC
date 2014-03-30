@@ -10,10 +10,10 @@
 #ifndef GLTC_ETC_Decompress_h
 #define GLTC_ETC_Decompress_h
 
-#include "colorSpaceReduction.h"
 
 #include "ETC_Common.h"
-#include "lib.h"
+
+#include "../lib.h"
 
 #include <stdbool.h>
 

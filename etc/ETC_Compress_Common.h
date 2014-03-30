@@ -11,10 +11,10 @@
 #define GLTC_ETC_Compress_Common_h
 
 
-#include "colorSpaceReduction.h"
+#include "ETC_Common.h"
 
 #include <stdbool.h>
-#include <stdlib.h>
+
 
 typedef struct {
     uint8_t c;
@@ -24,7 +24,7 @@ typedef struct {
 
 
 void changeCounter( const int32_t in_INC );
-void printCounter();
+void printCounter( void );
 
 void _fillUniformColorLUTGaps( ETCUniformColorComposition_t in_out_lut[8][4][256] );
 

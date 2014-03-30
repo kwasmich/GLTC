@@ -10,12 +10,8 @@
 #ifndef GLTC_ETC_Compress_I_h
 #define GLTC_ETC_Compress_I_h
 
+
 #include "ETC_Common.h"
-
-#include "blockCompressionCommon.h"
-#include "colorSpaceReduction.h"
-
-#include <stdlib.h>
 
 
 void computeUniformColorLUTI( void );

@@ -11,9 +11,7 @@
 
 #include "ETC_Compress_Common.h"
 #include "ETC_Decompress.h"
-#include "lib.h"
 
-#include <iso646.h>
 #include <stdio.h>
 
 
@@ -127,7 +125,6 @@ static int edgeSort( const void * in_A, const void * in_B ) {
 // Uses the minimum spanning tree algorithm to form cluster until there is no unconnected pixel.
 // Pick the largest cluster as the single point. Use all the other pixels to average a line through them.
 static void computeBlockChroma( rgb8_t * out_c0, rgb8_t * out_c1, int * out_d1, const rgb8_t in_BLOCK_RGB[4][4] ) {
-	rgb8_t pixel;
 	int clusterPartition[16];
 	int clusterSize[16];
 	struct edge_t edge[120];
@@ -154,7 +151,7 @@ static void computeBlockChroma( rgb8_t * out_c0, rgb8_t * out_c1, int * out_d1, 
 		}
 	}
 	
-	mergesort( edge, 120, sizeof( struct edge_t ), edgeSort );
+	qsort( edge, 120, sizeof( struct edge_t ), edgeSort );
 	
 	for ( int i = 0; i < 120; i++ ) {
 		int old = clusterPartition[edge[i].b];
@@ -412,7 +409,6 @@ void printInfoT( ETCBlockColor_t * in_BLOCK ) {
 	ETCBlockT_t * block = (ETCBlockT_t *)in_BLOCK;
 	int tmpR = ( block->r0a << 2 ) bitor block->r0b;
 	int distance = ( block->da << 1 ) bitor block->db;
-	distance = distance;
 	printf( "T: (%3i %3i %3i) (%3i %3i %3i) %i\n", tmpR, block->g0, block->b0, block->r1, block->g1, block->b1, distance );
 	printf( "T: (%3i %3i %3i) (%3i %3i %3i) %i\n", extend4to8bits( tmpR ), extend4to8bits( block->g0 ), extend4to8bits( block->b0 ), extend4to8bits( block->r1 ), extend4to8bits( block->g1 ), extend4to8bits( block->b1 ), ETC_DISTANCE_TABLE[distance] );
 }

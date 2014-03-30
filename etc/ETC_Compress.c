@@ -16,9 +16,8 @@
 #include "ETC_Compress_H.h"
 #include "ETC_Compress_P.h"
 #include "ETC_Decompress.h"
-#include "lib.h"
 
-#include "PNG.h"
+#include "../lib.h"
 
 #include <assert.h>
 #include <iso646.h>

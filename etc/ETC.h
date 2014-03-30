@@ -10,8 +10,8 @@
 #ifndef GLTC_ETC_h
 #define GLTC_ETC_h
 
-#include "blockCompressionCommon.h"
-#include "colorSpaceReduction.h"
+
+#include "ETC_Common.h"
 
 #include <stdbool.h>
 

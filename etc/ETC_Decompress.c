@@ -15,9 +15,6 @@
 
 
 
-#warning rename p -> palette
-#warning rename x, y -> bx, by if it relates to a block
-
 static void computeAlphaPalette( uint8_t out_alphaPalette[8], const uint8_t in_BASE, const uint8_t in_TABLE, const uint8_t in_MUL ) {
 	const int *LUT = ETC_ALPHA_MODIFIER_TABLE[in_TABLE];
 	//assert( in_MUL > 0 ); // An encoder is not allowed to produce a multiplier of zero, but the decoder should still be able to handle also this case (and produce 0× modifier = 0 in that case).
@@ -69,7 +66,7 @@ void computeBaseColorsID( rgb8_t * out_c0, rgb8_t * out_c1, const ETCBlockColor_
 
 
 void computeRGBColorPaletteCommonID( rgb8_t out_colorPalette[4], const rgb8_t in_C, const int in_TABLE_INDEX, const int in_TABLE[8][4] ) {
-	rgb8_t col = {{ 0, 0, 0 }};
+	rgb8_t col;
 	int luminance = 0;
 	const int *LUT = in_TABLE[in_TABLE_INDEX];
 	
@@ -85,38 +82,38 @@ void computeRGBColorPaletteCommonID( rgb8_t out_colorPalette[4], const rgb8_t in
 
 
 
-void computeRGBAColorPaletteCommonID( rgba8_t out_colorPalette[8], const rgb8_t in_C0, const rgb8_t in_C1, const int in_TABLE_INDEX[2], const bool in_OPAQUE ) {
-	rgb8_t p[8];
+static void computeRGBAColorPaletteCommonID( rgba8_t out_colorPalette[8], const rgb8_t in_C0, const rgb8_t in_C1, const int in_TABLE_INDEX[2], const bool in_OPAQUE ) {
+	rgb8_t palette[8];
 	bool punchThrough = false;
 	
 	if ( in_OPAQUE ) {
-		computeRGBColorPaletteCommonID( &p[0], in_C0, in_TABLE_INDEX[0], ETC_MODIFIER_TABLE );
-		computeRGBColorPaletteCommonID( &p[4], in_C1, in_TABLE_INDEX[1], ETC_MODIFIER_TABLE );
+		computeRGBColorPaletteCommonID( &palette[0], in_C0, in_TABLE_INDEX[0], ETC_MODIFIER_TABLE );
+		computeRGBColorPaletteCommonID( &palette[4], in_C1, in_TABLE_INDEX[1], ETC_MODIFIER_TABLE );
 	} else {
-		computeRGBColorPaletteCommonID( &p[0], in_C0, in_TABLE_INDEX[0], ETC_MODIFIER_TABLE_NON_OPAQUE );
-		computeRGBColorPaletteCommonID( &p[4], in_C1, in_TABLE_INDEX[1], ETC_MODIFIER_TABLE_NON_OPAQUE );
+		computeRGBColorPaletteCommonID( &palette[0], in_C0, in_TABLE_INDEX[0], ETC_MODIFIER_TABLE_NON_OPAQUE );
+		computeRGBColorPaletteCommonID( &palette[4], in_C1, in_TABLE_INDEX[1], ETC_MODIFIER_TABLE_NON_OPAQUE );
 	}
 	
-	for ( int i = 0; i < 8; i++ ) {
-		punchThrough = ( not in_OPAQUE ) and ( ( i bitand 0x3 ) == 0x2 );
+	for ( int p = 0; p < 8; p++ ) {
+		punchThrough = ( not in_OPAQUE ) and ( ( p bitand 0x3 ) == 0x2 );
 		
 		if ( punchThrough ) {
-			out_colorPalette[i].r = 0;
-			out_colorPalette[i].g = 0;
-			out_colorPalette[i].b = 0;
-			out_colorPalette[i].a = 0;
+			out_colorPalette[p].r = 0;
+			out_colorPalette[p].g = 0;
+			out_colorPalette[p].b = 0;
+			out_colorPalette[p].a = 0;
 		} else {
-			out_colorPalette[i].r = p[i].r;
-			out_colorPalette[i].g = p[i].g;
-			out_colorPalette[i].b = p[i].b;
-			out_colorPalette[i].a = 255;
+			out_colorPalette[p].r = palette[p].r;
+			out_colorPalette[p].g = palette[p].g;
+			out_colorPalette[p].b = palette[p].b;
+			out_colorPalette[p].a = 255;
 		}
 	}
 }
 
 
 
-void computeRGBColorPaletteID( rgb8_t out_colorPalette[8], const ETCBlockColor_t in_BLOCK ) {
+static void computeRGBColorPaletteID( rgb8_t out_colorPalette[8], const ETCBlockColor_t in_BLOCK ) {
 	rgb8_t c0;
 	rgb8_t c1;
 	computeBaseColorsID( &c0, &c1, in_BLOCK );
@@ -126,7 +123,7 @@ void computeRGBColorPaletteID( rgb8_t out_colorPalette[8], const ETCBlockColor_t
 
 
 
-void computeRGBAColorPaletteID( rgba8_t out_colorPalette[8], const ETCBlockColor_t in_BLOCK ) {
+static void computeRGBAColorPaletteID( rgba8_t out_colorPalette[8], const ETCBlockColor_t in_BLOCK ) {
 	rgb8_t c0;
 	rgb8_t c1;
 	int tableIndex[2] = { in_BLOCK.table0, in_BLOCK.table1 };
@@ -223,26 +220,26 @@ void computeRGBColorPaletteTHP( rgb8_t out_colorPalette[4], const ETCBlockColor_
 
 
 
-void computeRGBAColorPaletteTHP( rgba8_t out_colorPalette[4], const ETCBlockColor_t in_BLOCK, const ETCMode_t in_MODE ) {
+static void computeRGBAColorPaletteTHP( rgba8_t out_colorPalette[4], const ETCBlockColor_t in_BLOCK, const ETCMode_t in_MODE ) {
 	assert( in_MODE != kETC_P );
-	rgb8_t p[4];
+	rgb8_t palette[4];
 	bool opaque = in_BLOCK.differential or (in_MODE == kETC_P);
 	bool punchThrough = false;
-	computeRGBColorPaletteTHP( p, in_BLOCK, in_MODE );
+	computeRGBColorPaletteTHP( palette, in_BLOCK, in_MODE );
 	
-	for ( int i = 0; i < 4; i++ ) {
-		punchThrough = ( not opaque ) and ( i == 0x2 );
+	for ( int p = 0; p < 4; p++ ) {
+		punchThrough = ( not opaque ) and ( p == 0x2 );
 		
 		if ( punchThrough ) {
-			out_colorPalette[i].r = 0;
-			out_colorPalette[i].g = 0;
-			out_colorPalette[i].b = 0;
-			out_colorPalette[i].a = 0;
+			out_colorPalette[p].r = 0;
+			out_colorPalette[p].g = 0;
+			out_colorPalette[p].b = 0;
+			out_colorPalette[p].a = 0;
 		} else {
-			out_colorPalette[i].r = p[i].r;
-			out_colorPalette[i].g = p[i].g;
-			out_colorPalette[i].b = p[i].b;
-			out_colorPalette[i].a = 255;
+			out_colorPalette[p].r = palette[p].r;
+			out_colorPalette[p].g = palette[p].g;
+			out_colorPalette[p].b = palette[p].b;
+			out_colorPalette[p].a = 255;
 		}
 	}
 }
@@ -271,15 +268,15 @@ ETCMode_t etcGetBlockMode( const ETCBlockColor_t in_BLOCK, const bool in_PUNCH_T
 
 
 
-void decompressETC2BlockAlpha( uint8_t out_blockA[4][4], const ETCBlockAlpha_t in_BLOCK ) {
+static void decompressETC2BlockAlpha( uint8_t out_blockA[4][4], const ETCBlockAlpha_t in_BLOCK ) {
 	uint8_t alphaPalette[8];
 	uint64_t aBitField = in_BLOCK.aBitField;
 	computeAlphaPalette( alphaPalette, in_BLOCK.base, in_BLOCK.table, in_BLOCK.mul );
 
-	for ( int x = 3; x >= 0; x-- ) {
-		for ( int y = 3; y >= 0; y-- ) {
+	for ( int bx = 3; bx >= 0; bx-- ) {
+		for ( int by = 3; by >= 0; by-- ) {
 			int paletteIndex = aBitField bitand 0x7;
-			out_blockA[y][x] = alphaPalette[paletteIndex];
+			out_blockA[by][bx] = alphaPalette[paletteIndex];
 			aBitField >>= 3;
 		}
 	}
@@ -287,35 +284,36 @@ void decompressETC2BlockAlpha( uint8_t out_blockA[4][4], const ETCBlockAlpha_t i
 
 
 
-void _decompressEACBlockR11( rgba8_t out_blockRGBA[4][4], const EACBlockR11_t in_BLOCK ) {
+static void _decompressEACBlockR11( rgba8_t out_blockRGBA[4][4], const EACBlockR11_t in_BLOCK ) {
 	const int *LUT = ETC_ALPHA_MODIFIER_TABLE[in_BLOCK.table];
 	int base = ( in_BLOCK.base << 3 ) bitor 0x4; // base * 8 + 4
 	int mul = in_BLOCK.mul << 3; // mul * 8
-	int x, y;
+	int bx, by;
 	int codewords[4][4];
 	uint64_t bitField = in_BLOCK.aBitField;
 	
-	for ( x = 3; x >= 0; x-- ) {
-		for ( y = 3; y >= 0; y-- ) {
-			codewords[y][x] = bitField bitand 0x7;
+	for ( bx = 3; bx >= 0; bx-- ) {
+		for ( by = 3; by >= 0; by-- ) {
+			codewords[by][bx] = bitField bitand 0x7;
 			bitField >>= 3;
 		}
 	}
 	
-	for ( y = 0; y < 4; y++ ) {
-		for ( x = 0; x < 4; x++ ) {
+	for ( by = 0; by < 4; by++ ) {
+		for ( bx = 0; bx < 4; bx++ ) {
 			int16_t value11;
 			int16_t value16;
 			
 			if ( mul > 0 ) {
-				value11 = clampi( base + LUT[codewords[y][x]] * mul, 0, 2047 );
+				value11 = clampi( base + LUT[codewords[by][bx]] * mul, 0, 2047 );
 				// alpha = value >> 3 but not exactly because of mul = 0
 			} else {
-				value11 = clampi( base + LUT[codewords[y][x]], 0, 2047 );
+				value11 = clampi( base + LUT[codewords[by][bx]], 0, 2047 );
 				// alpha = value >> 3 but not exactly because of mul = 0
 			}
 			
 			value16 = ( value11 << 5 ) bitor ( value11 >> 6 );
+            printf( "%i\n", value16 );
 		}
 	}
 	
@@ -324,33 +322,33 @@ void _decompressEACBlockR11( rgba8_t out_blockRGBA[4][4], const EACBlockR11_t in
 
 
 
-void _decompressEACBlockR11Signed( rgba8_t out_blockRGBA[4][4], const EACBlockR11Signed_t in_BLOCK ) {
+static void _decompressEACBlockR11Signed( rgba8_t out_blockRGBA[4][4], const EACBlockR11Signed_t in_BLOCK ) {
 	assert( in_BLOCK.base != -128 ); // It is a two’s-complement value in the range [−127, 127], and where the value −128 is not allowed; however, if it should occur anyway it must be treated as −127.
 	
 	const int *LUT = ETC_ALPHA_MODIFIER_TABLE[in_BLOCK.table];
 	int base = clampi( in_BLOCK.base, -127, 127 ) << 3; // base * 8
 	int mul = in_BLOCK.mul << 3; // mul * 8
-	int x, y;
+	int bx, by;
 	int codewords[4][4];
 	uint64_t bitField = in_BLOCK.aBitField;
 	
-	for ( x = 3; x >= 0; x-- ) {
-		for ( y = 3; y >= 0; y-- ) {
-			codewords[y][x] = bitField bitand 0x7;
+	for ( bx = 3; bx >= 0; bx-- ) {
+		for ( by = 3; by >= 0; by-- ) {
+			codewords[by][bx] = bitField bitand 0x7;
 			bitField >>= 3;
 		}
 	}
 	
-	for ( y = 0; y < 4; y++ ) {
-		for ( x = 0; x < 4; x++ ) {
+	for ( by = 0; by < 4; by++ ) {
+		for ( bx = 0; bx < 4; bx++ ) {
 			int16_t value11;
 			int16_t value16;
 			
 			if ( mul > 0 ) {
-				value11 = clampi( base + LUT[codewords[y][x]] * mul, -1023, 1023 );
+				value11 = clampi( base + LUT[codewords[by][bx]] * mul, -1023, 1023 );
 				// alpha = value >> 3 but not exactly because of mul = 0
 			} else {
-				value11 = clampi( base + LUT[codewords[y][x]], -1023, 1023 );
+				value11 = clampi( base + LUT[codewords[by][bx]], -1023, 1023 );
 				// alpha = value >> 3 but not exactly because of mul = 0
 			}
 			
@@ -362,22 +360,25 @@ void _decompressEACBlockR11Signed( rgba8_t out_blockRGBA[4][4], const EACBlockR1
 			} else {
 				value16 = ( value11 << 5 ) bitor ( value11 >> 5 );
 			}
+            
+            printf( "%i %i\n", value11, value16 );
 		}
 	}
 	
+    
 	assert( false ); // not yet implemented;
 }
 
 
 
-void _decompressEACBlockRG11( rgba8_t out_blockRGBA[4][4], const EACBlockRG11_t in_BLOCK ) {
+static void _decompressEACBlockRG11( rgba8_t out_blockRGBA[4][4], const EACBlockRG11_t in_BLOCK ) {
 	_decompressEACBlockR11( out_blockRGBA, in_BLOCK.r );
 	_decompressEACBlockR11( out_blockRGBA, in_BLOCK.g );
 }
 
 
 
-void _decompressEACBlockRG11Signed( rgba8_t out_blockRGBA[4][4], const EACBlockRG11Signed_t in_BLOCK ) {
+static void _decompressEACBlockRG11Signed( rgba8_t out_blockRGBA[4][4], const EACBlockRG11Signed_t in_BLOCK ) {
 	_decompressEACBlockR11Signed( out_blockRGBA, in_BLOCK.r );
 	_decompressEACBlockR11Signed( out_blockRGBA, in_BLOCK.g );
 }
@@ -385,21 +386,21 @@ void _decompressEACBlockRG11Signed( rgba8_t out_blockRGBA[4][4], const EACBlockR
 
 
 void decompressETC1BlockRGB( rgb8_t out_blockRGB[4][4], const ETCBlockColor_t in_BLOCK ) {
-	rgb8_t p[8];
+	rgb8_t palette[8];
 	int paletteIndex, paletteShift;
 	uint32_t bitField = in_BLOCK.cBitField;
-	computeRGBColorPaletteID( p, in_BLOCK );
+	computeRGBColorPaletteID( palette, in_BLOCK );
 	
-	for ( int x = 0; x < 4; x++ ) {
-		for ( int y = 0; y < 4; y++ ) {
+	for ( int bx = 0; bx < 4; bx++ ) {
+		for ( int by = 0; by < 4; by++ ) {
 			// if we are in the are of the second part then we use the second half of the palette
-			if ( ( not in_BLOCK.flip and ( x >> 1 ) ) or ( in_BLOCK.flip and ( y >> 1 ) ) )
+			if ( ( not in_BLOCK.flip and ( bx >> 1 ) ) or ( in_BLOCK.flip and ( by >> 1 ) ) )
 				paletteShift = 4;
 			else
 				paletteShift = 0;
 			
 			paletteIndex = ( ( bitField bitand 0x1 ) bitor ( bitField >> 15 bitand 0x2 ) ) + paletteShift;
-			out_blockRGB[y][x] = p[paletteIndex];
+			out_blockRGB[by][bx] = palette[paletteIndex];
 			bitField >>= 1;
 		}
 	}
@@ -409,7 +410,7 @@ void decompressETC1BlockRGB( rgb8_t out_blockRGB[4][4], const ETCBlockColor_t in
 
 void decompressETC2BlockRGB( rgb8_t out_blockRGB[4][4], const ETCBlockColor_t in_BLOCK ) {
 	ETCMode_t mode = etcGetBlockMode( in_BLOCK, false );
-	rgb8_t p[8];
+	rgb8_t palette[8];
 	rgb8_t col = {{ 0, 0, 0 }};
 	int paletteIndex;
 	uint32_t bitField = in_BLOCK.cBitField;
@@ -422,12 +423,12 @@ void decompressETC2BlockRGB( rgb8_t out_blockRGB[4][4], const ETCBlockColor_t in
 			
 		case kETC_T:
 		case kETC_H:
-			computeRGBColorPaletteTHP( p, in_BLOCK, mode );
+			computeRGBColorPaletteTHP( palette, in_BLOCK, mode );
 			
 			for ( int bx = 0; bx < 4; bx++ ) {
 				for ( int by = 0; by < 4; by++ ) {
 					paletteIndex = ( bitField bitand 0x1 ) bitor ( bitField >> 15 bitand 0x2 );
-					out_blockRGB[by][bx] = p[paletteIndex];
+					out_blockRGB[by][bx] = palette[paletteIndex];
 					bitField >>= 1;
 				}
 			}
@@ -435,13 +436,13 @@ void decompressETC2BlockRGB( rgb8_t out_blockRGB[4][4], const ETCBlockColor_t in
 			break;
 			
 		case kETC_P:
-			computeRGBColorPaletteTHP( p, in_BLOCK, mode );
+			computeRGBColorPaletteTHP( palette, in_BLOCK, mode );
 			
 			for ( int by = 0; by < 4; by++ ) {
 				for ( int bx = 0; bx < 4; bx++ ) {
-					col.r = computePlaneColor( bx, by, p[0].r, p[1].r, p[2].r );
-					col.g = computePlaneColor( bx, by, p[0].g, p[1].g, p[2].g );
-					col.b = computePlaneColor( bx, by, p[0].b, p[1].b, p[2].b );
+					col.r = computePlaneColor( bx, by, palette[0].r, palette[1].r, palette[2].r );
+					col.g = computePlaneColor( bx, by, palette[0].g, palette[1].g, palette[2].g );
+					col.b = computePlaneColor( bx, by, palette[0].b, palette[1].b, palette[2].b );
 					out_blockRGB[by][bx] = col;
 				}
 			}
@@ -462,12 +463,12 @@ void decompressETC2BlockRGBA( rgba8_t out_blockRGBA[4][4], const ETC2BlockRGBA_t
 	decompressETC2BlockRGB( color, in_BLOCK.color );
 	decompressETC2BlockAlpha( alpha, in_BLOCK.alpha );
 	
-	for ( int y = 0; y < 4; y++ ) {
-		for ( int x = 0; x < 4; x++ ) {
-			out_blockRGBA[y][x].r = color[y][x].r;
-			out_blockRGBA[y][x].g = color[y][x].g;
-			out_blockRGBA[y][x].b = color[y][x].b;
-			out_blockRGBA[y][x].a = alpha[y][x];
+	for ( int by = 0; by < 4; by++ ) {
+		for ( int bx = 0; bx < 4; bx++ ) {
+			out_blockRGBA[by][bx].r = color[by][bx].r;
+			out_blockRGBA[by][bx].g = color[by][bx].g;
+			out_blockRGBA[by][bx].b = color[by][bx].b;
+			out_blockRGBA[by][bx].a = alpha[by][bx];
 		}
 	}
 }
@@ -476,26 +477,26 @@ void decompressETC2BlockRGBA( rgba8_t out_blockRGBA[4][4], const ETC2BlockRGBA_t
 
 void decompressETC2BlockRGBAPunchThrough( rgba8_t out_blockRGBA[4][4], const ETCBlockColor_t in_BLOCK ) {
 	ETCMode_t mode = etcGetBlockMode( in_BLOCK, true );
-	rgba8_t p[8];
-	rgb8_t p2[4];
+	rgba8_t palette[8];
+	rgb8_t palette2[4];
 	rgba8_t col = {{ 0, 0, 0, 255 }};
 	int paletteIndex, paletteShift;
 	uint32_t bitField = in_BLOCK.cBitField;
 	
 	switch ( mode ) {
 		case kETC_D:
-			computeRGBAColorPaletteID( p, in_BLOCK );
+			computeRGBAColorPaletteID( palette, in_BLOCK );
 			
-			for ( int x = 0; x < 4; x++ ) {
-				for ( int y = 0; y < 4; y++ ) {
+			for ( int bx = 0; bx < 4; bx++ ) {
+				for ( int by = 0; by < 4; by++ ) {
 					// if we are in the are of the second part then we use the second half of the palette
-					if ( ( not in_BLOCK.flip and ( x >> 1 ) ) or ( in_BLOCK.flip and ( y >> 1 ) ) )
+					if ( ( not in_BLOCK.flip and ( bx >> 1 ) ) or ( in_BLOCK.flip and ( by >> 1 ) ) )
 						paletteShift = 4;
 					else
 						paletteShift = 0;
 					
 					paletteIndex = ( ( bitField bitand 0x1 ) bitor ( bitField >> 15 bitand 0x2 ) ) + paletteShift;
-					out_blockRGBA[y][x] = p[paletteIndex];
+					out_blockRGBA[by][bx] = palette[paletteIndex];
 					bitField >>= 1;
 				}
 			}
@@ -504,12 +505,12 @@ void decompressETC2BlockRGBAPunchThrough( rgba8_t out_blockRGBA[4][4], const ETC
 			
 		case kETC_T:
 		case kETC_H:
-			computeRGBAColorPaletteTHP( p, in_BLOCK, mode );
+			computeRGBAColorPaletteTHP( palette, in_BLOCK, mode );
 			
 			for ( int bx = 0; bx < 4; bx++ ) {
 				for ( int by = 0; by < 4; by++ ) {
 					paletteIndex = ( bitField bitand 0x1 ) bitor ( bitField >> 15 bitand 0x2 );
-					out_blockRGBA[by][bx] = p[paletteIndex];
+					out_blockRGBA[by][bx] = palette[paletteIndex];
 					bitField >>= 1;
 				}
 			}
@@ -517,13 +518,13 @@ void decompressETC2BlockRGBAPunchThrough( rgba8_t out_blockRGBA[4][4], const ETC
 			break;
 			
 		case kETC_P:
-			computeRGBColorPaletteTHP( p2, in_BLOCK, mode );
+			computeRGBColorPaletteTHP( palette2, in_BLOCK, mode );
 			
 			for ( int by = 0; by < 4; by++ ) {
 				for ( int bx = 0; bx < 4; bx++ ) {
-					col.r = computePlaneColor( bx, by, p[0].r, p[1].r, p[2].r );
-					col.g = computePlaneColor( bx, by, p[0].g, p[1].g, p[2].g );
-					col.b = computePlaneColor( bx, by, p[0].b, p[1].b, p[2].b );
+					col.r = computePlaneColor( bx, by, palette[0].r, palette[1].r, palette[2].r );
+					col.g = computePlaneColor( bx, by, palette[0].g, palette[1].g, palette[2].g );
+					col.b = computePlaneColor( bx, by, palette[0].b, palette[1].b, palette[2].b );
 					out_blockRGBA[by][bx] = col;
 				}
 			}

@@ -17,7 +17,6 @@
 #include "ETC_Compress_H.h"
 #include "ETC_Compress_P.h"
 #include "ETC_Decompress.h"
-#include "lib.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -396,7 +395,6 @@ bool etcReadRGBCompare( const char in_FILE_I[], const char in_FILE_D[], const ch
     
     ETCBlockColor_t * block[5] = { NULL, NULL, NULL, NULL, NULL };
 	ETCBlockColor_t * blockPtr;
-	ETCBlockColor_t blockDummy;
     uint32_t blockIndex = 0;
 	rgb8_t blockRGBReference[4][4];
     rgb8_t blockRGB[4][4];

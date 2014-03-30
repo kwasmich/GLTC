@@ -10,7 +10,14 @@
 #ifndef GLTC_ETC_Common_h
 #define GLTC_ETC_Common_h
 
+
+
+#include "../blockCompressionCommon.h"
+#include "../colorSpaceReduction.h"
+
 #include <stdlib.h>
+
+
 
 // WARNING: bitfields are filled from lowest to highest bit
 // 565 : rrrrrggg gggbbbbb

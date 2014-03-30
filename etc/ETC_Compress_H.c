@@ -13,7 +13,6 @@
 #include "ETC_Decompress.h"
 
 #include <assert.h>
-#include <iso646.h>
 #include <stdio.h>
 
 
@@ -72,7 +71,6 @@ static int edgeSort( const void * in_A, const void * in_B ) {
 // Uses the minimum spanning tree algorithm to form cluster until there are two clusters.
 // Use the average of a cluster as color and use the average width of both clusters as the width.
 static void computeBlockChroma( rgb8_t * out_c0, rgb8_t * out_c1, int * out_d1, const rgb8_t in_BLOCK_RGB[4][4] ) {
-	rgb8_t pixel;
 	int clusterPartition[16];
 	int clusterSize[16];
 	struct edge_t edge[120];
@@ -99,7 +97,7 @@ static void computeBlockChroma( rgb8_t * out_c0, rgb8_t * out_c1, int * out_d1, 
 		}
 	}
 	
-	mergesort( edge, 120, sizeof( struct edge_t ), edgeSort );
+	qsort( edge, 120, sizeof( struct edge_t ), edgeSort );
 	
 	assert( false );
 	

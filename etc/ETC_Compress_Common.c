@@ -9,14 +9,16 @@
 
 #include "ETC_Compress_Common.h"
 
-#include "ETC_Common.h"
 #include "ETC_Decompress.h"
-#include "lib.h"
+
+#include "../lib.h"
 
 #include <assert.h>
 #include <iso646.h>
 #include <math.h>
 #include <stdio.h>
+
+
 
 uint32_t g_counter = 0;
 
@@ -247,31 +249,30 @@ void computeSubBlockCenter( rgb8_t * out_center, const rgb8_t in_SUB_BLOCK_RGB[2
 
 
 void computeSubBlockMedian( rgb8_t * out_median, const rgb8_t in_SUB_BLOCK_RGB[2][4] ) {
-	rgb8_t pixel;
-	uint8_t mR[8];
-	uint8_t mG[8];
-	uint8_t mB[8];
-	int index = 0;
-
-	for ( int sby = 0; sby < 2; sby++ ) {
-		for ( int sbx = 0; sbx < 4; sbx++ ) {
-			pixel = in_SUB_BLOCK_RGB[sby][sbx];
-
-			mR[index] = pixel.r;
-			mG[index] = pixel.g;
-			mB[index] = pixel.b;
-			index++;
-		}
-	}
-	
-#warning consider using other sort functions for the given constant length of 8
-	qsort( mR, 8, sizeof( uint8_t ), mySort );
-	qsort( mG, 8, sizeof( uint8_t ), mySort );
-	qsort( mB, 8, sizeof( uint8_t ), mySort );
-	
-	(*out_median).r = ( mR[3] + mR[4] + 1 ) >> 1;
-	(*out_median).g = ( mG[3] + mG[4] + 1 ) >> 1;
-	(*out_median).b = ( mB[3] + mB[4] + 1 ) >> 1;
+    rgb8_t pixel;
+    uint8_t mR[8];
+    uint8_t mG[8];
+    uint8_t mB[8];
+    int index = 0;
+    
+    for ( int sby = 0; sby < 2; sby++ ) {
+        for ( int sbx = 0; sbx < 4; sbx++ ) {
+            pixel = in_SUB_BLOCK_RGB[sby][sbx];
+            
+            mR[index] = pixel.r;
+            mG[index] = pixel.g;
+            mB[index] = pixel.b;
+            index++;
+        }
+    }
+    
+    qsort( mR, 8, sizeof( uint8_t ), mySort );
+    qsort( mG, 8, sizeof( uint8_t ), mySort );
+    qsort( mB, 8, sizeof( uint8_t ), mySort );
+    
+    (*out_median).r = ( mR[3] + mR[4] + 1 ) >> 1;
+    (*out_median).g = ( mG[3] + mG[4] + 1 ) >> 1;
+    (*out_median).b = ( mB[3] + mB[4] + 1 ) >> 1;
 }
 
 
@@ -383,16 +384,7 @@ static int edgeSort( const void * in_A, const void * in_B ) {
 
 
 
-static int clusterSort( const void * in_A, const void * in_B ) {
-	struct cluster_t a = *(struct cluster_t*)in_A;
-	struct cluster_t b = *(struct cluster_t*)in_B;
-	return b.size - a.size;
-}
-
-
-
 void computeBlockChromas( rgb8_t out_c0[8], rgb8_t out_c1[8], const rgb8_t in_BLOCK_RGB[4][4] ) {
-	rgb8_t pixel;
 	int clusterPartition[16];
 	struct cluster_t clusterSize[16];
 	struct edge_t edge[120];
@@ -420,7 +412,7 @@ void computeBlockChromas( rgb8_t out_c0[8], rgb8_t out_c1[8], const rgb8_t in_BL
 		}
 	}
 	
-	mergesort( edge, 120, sizeof( struct edge_t ), edgeSort );
+	qsort( edge, 120, sizeof( struct edge_t ), edgeSort );
 
 	for ( int i = 0; i < 120; i++ ) {
 		int old = clusterPartition[edge[i].b];
@@ -543,12 +535,9 @@ void computeBlockChromas( rgb8_t out_c0[8], rgb8_t out_c1[8], const rgb8_t in_BL
 
 
 void computeBlockChromas2( rgb8_t * out_c0, rgb8_t * out_c1, const rgb8_t in_BLOCK_RGB[4][4] ) {
-	rgb8_t pixel;
 	float blocks[4][4][3];
 	float cf0[3], cf1[3];
 	float dX, dY, dZ, dist, maxDist = -MAXFLOAT;
-	
-	int count = 'a';
 	
 	int clusterPartition[16];
 	struct cluster_t clusterSize[16];
@@ -578,7 +567,7 @@ void computeBlockChromas2( rgb8_t * out_c0, rgb8_t * out_c1, const rgb8_t in_BLO
 		}
 	}
 	
-	mergesort( edge, 120, sizeof( struct edge_t ), edgeSort );
+	qsort( edge, 120, sizeof( struct edge_t ), edgeSort );
 	
 //	for ( int l = 0; l < 120; l++ ) {
 //		printf( "%3i %2i %2i %i\n", l, edge[l].a, edge[l].b, edge[l].dist );
@@ -828,7 +817,6 @@ void computeMinMaxAvgCenterMedian( rgb8_t * out_min, rgb8_t * out_max, rgb8_t ou
 	*out_min = cMin;
 	*out_max = cMax;
 	
-#warning consider using other sort functions for the given constant length of 8
 	qsort( mR, 8, sizeof( uint8_t ), mySort );
 	qsort( mG, 8, sizeof( uint8_t ), mySort );
 	qsort( mB, 8, sizeof( uint8_t ), mySort );
@@ -907,11 +895,11 @@ void computeMinMaxAvgCenterMedian( rgb8_t * out_min, rgb8_t * out_max, rgb8_t ou
 	float qy = m[1][0] * cx + m[1][1] * cy + m[1][2] * cz;
 	float qz = m[2][0] * cx + m[2][1] * cy + m[2][2] * cz;
 	
-//	printf( "CTR %.3f %.3f %.3f\n", px, py, pz );
-//	printf( "Ctr %.3f %.3f %.3f\n", cx, cy, cz );
-//	printf( "Ctr %.3f %.3f %.3f\n", fabsf( px - cx ), fabsf( py - cy ), fabsf( pz - cz ) );
-//	printf( "CTR_%3i %3i %3i\n", out_acm[1].r, out_acm[1].g, out_acm[1].b );
-//	printf( "Ctr_%.0f %.0f %.0f\n", qx, qy, qz );
+	printf( "CTR %.3f %.3f %.3f\n", px, py, pz );
+	printf( "Ctr %.3f %.3f %.3f\n", cx, cy, cz );
+	printf( "Ctr %.3f %.3f %.3f\n", fabsf( px - cx ), fabsf( py - cy ), fabsf( pz - cz ) );
+	printf( "CTR_%3i %3i %3i\n", out_acm[1].r, out_acm[1].g, out_acm[1].b );
+	printf( "Ctr_%.0f %.0f %.0f\n", qx, qy, qz );
 	
 	out_acm[3].r = roundf( qx );
 	out_acm[3].g = roundf( qy );

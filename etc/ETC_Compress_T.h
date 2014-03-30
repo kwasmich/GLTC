@@ -13,11 +13,6 @@
 
 #include "ETC_Common.h"
 
-#include "blockCompressionCommon.h"
-#include "colorSpaceReduction.h"
-
-#include <stdlib.h>
-
 
 void computeUniformColorLUTT( void );
 

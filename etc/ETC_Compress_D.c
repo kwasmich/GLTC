@@ -11,7 +11,6 @@
 
 #include "ETC_Compress_Common.h"
 #include "ETC_Decompress.h"
-#include "lib.h"
 
 #include <stdio.h>
 
@@ -282,7 +281,6 @@ uint32_t compressD( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4]
 	uint32_t blockError = 0xFFFFFFFF;
 	uint32_t bestBlockError = 0xFFFFFFFF;
     uint32_t subBlockError = 0xFFFFFFFF;
-    uint32_t bestSubBlockError = 0xFFFFFFFF;
 	
     if ( isUniformColorBlock( in_BLOCK_RGB ) ) {
         bestBlockError  = uniformColor( &bestC0, &bestT[0], &outModulation[0], &in_BLOCK_RGB[0] );
@@ -317,7 +315,6 @@ uint32_t compressD( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4]
                         blockError += uniformColor( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
                     } else {
                         subBlockError = 0xFFFFFFFF;
-                        bestSubBlockError = 0xFFFFFFFF;
                         
                         switch ( in_STRATEGY ) {
                             case kBRUTE_FORCE:

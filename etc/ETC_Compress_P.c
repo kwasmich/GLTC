@@ -11,9 +11,7 @@
 
 #include "ETC_Compress_Common.h"
 #include "ETC_Decompress.h"
-#include "lib.h"
 
-#include <iso646.h>
 #include <stdio.h>
 
 
@@ -96,14 +94,10 @@ static uint32_t uniformColor( rgb676_t * out_c0, rgb676_t * out_cH, rgb676_t * o
 	rgb8_t cMin, cMax, cAvg, cACM[3];
 	int dummy;
 	rgb676_t c = { 0, 0, 0 };
-	uint32_t error = 0;
 	
 	computeMinMaxAvgCenterMedian( &cMin, &cMax, cACM, &dummy, &dummy, in_BLOCK_RGB );
 	cAvg = cACM[0];
 	
-	error += ETC_UNIFORM_COLOR_LUT_6[cAvg.r].error;
-	error += ETC_UNIFORM_COLOR_LUT_7[cAvg.g].error;
-	error += ETC_UNIFORM_COLOR_LUT_6[cAvg.b].error;
 	c.r = ETC_UNIFORM_COLOR_LUT_6[cAvg.r].c;
 	c.g = ETC_UNIFORM_COLOR_LUT_7[cAvg.g].c;
 	c.b = ETC_UNIFORM_COLOR_LUT_6[cAvg.b].c;

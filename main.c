@@ -167,7 +167,7 @@ typedef enum {
 	kINVALID
 } tcType_t;
 
-
+/*
 static int main1( int argc, char * argv[] ) {
     uint32_t w = 0;
     uint32_t h = 0;
@@ -245,7 +245,7 @@ static int main2( int argc, char * argv[] ) {
 	
 	return 0;
 }
-
+*/
 
 
 int main( int argc, char * argv[] ) {
@@ -369,6 +369,7 @@ int main( int argc, char * argv[] ) {
 
     printf( "c: %i \"%s\"\n", optC, optCDArg );
     printf( "d: %i \"%s\"\n", optD, optCDArg );
+    printf( "-%i\n", optStrategy );
     printf( "f: %i \"%s\" -> \"%s\"\n", optF, optFArg, expandTilde( optFArg ) );
     printf( "o: %i \"%s\" -> \"%s\"\n", optO, optOArg, expandTilde( optOArg ) );
 	
