@@ -93,152 +93,134 @@ earlyExit:
 
 
 
-struct edge_t {
-	uint32_t dist;
-	uint8_t a;
-	uint8_t b;
-};
-
-
-
-static int edgeSort( const void * in_A, const void * in_B ) {
-	struct edge_t a = *(struct edge_t*)in_A;
-	struct edge_t b = *(struct edge_t*)in_B;
-	return a.dist - b.dist;
-}
-
-
-
-// Uses the minimum spanning tree algorithm to form cluster until there is no unconnected pixel.
-// Pick the largest cluster as the single point. Use all the other pixels to average a line through them.
 static void computeBlockChroma( rgb8_t * out_c0, rgb8_t * out_c1, int * out_d1, const rgb8_t in_BLOCK_RGB[4][4] ) {
-	int clusterPartition[16];
-	int clusterSize[16];
-	struct edge_t edge[120];
 	const rgb8_t * data = &in_BLOCK_RGB[0][0];
-	int dX, dY, dZ;
-	int maxClusterSize = 0;
+	int partitionMap[16];
+	int maxA, maxB, cluster, counter;
+	uint32_t maxDistance = 0;
+	rgb8_t clusterCenter[2];
+	int32_t dR, dG, dB;
+	int32_t sumR, sumG, sumB;
 	
-	for ( int i = 0; i < 16; i++ ) {
-		clusterPartition[i] = i;
-		clusterSize[i] = 1;
-	}
-	
-	int k = 0;
-	
-	for ( int i = 0; i < 16; i++ ) {
-		for ( int j = i + 1; j < 16; j++ ) {
-			dX = data[i].r - data[j].r;
-			dY = data[i].g - data[j].g;
-			dZ = data[i].b - data[j].b;
-			edge[k].a = i;
-			edge[k].b = j;
-			edge[k].dist = dX * dX + dY * dY + dZ * dZ;
-			k++;
-		}
-	}
-	
-	qsort( edge, 120, sizeof( struct edge_t ), edgeSort );
-	
-	for ( int i = 0; i < 120; i++ ) {
-		int old = clusterPartition[edge[i].b];
-		int new = clusterPartition[edge[i].a];
+	for ( int a = 0; a < 16; a++ ) {
+		partitionMap[a] = -1;
 		
-		if ( old == new )
-			continue;
-		
-		for ( int j = 0; j < 16; j++ ) {
-			if ( ( clusterPartition[j] == old ) and ( edge[i].a != j ) ) {
-				clusterPartition[j] = new;
-				clusterSize[clusterPartition[j]] += clusterSize[j];
-				clusterSize[j] = 0;
+		for ( int b = a + 1; b < 16; b++ ) {
+			dR = data[a].r - data[b].r;
+			dG = data[a].g - data[b].g;
+			dB = data[a].b - data[b].b;
+			uint32_t distance = dR * dR + dG * dG + dB * dB;
+			
+			if ( distance > maxDistance ) {
+				maxDistance = distance;
+				maxA = a;
+				maxB = b;
 			}
 		}
-		
-		bool done = true;
-		
-		for ( int j = 0; j < 16; j++ ) {
-			if ( clusterSize[j] == 1 ) {
-				done = false;
-				break;
-			}
-		}
-		
-		if ( done )
-			break;
 	}
+
+	partitionMap[maxA] = 0;
+	partitionMap[maxB] = 1;
+	clusterCenter[0] = data[maxA];
+	clusterCenter[1] = data[maxB];
 	
 	for ( int i = 0; i < 16; i++ ) {
-		if ( maxClusterSize < clusterSize[i] )
-			maxClusterSize = clusterSize[i];
-	}
-	
-	for ( int i = 0; i < 16; i++ ) {
-		if ( maxClusterSize == clusterSize[i] ) {
-			int cluster = clusterPartition[i];
-			int c0[3] = { 0, 0, 0 };
-			int c1[3] = { 0, 0, 0 };
-			int dot0, dot1;
-			int min0 = 255;
-			int max0 = 0;
-			int min1 = 255;
-			int max1 = 0;
+		if ( partitionMap[i] == -1 ) {
+			dR = data[i].r - clusterCenter[0].r;
+			dG = data[i].g - clusterCenter[0].g;
+			dB = data[i].b - clusterCenter[0].b;
+			uint32_t distanceA = dR * dR + dG * dG + dB * dB;
+			
+			dR = data[i].r - clusterCenter[1].r;
+			dG = data[i].g - clusterCenter[1].g;
+			dB = data[i].b - clusterCenter[1].b;
+			uint32_t distanceB = dR * dR + dG * dG + dB * dB;
+			
+			cluster = ( distanceA < distanceB ) ? 0 : 1;
+			partitionMap[i] = cluster;
+			
+			counter = 0;
+			sumR = 0;
+			sumG = 0;
+			sumB = 0;
 			
 			for ( int j = 0; j < 16; j++ ) {
-				if ( clusterPartition[j] == cluster ) {
-					c0[0] += data[j].r;
-					c0[1] += data[j].g;
-					c0[2] += data[j].b;
-					
-					dot0 = data[j].r + data[j].g + data[j].b;
-					min0 = ( dot0 < min0 ) ? dot0 : min0;
-					max0 = ( dot0 > max0 ) ? dot0 : max0;
-				} else {
-					c1[0] += data[j].r;
-					c1[1] += data[j].g;
-					c1[2] += data[j].b;
-					
-					dot1 = data[j].r + data[j].g + data[j].b;
-					min1 = ( dot1 < min1 ) ? dot1 : min1;
-					max1 = ( dot1 > max1 ) ? dot1 : max1;
+				if ( partitionMap[j] == cluster ) {
+					sumR += data[j].r;
+					sumG += data[j].g;
+					sumB += data[j].b;
+					counter++;
 				}
 			}
 			
-			c0[0] /= maxClusterSize;
-			c0[1] /= maxClusterSize;
-			c0[2] /= maxClusterSize;
-			
-			if ( maxClusterSize < 16 ) {
-				c1[0] /= 16 - maxClusterSize;
-				c1[1] /= 16 - maxClusterSize;
-				c1[2] /= 16 - maxClusterSize;
-			} else {
-				c1[0] = c0[0];
-				c1[1] = c0[1];
-				c1[2] = c0[2];
-				min1 = min0;
-				max1 = max0;
-			}
-			
-			int halfWidth = ( max1 - min1 ) / 6; // intentionally round twards zero
-			
-			//printf( "C%2i %3i %3i %3i - %3i %3i %3i (%i)\n", i, c0[0], c0[1], c0[2], c1[0], c1[1], c1[2], halfWidth );
-			out_c0->r = c0[0];
-			out_c0->g = c0[1];
-			out_c0->b = c0[2];
-			out_c1->r = c1[0];
-			out_c1->g = c1[1];
-			out_c1->b = c1[2];
-			*out_d1 = 0;
-			
-			for ( int d = 0; d < ETC_DISTANCE_TABLE_COUNT; d++ ) {
-				if ( ETC_DISTANCE_TABLE[d] < halfWidth )
-					*out_d1 = d;
-			}
-			
-			return;
+			clusterCenter[cluster].r = sumR / counter;
+			clusterCenter[cluster].g = sumG / counter;
+			clusterCenter[cluster].b = sumB / counter;
 		}
 	}
+	
+	// TODO: Make this code nicer and use it for H-Mode as well!
+	int clusterSpread[2];
+
+	{
+		rgb8_t pixel;
+		uint32_t dot;
+		uint32_t min = 0xFFFFFFFF;
+		uint32_t max = 0;
+		
+		for ( int i = 0; i < 16; i++ ) {
+			if ( partitionMap[i] == 0 ) {
+				pixel = data[i];
+				
+				dot = pixel.r + pixel.g + pixel.b;
+				min = ( dot < min ) ? dot : min;
+				max = ( dot > max ) ? dot : max;
+			}
+		}
+		
+		int halfWidth = ( max - min ) / 6; // intentionally round twards zero
+		int d0 = 0;
+		
+		for ( int d = 0; d < ETC_DISTANCE_TABLE_COUNT; d++ ) {
+			if ( ETC_DISTANCE_TABLE[d] < halfWidth )
+				d0 = d;
+		}
+		
+		clusterSpread[0] = d0;
+	}
+	
+	{
+		rgb8_t pixel;
+		uint32_t dot;
+		uint32_t min = 0xFFFFFFFF;
+		uint32_t max = 0;
+		
+		for ( int i = 0; i < 16; i++ ) {
+			if ( partitionMap[i] == 1 ) {
+				pixel = data[i];
+				
+				dot = pixel.r + pixel.g + pixel.b;
+				min = ( dot < min ) ? dot : min;
+				max = ( dot > max ) ? dot : max;
+			}
+		}
+		
+		int halfWidth = ( max - min ) / 6; // intentionally round twards zero
+		int d0 = 0;
+		
+		for ( int d = 0; d < ETC_DISTANCE_TABLE_COUNT; d++ ) {
+			if ( ETC_DISTANCE_TABLE[d] < halfWidth )
+				d0 = d;
+		}
+		
+		clusterSpread[1] = d0;
+	}
+
+	cluster = ( clusterSpread[0] > clusterSpread[1] ) ? 0 : 1;
+	
+	*out_c0 = clusterCenter[1-cluster];
+	*out_c1 = clusterCenter[cluster];
+	*out_d1 = clusterSpread[cluster];
 }
 
 
@@ -255,8 +237,6 @@ static uint32_t quick( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, uint8_t ou
 	convert444to888( &col8[0], c0 );
 	convert444to888( &col8[1], c1 );
 	computeRGBColorPaletteT( &palette[0], col8[0], col8[1], d1 );
-	
-	//printf( "%3i %3i %3i - %3i %3i %3i\n", col8[0].r, col8[0].g, col8[0].b, col8[1].r, col8[1].g, col8[1].b );
 	
 	*out_c0 = c0;
 	*out_c1 = c1;
@@ -349,11 +329,6 @@ uint32_t compressT( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4]
 	
 	if ( isUniformColorBlock( in_BLOCK_RGB ) ) {
 		blockError = uniformColor( &c0, &c1, &d, modulation, in_BLOCK_RGB );
-		
-		uint32_t bruteError = brute( &c0, &c1, &d, modulation, in_BLOCK_RGB );
-		
-		if ( blockError > bruteError )
-			puts( "fail" );
 	} else {
 		switch ( in_STRATEGY ) {
 			case kFAST:
