@@ -270,7 +270,7 @@ int main( int argc, char * argv[] ) {
 						  expandTilde( "~/Desktop/ETC/TestRGB64_D2.etc" ),
 						  expandTilde( "~/Desktop/ETC/TestRGB64_T.etc" ), 
 						  expandTilde( "~/Desktop/ETC/TestRGB64_H.etc" ), 
-						  expandTilde( "~/Desktop/ETC/TestRGB64_P.etc" ), imageData, w, h );
+						  expandTilde( "~/Desktop/ETC/TestRGB64_P.etc" ), imageData, w, h, kBEST );
 		pngFree( (uint8_t **)&imageData );
 		
 		return EXIT_SUCCESS;
@@ -286,7 +286,7 @@ int main( int argc, char * argv[] ) {
     bool optF = false;
     bool optO = false;
 	bool optR = false;
-    int optStrategy = 0;
+    Strategy_t optStrategy = kFAST;
     char * optCDArg = NULL;
     char * optFArg = NULL;
 	char * optOArg = NULL;
@@ -318,7 +318,7 @@ int main( int argc, char * argv[] ) {
 				break;
             
             case '0':
-                optStrategy = 0;
+                optStrategy = kFAST;
                 break;
                 
             case '1':
@@ -354,7 +354,7 @@ int main( int argc, char * argv[] ) {
                 break;
                 
             case '9':
-                optStrategy = 9;
+                optStrategy = kBEST;
                 break;
                 
 			case 'h':
@@ -407,15 +407,6 @@ int main( int argc, char * argv[] ) {
         }
     }
 	
-    // determine compression strategy
-    Strategy_t strategy = kFAST;
-    
-    if ( optStrategy < 5 ) {
-        strategy = kFAST;
-    } else {
-        strategy = kBRUTE_FORCE;
-    }
-    
     // compress
     if ( optC ) {
         uint32_t w = 0;
@@ -470,9 +461,9 @@ int main( int argc, char * argv[] ) {
                 assert( c == 3 );
 				
 				if ( optR )
-					etcResumeWriteETC1RGB( optOArg, imageData, w, h );
+					etcResumeWriteETC1RGB( optOArg, imageData, w, h, optStrategy );
 				else
-					etcWriteETC1RGB( optOArg, imageData, w, h, strategy );
+					etcWriteETC1RGB( optOArg, imageData, w, h, optStrategy );
                 
                 pngFree( (uint8_t **)&imageData );
             }

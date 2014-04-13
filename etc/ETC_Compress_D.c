@@ -307,7 +307,7 @@ uint32_t compressD( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4]
             
             blockError = 0;
             
-            if ( in_STRATEGY == kBRUTE_FORCE ) {
+            if ( in_STRATEGY == kBEST ) {
                 blockError = bruteBlock( &c[0], &c[1], &t[0], &t[1], modulation, blockRGB );
             } else {
                 for ( int sb = 0; sb < 2; sb++ ) {
@@ -317,12 +317,12 @@ uint32_t compressD( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4]
                         subBlockError = 0xFFFFFFFF;
                         
                         switch ( in_STRATEGY ) {
-                            case kBRUTE_FORCE:
-                                break;
-                                
-                            case kFAST:
+							case kFAST:
                                 subBlockError = quick( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
                                 break;
+								
+							case kBEST:
+								break;
                         }
 
                         blockError += subBlockError;

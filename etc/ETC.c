@@ -293,7 +293,7 @@ void etcFreeRGBA( rgba8_t ** in_out_image ) {
 
 
 
-bool etcResumeWriteETC1RGB( const char in_FILE[], const rgb8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT ) {
+bool etcResumeWriteETC1RGB( const char in_FILE[], const rgb8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT, const Strategy_t in_STRATEGY ) {
 	computeUniformColorLUT();
 	
 	uint32_t w = in_WIDTH;
@@ -344,7 +344,7 @@ bool etcResumeWriteETC1RGB( const char in_FILE[], const rgb8_t * in_IMAGE, const
             }
             
 			if ( blockPtr->b64 == 0 ) {
-				compressETC1BlockRGB( blockPtr, (const rgb8_t(*)[4])blockRGB, kBRUTE_FORCE );
+				compressETC1BlockRGB( blockPtr, (const rgb8_t(*)[4])blockRGB, in_STRATEGY );
 				switchEndianness( REINTERPRET(endian64*)blockPtr );
 			} else {
 				puts( "skipping" );
@@ -389,7 +389,13 @@ static ETCBlockColor_t * blockOut( const char in_FILE[], const uint32_t in_WIDTH
 
 
 
-bool etcReadRGBCompare( const char in_FILE_I[], const char in_FILE_D[], const char in_FILE_T[], const char in_FILE_H[], const char in_FILE_P[], const rgb8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT ) {
+
+
+
+
+// TODO : Remove those in a future version
+
+bool etcReadRGBCompare( const char in_FILE_I[], const char in_FILE_D[], const char in_FILE_T[], const char in_FILE_H[], const char in_FILE_P[], const rgb8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT, const Strategy_t in_STRATEGY ) {
     uint32_t w = in_WIDTH;
     uint32_t h = in_HEIGHT;
     
@@ -451,7 +457,7 @@ bool etcReadRGBCompare( const char in_FILE_I[], const char in_FILE_D[], const ch
             //			printf( "%s ", bla( bestBlockType ) );
             //			puts( "" );
 			
-			compressETC1BlockRGB( &block[0][blockIndex], (const rgb8_t(*)[4])blockRGBReference, kBRUTE_FORCE );
+			compressETC1BlockRGB( &block[0][blockIndex], (const rgb8_t(*)[4])blockRGBReference, in_STRATEGY );
 			
 			blockIndex++;
         }

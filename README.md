@@ -32,6 +32,7 @@ ETC is historically derived from another format called PACKMAN which encoded ima
 Those are two PACKMAN blocks next to each other or on top of each other. This _Flipping_ is a new degree of freedom
 introduced by ETC. The pixels are encoded in column major order as illustrated here:
 
+```
  no flip         flip
 +-----+-----+   +---------+
 | a e | i m |   | a e i m |
@@ -40,12 +41,14 @@ introduced by ETC. The pixels are encoded in column major order as illustrated h
 | d h | l p |   | c g k o |
 +-----+-----+   | d h l p |
                 +---------+
+```
 
 All modes except Planar-Mode actually operate in the HSL color space. This is because in this modes the block or
 sub-block palette is computed by using one base color that is lightened or darkened by adding or subtracting a value
 from a table to all color components atonce. Saturation of one component has to be considered. This is just like in HSL
 color space which has the form of two cones connected at the base.
 
+```
 L (from bottom to top)
 ^    /\
 |   /  \
@@ -55,6 +58,7 @@ L (from bottom to top)
 |   \  /
 |    \/
       ----> S (from the center to the border)
+```
 
 Adding or subtracting a value from all color components atonce is equivalent to moving along L in the HSL color space.
 As one can see from the shape moving along L can cause clipping in S such that in some modes there is no way to
@@ -126,17 +130,48 @@ sub-blocks are considered at 5bits per color component. And the answer is thats 
 compute the errors for the entire search space for the second sub-block and store it in a table and then look it up
 while searching the best combined error for the first and second sub-block atonce.
 
-Blocks or the first sub-block with a uniform color can be constructed much easier by using another precomputed LUT.
-The worst squared error per pixel for a uniform colored block or the first sub-block in this mode is 14. This is due to
-the higher color space resolution. This does not apply per se to the second sub-block as it is dependent on the first
-block. Picking the best color for a uniform first sub-block may increase the error in the second sub-block such that
-in general this does only result in the best possible quality when applied to uniform blocks instead of sub-blocks.
+Blocks or the first sub-block with a uniform color can be constructed much easier by using another precomputed LUT. The
+worst squared error per pixel for a uniform colored block or the first sub-block in this mode is 14. This is due to the
+higher color space resolution. This does not apply per se to the second sub-block as it is dependent on the first block.
+Picking the best color for a uniform first sub-block may increase the error in the second sub-block such that in general
+this does only result in the best possible quality when applied to uniform blocks instead of sub-blocks.
 
 The same straight forward approach as for the individual mode can be used but with the constraint that the result has to
 be rejected if the sub-block _Color_s differ too much.
 
 
 
+T-Mode
+------
+This is an extension used in ETC2 to overcome some deficites in ETC. While in the Individual- and Differential-Mode you
+have one chroma and four luminances per sub-block, here you have two chromas and one or three luminances per block. So
+this mode is completely different as it does not have sub-blocks. Instead of a palette of four colors per sub-block you
+now have four colors for the entire block. Intended for use on Blocks that have a high variance in chroma in a way that
+cannot be separated horizontally or vertically.
+
+The T-Mode consists of the colors _ColorA_ and _ColorB_ in RGB4 (4bits per color channel) and a _Table-Index_ to
+construct a palette of four colors and a set of 2bit palette indices for each pixel. The _Table-Index_ only operates on
+_ColorB_. As the original values of _ColorA_ and _ColorB_ are part of the palette, this is the only mode where you can
+render a color at full chrominance.
+
+For an exhaustive search for the optimum encoding of a 4x4 block of the input image we need to consider:
+
+  * 16 values per channel of _ColorA_ (and 3 channels)
+  * 16 values per channel of _ColorB_ (and 3 channels)
+  * 8  table indices
+
+The sub total is 16 * 16 * 16 * 16 * 16 * 16 * 8 = 134,217,728 possible combinations to pick the optimum. So giving up
+the constraint of one color per sub-block to two independant colors per block dramatically increases the search space.
+
+Blocks with a uniform color can be constructed much easier by using another precomputed LUT. The worst squared error per
+pixel for a uniform colored block or the first sub-block in this mode is ???. Almost like in the Individual-Mode. But as
+we only use one of those two individual colors you need to consider only 3 of 4 _Table-Indices_.
+
+A straight forward approach would be to first isolate two color clusters using the minimum spanning tree algorithm to
+connect those clusters in the plane perpendicular to the luminance direction. Then find a _Color_ for each cluster that
+represents the pixel values of the cluster in a reasonable way such as the center color, average or median. The _Color_
+of the cluster with the higher spread along the diagonal in the RGB space will be _ColorB_ and one has to pick a
+_Table-Index_ that matches the span.
 
 
 

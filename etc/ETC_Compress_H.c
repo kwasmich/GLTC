@@ -320,8 +320,20 @@ uint32_t compressH( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4]
 	uint8_t modulation[4][4];
 	uint32_t blockError = 0xFFFFFFFF;
 	
-	blockError = quick( &c0, &c1, &d, modulation, in_BLOCK_RGB );
-	//blockError = brute( &c0, &c1, &d, modulation, in_BLOCK_RGB );
+	if ( isUniformColorBlock( in_BLOCK_RGB ) ) {
+		return blockError;
+	} else {
+		switch ( in_STRATEGY ) {
+			case kFAST:
+				blockError = quick( &c0, &c1, &d, modulation, in_BLOCK_RGB );
+				break;
+				
+			case kBEST:
+				blockError = brute( &c0, &c1, &d, modulation, in_BLOCK_RGB );
+				break;
+		}
+	}
+	
 	buildBlock( out_block, c0, c1, d, (const uint8_t(*)[4])modulation );
 	return blockError;
 }

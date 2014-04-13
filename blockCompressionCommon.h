@@ -31,9 +31,19 @@ void twiddleBlocksRGB( rgb8_t * in_out_image, const uint32_t in_WIDTH, const uin
 void twiddleBlocksRGBA( rgba8_t * in_out_image, const uint32_t in_WIDTH, const uint32_t in_HEIGHT, const bool in_REVERSE );
 
 
+//typedef uint8_t Strategy_t; // intended only for values [0..9]
+
 typedef enum {
-    kBRUTE_FORCE,
-    kFAST
+	kFAST = 0,
+//	kS1 = 1,
+//	kS2 = 2,
+//	kS3 = 3,
+//	kS4 = 4,
+//	kS5 = 5,
+//	kS6 = 6,
+//	kS7 = 7,
+//	kS8 = 8,
+    kBEST = 9
 } Strategy_t;
 
 
