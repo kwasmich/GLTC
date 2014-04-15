@@ -73,7 +73,7 @@ There are also some noteworth differences in the 5 modes:
     sub-block. Such that these Modes operate best on blocks with very low variance in chroma but high variance in L as
     there are 4 lightness settings per sub-block.
   * T- and H-Mode have a total of 4 colors for the entire block. But there are 2 chromas and either 1 lightness setting
-    for one and 2 lightness settings for the other chroma or 2 lighness settings for both chromas. So these modes are
+    for one and 2 lightness settings for the other chroma or 2 lightness settings for both chromas. So these modes are
     suited best for Blocks with high variance in chroma but low variance in lightness.
     NOTE:
     If the chromas can be (almost completely) separated by dividing the block horizontally or vertically, then the
@@ -137,7 +137,7 @@ Picking the best color for a uniform first sub-block may increase the error in t
 this does only result in the best possible quality when applied to uniform blocks instead of sub-blocks.
 
 The same straight forward approach as for the individual mode can be used but with the constraint that the result has to
-be rejected if the sub-block _Color_s differ too much.
+be rejected if the sub-block _Colors_ differ too much.
 
 
 
@@ -167,11 +167,41 @@ Blocks with a uniform color can be constructed much easier by using another prec
 pixel for a uniform colored block or the first sub-block in this mode is ???. Almost like in the Individual-Mode. But as
 we only use one of those two individual colors you need to consider only 3 of 4 _Table-Indices_.
 
-A straight forward approach would be to first isolate two color clusters using the minimum spanning tree algorithm to
-connect those clusters in the plane perpendicular to the luminance direction. Then find a _Color_ for each cluster that
+A straight forward approach would be to first isolate two color clusters. Then find a _Color_ for each cluster that
 represents the pixel values of the cluster in a reasonable way such as the center color, average or median. The _Color_
 of the cluster with the higher spread along the diagonal in the RGB space will be _ColorB_ and one has to pick a
 _Table-Index_ that matches the span.
+
+
+
+H-Mode
+------
+Similar to the T-Mode this mode uses two chromas to per block but this time with two luminances for each. Again leading
+to the situation that no fully saturated colors can be reconstructed.
+
+Almost identical to the T-Mode the only difference is that both primary colors are altered by the value provided by the
+_Table-Index_ and are not part of the resulting palette. So this time both colors are treated equally leading to an
+ambiguity which is also known from DXTC (S3TC). The colors would be interchangeable and with the correct palette indices
+the image could be reconstructed indentically. A fact that is used for a second mode in DXTC. But this is not the case
+here. Here the ambiguity is used to store the LSB (least significant bit) of the _Table-Index_. So the search-space is
+just half as big as it would be if the ambiguity would be allowed.
+
+For an exhaustive search for the optimum encoding of a 4x4 block of the input image we need to consider:
+
+  * 16 values per channel of _ColorA_ (and 3 channels)
+  * 16 values per channel of _ColorB_ (and 3 channels)
+  * 8  table indices
+  * 1/2 to disallow the ambiguity
+
+The sub total is 16 * 16 * 16 * 16 * 16 * 16 * 8 / 2 = 67,108,864 possible combinations to pick the optimum. So this
+time the search-space is just half as large as in the T-Mode.
+
+It is useless to treat uniform colored blocks in this mode as the palette offers just a sub-set of the colors available
+in T-Mode.
+
+The same straight forward approach can be taken as for the T-Mode but this time the span of both clusters has to be
+considered while picking the _Table-Index_.
+
 
 
 

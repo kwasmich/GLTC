@@ -93,7 +93,7 @@ earlyExit:
 
 
 
-static void computeBlockChroma( rgb8_t * out_c0, rgb8_t * out_c1, int * out_d1, const rgb8_t in_BLOCK_RGB[4][4] ) {
+static void computeBlockChroma( rgb8_t * out_c0, rgb8_t * out_c1, int * out_d, const rgb8_t in_BLOCK_RGB[4][4] ) {
 	const rgb8_t * data = &in_BLOCK_RGB[0][0];
 	int partitionMap[16];
 	int maxA, maxB, cluster, counter;
@@ -159,17 +159,16 @@ static void computeBlockChroma( rgb8_t * out_c0, rgb8_t * out_c1, int * out_d1, 
 		}
 	}
 	
-	// TODO: Make this code nicer and use it for H-Mode as well!
 	int clusterSpread[2];
 
-	{
+	for ( int c = 0; c < 2; c++ ) {
 		rgb8_t pixel;
 		uint32_t dot;
 		uint32_t min = 0xFFFFFFFF;
 		uint32_t max = 0;
 		
 		for ( int i = 0; i < 16; i++ ) {
-			if ( partitionMap[i] == 0 ) {
+			if ( partitionMap[i] == c ) {
 				pixel = data[i];
 				
 				dot = pixel.r + pixel.g + pixel.b;
@@ -186,41 +185,14 @@ static void computeBlockChroma( rgb8_t * out_c0, rgb8_t * out_c1, int * out_d1, 
 				d0 = d;
 		}
 		
-		clusterSpread[0] = d0;
-	}
-	
-	{
-		rgb8_t pixel;
-		uint32_t dot;
-		uint32_t min = 0xFFFFFFFF;
-		uint32_t max = 0;
-		
-		for ( int i = 0; i < 16; i++ ) {
-			if ( partitionMap[i] == 1 ) {
-				pixel = data[i];
-				
-				dot = pixel.r + pixel.g + pixel.b;
-				min = ( dot < min ) ? dot : min;
-				max = ( dot > max ) ? dot : max;
-			}
-		}
-		
-		int halfWidth = ( max - min ) / 6; // intentionally round twards zero
-		int d0 = 0;
-		
-		for ( int d = 0; d < ETC_DISTANCE_TABLE_COUNT; d++ ) {
-			if ( ETC_DISTANCE_TABLE[d] < halfWidth )
-				d0 = d;
-		}
-		
-		clusterSpread[1] = d0;
+		clusterSpread[c] = d0;
 	}
 
 	cluster = ( clusterSpread[0] > clusterSpread[1] ) ? 0 : 1;
-	
+
 	*out_c0 = clusterCenter[1-cluster];
 	*out_c1 = clusterCenter[cluster];
-	*out_d1 = clusterSpread[cluster];
+	*out_d = clusterSpread[cluster];
 }
 
 
@@ -228,19 +200,19 @@ static void computeBlockChroma( rgb8_t * out_c0, rgb8_t * out_c1, int * out_d1, 
 static uint32_t quick( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, uint8_t out_modulation[4][4], const rgb8_t in_BLOCK_RGB[4][4] ) {
 	rgb8_t col8[2], palette[4];
 	rgb4_t c0, c1;
-	int d1;
+	int d;
 	
-	computeBlockChroma( &col8[0], &col8[1], &d1, in_BLOCK_RGB );
+	computeBlockChroma( &col8[0], &col8[1], &d, in_BLOCK_RGB );
 	
 	convert888to444( &c0, col8[0] );
 	convert888to444( &c1, col8[1] );
 	convert444to888( &col8[0], c0 );
 	convert444to888( &col8[1], c1 );
-	computeRGBColorPaletteT( &palette[0], col8[0], col8[1], d1 );
+	computeRGBColorPaletteT( &palette[0], col8[0], col8[1], d );
 	
 	*out_c0 = c0;
 	*out_c1 = c1;
-	*out_d = d1;
+	*out_d = d;
 	
 	return computeBlockError( out_modulation, in_BLOCK_RGB, palette );
 }
@@ -262,9 +234,9 @@ static uint32_t brute( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, uint8_t ou
 	
 	computeBlockCenter( &center, in_BLOCK_RGB );
 	
-	for ( b0 = 0; b0 < 16; b0++ ) {
+	for ( r0 = 0; r0 < 16; r0++ ) {
 		for ( g0 = 0; g0 < 16; g0++ ) {
-			for ( r0 = 0; r0 < 16; r0++ ) {
+			for ( b0 = 0; b0 < 16; b0++ ) {
 				c0 = (rgb4_t){ b0, g0, r0 };
 				convert444to888( &col8[0], c0 );
 				dR = center.r - col8[0].r;
@@ -272,18 +244,19 @@ static uint32_t brute( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, uint8_t ou
 				dB = center.b - col8[0].b;
 				distance[0] = dR * dR + dG * dG + dB * dB;
 				
-				for ( d = 0; d < ETC_DISTANCE_TABLE_COUNT; d++ ) {
-					for ( b1 = 0; b1 < 16; b1++ ) {
-						for ( g1 = 0; g1 < 16; g1++ ) {
-							for ( r1 = 0; r1 < 16; r1++ ) {
-								c1 = (rgb4_t){ b1, g1, r1 };
-								convert444to888( &col8[1], c1 );
+				for ( r1 = 0; r1 < 16; r1++ ) {
+					for ( g1 = 0; g1 < 16; g1++ ) {
+						for ( b1 = 0; b1 < 16; b1++ ) {
+							c1 = (rgb4_t){ b1, g1, r1 };
+							convert444to888( &col8[1], c1 );
+							dR = center.r - col8[1].r;
+							dG = center.g - col8[1].g;
+							dB = center.b - col8[1].b;
+							distance[1] = distance[0] + dR * dR + dG * dG + dB * dB;
+							
+							for ( d = 0; d < ETC_DISTANCE_TABLE_COUNT; d++ ) {
 								computeRGBColorPaletteT( &palette[0], col8[0], col8[1], d );
 								error = computeBlockError( NULL, in_BLOCK_RGB, palette );
-								dR = center.r - col8[1].r;
-								dG = center.g - col8[1].g;
-								dB = center.b - col8[1].b;
-								distance[1] = distance[0] + dR * dR + dG * dG + dB * dB;
 								
 								if ( ( error < bestError ) or ( ( error == bestError ) and ( distance[1] < bestDistance ) ) ) {
 									bestError = error;
