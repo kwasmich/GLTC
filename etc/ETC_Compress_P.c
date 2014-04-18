@@ -91,12 +91,10 @@ static void buildBlock( ETCBlockColor_t * out_block, const rgb676_t in_C0, const
 
 
 static uint32_t uniformColor( rgb676_t * out_c0, rgb676_t * out_cH, rgb676_t * out_cV, const rgb8_t in_BLOCK_RGB[4][4] ) {
-	rgb8_t cMin, cMax, cAvg, cACM[3];
-	int dummy;
+	rgb8_t cAvg;
 	rgb676_t c = { 0, 0, 0 };
 	
-	computeMinMaxAvgCenterMedian( &cMin, &cMax, cACM, &dummy, &dummy, in_BLOCK_RGB );
-	cAvg = cACM[0];
+	computeBlockCenter( &cAvg, in_BLOCK_RGB );
 	
 	c.r = ETC_UNIFORM_COLOR_LUT_6[cAvg.r].c;
 	c.g = ETC_UNIFORM_COLOR_LUT_7[cAvg.g].c;
@@ -298,9 +296,20 @@ uint32_t compressP( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4]
 	rgb676_t c0, cH, cV;
 	uint32_t blockError = 0xFFFFFFFF;
 	
-	//blockError = uniformColor( &c0, &cH, &cV, in_BLOCK_RGB );
-	//blockError = analytical( &c0, &cH, &cV, in_BLOCK_RGB );
-	blockError = brute( &c0, &cH, &cV, in_BLOCK_RGB );
+	if ( isUniformColorBlock( in_BLOCK_RGB ) ) {
+		blockError = uniformColor( &c0, &cH, &cV, in_BLOCK_RGB );
+	} else {
+		switch ( in_STRATEGY ) {
+			case kFAST:
+				blockError = analytical( &c0, &cH, &cV, in_BLOCK_RGB );
+				break;
+				
+			case kBEST:
+				blockError = brute( &c0, &cH, &cV, in_BLOCK_RGB );
+				break;
+		}
+	}
+	
 	buildBlock( out_block, c0, cH, cV );
 	return blockError;
 }

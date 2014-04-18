@@ -164,8 +164,8 @@ The sub total is 16 * 16 * 16 * 16 * 16 * 16 * 8 = 134,217,728 possible combinat
 the constraint of one color per sub-block to two independant colors per block dramatically increases the search space.
 
 Blocks with a uniform color can be constructed much easier by using another precomputed LUT. The worst squared error per
-pixel for a uniform colored block or the first sub-block in this mode is ???. Almost like in the Individual-Mode. But as
-we only use one of those two individual colors you need to consider only 3 of 4 _Table-Indices_.
+pixel for a uniform colored block in this mode is ???. Almost like in the Individual-Mode. But as we only use one of
+those two individual colors you need to consider only 3 of 4 _Table-Indices_.
 
 A straight forward approach would be to first isolate two color clusters. Then find a _Color_ for each cluster that
 represents the pixel values of the cluster in a reasonable way such as the center color, average or median. The _Color_
@@ -202,6 +202,36 @@ in T-Mode.
 The same straight forward approach can be taken as for the T-Mode but this time the span of both clusters has to be
 considered while picking the _Table-Index_.
 
+
+
+Planar-Mode
+-----------
+The planar mode is completely different form all the other modes intended for use on blocks with smooth color
+transitions.
+
+Instead of a palette and a 2bit palette index per encoded pixel, this mode consists of three colors encoded in RGB676
+(colordepths of 6bit red, 7bit green and 6bit blue). Those are located in the upper left (_Color0_), upper right
+(_ColorH_) and lower left (_ColorV_) and blended into eachother.
+
+For an exhaustive search for the optimum encoding of a 4x4 block of the input image we need to consider:
+
+  * 64 values for the red channel (and three colors)
+  * 128 values for the green channel (and three colors)
+  * 64 values for the blue channel (and three colors)
+
+The sub total is 64 * 64 * 64 + 128 * 128 * 128 + 64 * 64 * 64 = 2,621,440 possible combinations to pick the optimum.
+This is because the color channels are completely independent and not bound to a palette.
+
+Again blocks with a uniform color can be constructed much easier by using another precomputed LUT. The worst squared
+error per pixel for a uniform colored block in this mode is ???. Just the nearest color has to be found and no other
+information is required. But because we have no palette, this might not be the best possible result. If a color cannot
+be matched exactly in RGB676 than a gradient between the nearest lower and higher color value will have a lower error as
+some match the exact color while otherwise none would match. For example a green color value of 5 cannot be represented
+in 7bit. So one might pick 4 or 6 instead. All 16 pixels would be 1bit off. A gradient would match the value of 5 at
+least for a part of the pixels reducing the overall error while the rest remains 1bit off.
+
+As the color blending across the surface is fixed an analytical approach is feasible while it is not exact. In this
+approach each pixel color value is multiplied with three matrices, one for each _Color_.
 
 
 
