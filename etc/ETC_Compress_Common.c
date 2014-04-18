@@ -32,55 +32,62 @@ static int mySort( const void * in_A, const void * in_B ) {
 
 
 
-void _fillUniformColorLUTGaps( ETCUniformColorComposition_t in_out_lut[8][4][256] ) {
+void fillUniformColorLUTGaps( ETCUniformColorComposition_t in_out_lut[256] ) {
 	ETCUniformColorComposition_t tmp = { 0, 65535 };
+	int dist = 255;
+	bool found = false;
 	
-	for ( int t = 0; t < ETC_TABLE_COUNT; t++ ) {
-		for ( int p = 0; p < ETC_PALETTE_SIZE; p++ ) {
-			int dist = 255;
-            bool found = false;
+	// sweep forward
+	for ( int c = 0; c < 256; c++ ) {
+		if ( in_out_lut[c].error == 0 ) {
+			tmp = in_out_lut[c];
+			dist = 0;
+			found = true;
+		}
+		
+		if ( found ) {
+			tmp.error = dist * dist;
+			in_out_lut[c] = tmp;
+			dist++;
+		}
+	}
+	
+	dist = 255;
+	found = false;
+	
+	// sweep backward
+	for ( int c = 255; c >= 0; c-- ) {
+		if ( in_out_lut[c].error == 0 ) {
+			tmp = in_out_lut[c];
+			dist = 0;
+			found = true;
+		}
+		
+		if ( found ) {
+			tmp.error = dist * dist;
 			
-			// sweep forward
-			for ( int c = 0; c < 256; c++ ) {
-				if ( in_out_lut[t][p][c].error == 0 ) {
-					tmp = in_out_lut[t][p][c];
-					dist = 0;
-                    found = true;
-				}
-				
-                if ( found ) {
-                    tmp.error = dist * dist;
-                    in_out_lut[t][p][c] = tmp;
-                    dist++;
-                }
-			}
+			if ( tmp.error < in_out_lut[c].error )
+				in_out_lut[c] = tmp;
 			
-			dist = 255;
-            found = false;
-			
-			// sweep backward
-			for ( int c = 255; c >= 0; c-- ) {
-				if ( in_out_lut[t][p][c].error == 0 ) {
-					tmp = in_out_lut[t][p][c];
-					dist = 0;
-                    found = true;
-				}
-				
-                if ( found ) {
-                    tmp.error = dist * dist;
-                    
-                    if ( tmp.error < in_out_lut[t][p][c].error )
-                        in_out_lut[t][p][c] = tmp;
-                    
-                    dist++;
-                }
-			}
+			dist++;
 		}
 	}
 }
 
 
+
+void fillUniformColorPaletteLUTGaps( ETCUniformColorComposition_t in_out_lut[8][4][256] ) {
+	for ( int t = 0; t < ETC_TABLE_COUNT; t++ ) {
+		for ( int p = 0; p < ETC_PALETTE_SIZE; p++ ) {
+			fillUniformColorLUTGaps( in_out_lut[t][p] );
+		}
+	}
+}
+
+
+
 #warning compute error separately for each color comoponent
+
 
 
 // computes the error for a 4x2 sub-block

@@ -314,7 +314,7 @@ void computeUniformColorLUTI() {
 	}
     
 	// fill the gaps with the nearest color
-	_fillUniformColorLUTGaps( ETC_UNIFORM_COLOR_LUT_I );
+	fillUniformColorPaletteLUTGaps( ETC_UNIFORM_COLOR_LUT_I );
 }
 
 

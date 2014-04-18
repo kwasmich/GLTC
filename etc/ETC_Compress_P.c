@@ -21,42 +21,6 @@ static ETCUniformColorComposition_t ETC_UNIFORM_COLOR_LUT_7[256];
 
 
 
-static void _fillUniformColorLUTGapsP( ETCUniformColorComposition_t in_out_lut[256] ) {
-	ETCUniformColorComposition_t tmp = { 0, 65535 };
-	int dist = 255;
-	
-	// sweep forward
-	for ( int c = 0; c < 256; c++ ) {
-		if ( in_out_lut[c].error == 0 ) {
-			tmp = in_out_lut[c];
-			dist = 0;
-		}
-		
-		tmp.error = dist * dist;
-		in_out_lut[c] = tmp;
-		dist++;
-	}
-	
-	dist = 255;
-	
-	// sweep backward
-	for ( int c = 255; c >= 0; c-- ) {
-		if ( in_out_lut[c].error == 0 ) {
-			tmp = in_out_lut[c];
-			dist = 0;
-		}
-		
-		tmp.error = dist * dist;
-		
-		if ( tmp.error < in_out_lut[c].error )
-			in_out_lut[c] = tmp;
-		
-		dist++;
-	}
-}
-
-
-
 static void buildBlock( ETCBlockColor_t * out_block, const rgb676_t in_C0, const rgb676_t in_CH, const rgb676_t in_CV ) {
 	ETCBlockP_t block;
 	block.one = 1;
@@ -225,7 +189,7 @@ earlyExitB:
 	*out_c0 = bestC0;
 	*out_cH = bestCH;
 	*out_cV = bestCV;
-	return bestError[0] + bestError[1] + bestError[1];
+	return bestError[0] + bestError[1] + bestError[2];
 }
 
 
@@ -292,6 +256,10 @@ static uint32_t analytical( rgb676_t * out_c0, rgb676_t * out_cH, rgb676_t * out
 
 
 
+#pragma mark - exposed interface
+
+
+
 uint32_t compressP( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4], const Strategy_t in_STRATEGY ) {
 	rgb676_t c0, cH, cV;
 	uint32_t blockError = 0xFFFFFFFF;
@@ -332,15 +300,15 @@ void computeUniformColorLUTP() {
 		ETC_UNIFORM_COLOR_LUT_6[col8] = (ETCUniformColorComposition_t){ col6, 0 };
 	}
 	
-	// compute all colors that can be constructed with 6bpp
+	// compute all colors that can be constructed with 7bpp
 	for ( int col7 = 0; col7 < 128; col7++ ) {
 		col8 = extend7to8bits( col7 );
 		ETC_UNIFORM_COLOR_LUT_7[col8] = (ETCUniformColorComposition_t){ col7, 0 };
 	}
 	
 	// fill the gaps with the nearest color
-	_fillUniformColorLUTGapsP( ETC_UNIFORM_COLOR_LUT_6 );
-	_fillUniformColorLUTGapsP( ETC_UNIFORM_COLOR_LUT_7 );
+	fillUniformColorLUTGaps( ETC_UNIFORM_COLOR_LUT_6 );
+	fillUniformColorLUTGaps( ETC_UNIFORM_COLOR_LUT_7 );
 }
 
 

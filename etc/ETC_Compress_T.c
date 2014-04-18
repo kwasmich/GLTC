@@ -20,8 +20,14 @@ static ETCUniformColorComposition_t ETC_UNIFORM_COLOR_LUT_T[ETC_DISTANCE_TABLE_C
 
 
 
-static void buildBlock( ETCBlockColor_t * out_block, const rgb4_t in_C0, const rgb4_t in_C1, const int in_D, const uint8_t in_MODULATION[4][4] ) {
-	uint32_t bitField = generateBitField( in_MODULATION );
+static void buildBlock( ETCBlockColor_t * out_block, const rgb4_t in_C0, const rgb4_t in_C1, const int in_D, const rgb8_t in_BLOCK_RGB[4][4] ) {
+	rgb8_t col8[2], palette[4];
+	uint8_t modulation[4][4];
+	convert444to888( &col8[0], in_C0 );
+	convert444to888( &col8[1], in_C1 );
+	computeRGBColorPaletteT( &palette[0], col8[0], col8[1], in_D );
+	computeBlockError( modulation, in_BLOCK_RGB, palette );
+	uint32_t bitField = generateBitField( modulation );
 	
 	ETCBlockT_t block;
 	block.one = 1;
@@ -49,8 +55,8 @@ static void buildBlock( ETCBlockColor_t * out_block, const rgb4_t in_C0, const r
 
 
 
-static uint32_t uniformColor( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, uint8_t out_modulation[4][4], const rgb8_t in_BLOCK_RGB[4][4] ) {
-	rgb8_t col8, palette[4];
+static uint32_t uniformColor( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, const rgb8_t in_BLOCK_RGB[4][4] ) {
+	rgb8_t col8;
 	rgb4_t col4 = { 0, 0, 0 };
 	uint32_t error = 0;
 	uint32_t bestError = 0xFFFFFFFF;
@@ -85,10 +91,7 @@ earlyExit:
 	*out_c0 = bestC;
 	*out_c1 = bestC;
 	*out_d = bestT;
-	
-	convert444to888( &col8, bestC );
-	computeRGBColorPaletteT( palette, col8, col8, bestT );
-	return computeBlockError( out_modulation, in_BLOCK_RGB, palette );
+	return bestError * 16;
 }
 
 
@@ -197,7 +200,7 @@ static void computeBlockChroma( rgb8_t * out_c0, rgb8_t * out_c1, int * out_d, c
 
 
 
-static uint32_t quick( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, uint8_t out_modulation[4][4], const rgb8_t in_BLOCK_RGB[4][4] ) {
+static uint32_t quick( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, const rgb8_t in_BLOCK_RGB[4][4] ) {
 	rgb8_t col8[2], palette[4];
 	rgb4_t c0, c1;
 	int d;
@@ -209,17 +212,17 @@ static uint32_t quick( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, uint8_t ou
 	convert444to888( &col8[0], c0 );
 	convert444to888( &col8[1], c1 );
 	computeRGBColorPaletteT( &palette[0], col8[0], col8[1], d );
+	uint32_t error = computeBlockError( NULL, in_BLOCK_RGB, palette );
 	
 	*out_c0 = c0;
 	*out_c1 = c1;
 	*out_d = d;
-	
-	return computeBlockError( out_modulation, in_BLOCK_RGB, palette );
+	return error;
 }
 
 
 
-static uint32_t brute( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, uint8_t out_modulation[4][4], const rgb8_t in_BLOCK_RGB[4][4] ) {
+static uint32_t brute( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, const rgb8_t in_BLOCK_RGB[4][4] ) {
 	rgb8_t palette[4];
 	rgb8_t center;
 	rgb8_t col8[2];
@@ -281,11 +284,7 @@ earlyExit:
 	*out_c0 = bestC0;
 	*out_c1 = bestC1;
 	*out_d = bestD;
-	
-	convert444to888( &col8[0], bestC0 );
-	convert444to888( &col8[1], bestC1 );
-	computeRGBColorPaletteT( &palette[0], col8[0], col8[1], bestD );
-	return computeBlockError( out_modulation, in_BLOCK_RGB, palette );
+	return bestError;
 }
 
 
@@ -297,24 +296,23 @@ earlyExit:
 uint32_t compressT( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4], const Strategy_t in_STRATEGY ) {
 	rgb4_t c0, c1;
 	int d;
-	uint8_t modulation[4][4];
 	uint32_t blockError = 0xFFFFFFFF;
 	
 	if ( isUniformColorBlock( in_BLOCK_RGB ) ) {
-		blockError = uniformColor( &c0, &c1, &d, modulation, in_BLOCK_RGB );
+		blockError = uniformColor( &c0, &c1, &d, in_BLOCK_RGB );
 	} else {
 		switch ( in_STRATEGY ) {
 			case kFAST:
-				blockError = quick( &c0, &c1, &d, modulation, in_BLOCK_RGB );
+				blockError = quick( &c0, &c1, &d, in_BLOCK_RGB );
 				break;
 				
 			case kBEST:
-				blockError = brute( &c0, &c1, &d, modulation, in_BLOCK_RGB );
+				blockError = brute( &c0, &c1, &d, in_BLOCK_RGB );
 				break;
 		}
 	}
 	
-	buildBlock( out_block, c0, c1, d, (const uint8_t(*)[4])modulation );
+	buildBlock( out_block, c0, c1, d, in_BLOCK_RGB );
 	return blockError;
 }
 
@@ -350,7 +348,7 @@ void computeUniformColorLUTT() {
 	}
 	
 	// fill the gaps with the nearest color
-	_fillUniformColorLUTGaps( ETC_UNIFORM_COLOR_LUT_T );
+	fillUniformColorPaletteLUTGaps( ETC_UNIFORM_COLOR_LUT_T );
 }
 
 

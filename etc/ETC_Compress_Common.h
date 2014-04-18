@@ -26,7 +26,8 @@ typedef struct {
 void changeCounter( const int32_t in_INC );
 void printCounter( void );
 
-void _fillUniformColorLUTGaps( ETCUniformColorComposition_t in_out_lut[8][4][256] );
+void fillUniformColorLUTGaps( ETCUniformColorComposition_t in_out_lut[256] );
+void fillUniformColorPaletteLUTGaps( ETCUniformColorComposition_t in_out_lut[8][4][256] );
 
 uint32_t computeSubBlockError( uint8_t out_modulation[2][4], const rgb8_t in_SUB_BLOCK_RGB[2][4], const rgb8_t in_PALETTE[4] );
 uint32_t computeBlockError( uint8_t out_modulation[4][4], const rgb8_t in_BLOCK_RGB[4][4], const rgb8_t in_PALETTE[4] );
