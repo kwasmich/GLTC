@@ -15,12 +15,12 @@
 
 
 
-static void computeAlphaPalette( uint8_t out_alphaPalette[8], const uint8_t in_BASE, const uint8_t in_TABLE, const uint8_t in_MUL ) {
+void computeAlphaPalette( uint8_t out_alphaPalette[ETC_ALPHA_PALETTE_SIZE], const uint8_t in_BASE, const int in_TABLE, const int in_MUL ) {
 	const int *LUT = ETC_ALPHA_MODIFIER_TABLE[in_TABLE];
 	//assert( in_MUL > 0 ); // An encoder is not allowed to produce a multiplier of zero, but the decoder should still be able to handle also this case (and produce 0× modifier = 0 in that case).
 	// etcpack violates this
 	
-	for ( int p = 0; p < 8; p++ ) {
+	for ( int p = 0; p < ETC_ALPHA_PALETTE_SIZE; p++ ) {
 		out_alphaPalette[p] = clampi( in_BASE + LUT[p] * in_MUL, 0, 255 );
 	}
 }

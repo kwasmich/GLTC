@@ -90,7 +90,7 @@ void fillUniformColorPaletteLUTGaps( ETCUniformColorComposition_t in_out_lut[8][
 
 
 
-// computes the error for a 4x2 sub-block
+// computes the error for a 4x2 RGB sub-block
 uint32_t computeSubBlockError( uint8_t out_modulation[2][4], const rgb8_t in_SUB_BLOCK_RGB[2][4], const rgb8_t in_PALETTE[4] ) {
 	uint32_t subBlockError = 0;
 	uint32_t pixelError = 0;
@@ -129,7 +129,7 @@ uint32_t computeSubBlockError( uint8_t out_modulation[2][4], const rgb8_t in_SUB
 
 
 
-// computes the error for a 4x4 block
+// computes the error for a 4x4 RGB block
 uint32_t computeBlockError( uint8_t out_modulation[4][4], const rgb8_t in_BLOCK_RGB[4][4], const rgb8_t in_PALETTE[4] ) {
 	uint32_t blockError = 0;
 	uint32_t pixelError = 0;
@@ -168,7 +168,7 @@ uint32_t computeBlockError( uint8_t out_modulation[4][4], const rgb8_t in_BLOCK_
 
 
 
-// computes the error for a 4x4 block in planar mode
+// computes the error for a 4x4 RGB block in planar mode
 uint32_t computeBlockErrorP( const rgb8_t in_C0, const rgb8_t in_CH, const rgb8_t in_CV, const rgb8_t in_BLOCK_RGB[4][4] ) {
 	uint32_t blockError = 0;
 	int32_t dR, dG, dB;
@@ -184,6 +184,43 @@ uint32_t computeBlockErrorP( const rgb8_t in_C0, const rgb8_t in_CH, const rgb8_
 			dG = pixel.g - col8.g;
 			dB = pixel.b - col8.b;
 			blockError += dR * dR + dG * dG + dB * dB;
+		}
+	}
+	
+	g_counter += 2;
+	return blockError;
+}
+
+
+
+// computes the error for a 4x4 block
+uint32_t computeAlphaBlockError( uint8_t out_modulation[4][4], const uint8_t in_BLOCK_A[4][4], const uint8_t in_PALETTE[ETC_ALPHA_PALETTE_SIZE] ) {
+	uint32_t blockError = 0;
+	uint32_t pixelError = 0;
+	uint32_t lowestPixelError = 0;
+	int32_t dA;
+	
+	for ( int by = 0; by < 4; by++ ) {
+		for ( int bx = 0; bx < 4; bx++ ) {
+			uint8_t pixel = in_BLOCK_A[by][bx];
+			lowestPixelError = 0xFFFFFFFF;
+			
+			for ( int p = 0; p < 4; p++ ) {
+				dA = pixel - in_PALETTE[p];
+				pixelError = dA * dA;
+				
+				if ( pixelError < lowestPixelError ) {
+					lowestPixelError = pixelError;
+					
+					if ( out_modulation )
+						out_modulation[by][bx] = p;
+					
+					if ( lowestPixelError == 0 )
+						break;
+				}
+			}
+			
+			blockError += lowestPixelError;
 		}
 	}
 	
@@ -217,6 +254,22 @@ uint32_t generateBitField( const uint8_t in_MODULATION[4][4] ) {
 	
 	return bitField;
 }
+
+
+
+uint64_t generateAlphaBitField( const uint8_t in_MODULATION[4][4] ) {
+	uint64_t bitField = 0x0;
+	
+	for ( int bx = 0; bx < 4; bx++ ) {
+		for ( int by = 0; by < 4; by++ ) {
+			bitField <<= 3;
+			bitField |= ( in_MODULATION[by][bx] bitand 0x7 );
+		}
+	}
+	
+	return bitField;
+}
+
 
 
 void computeSubBlockMinMax( rgb8_t * out_min, rgb8_t * out_max, const rgb8_t in_SUB_BLOCK_RGB[2][4] ) {
@@ -323,6 +376,34 @@ void computeSubBlockWidth( int * out_t, const rgb8_t in_SUB_BLOCK_RGB[2][4] ) {
 
 
 
+void computeAlphaBlockWidth( int * out_t, int * out_mul, const uint8_t in_BLOCK_A[4][4] ) {
+	uint8_t aMin, aMax;
+	int width;
+	int mul = 1;
+    computeAlphaBlockMinMax( &aMin, &aMax, in_BLOCK_A );
+	width = aMax - aMin;
+	
+	// this is a reduced set of the tables with more or less equal distributions
+	const int spans[8] = {  6, 12, 18, 20, 22, 24, 26, 30 }; // widths of the corresponding alpha table
+	const int table[8] = { 13,  3, 15,  9,  7,  4,  1,  0 };
+	
+	while ( width / mul > 33 ) {
+		mul++;
+	}
+	
+	int t0 = 0;
+	
+	for ( int i = 0; i < 8; i++ ) {
+		if ( width < spans[i] )
+			t0 = i;
+	}
+	
+	*out_t = table[t0];
+	*out_mul = mul;
+}
+
+
+
 void computeBlockMinMax( rgb8_t * out_min, rgb8_t * out_max, const rgb8_t in_BLOCK_RGB[4][4] ) {
     rgb8_t pixel;
 	rgb8_t cMin = {{ 255, 255, 255 }};
@@ -348,6 +429,26 @@ void computeBlockMinMax( rgb8_t * out_min, rgb8_t * out_max, const rgb8_t in_BLO
 
 
 
+void computeAlphaBlockMinMax( uint8_t * out_min, uint8_t * out_max, const uint8_t in_BLOCK_A[4][4] ) {
+    uint8_t pixel;
+	uint8_t aMin = 255;
+	uint8_t aMax = 0;
+	
+	for ( int by = 0; by < 4; by++ ) {
+		for ( int bx = 0; bx < 4; bx++ ) {
+			pixel = in_BLOCK_A[by][bx];
+			
+			aMin = ( pixel < aMin ) ? pixel : aMin;
+			aMax = ( pixel > aMax ) ? pixel : aMax;
+		}
+	}
+    
+    *out_min = aMin;
+    *out_max = aMax;
+}
+
+
+
 void computeBlockCenter( rgb8_t * out_center, const rgb8_t in_BLOCK_RGB[4][4] ) {
 	rgb8_t cMin = {{ 255, 255, 255 }};
 	rgb8_t cMax = {{ 0, 0, 0 }};
@@ -355,6 +456,15 @@ void computeBlockCenter( rgb8_t * out_center, const rgb8_t in_BLOCK_RGB[4][4] ) 
 	out_center->r = ( cMin.r + cMax.r + 1 ) >> 1;
 	out_center->g = ( cMin.g + cMax.g + 1 ) >> 1;
 	out_center->b = ( cMin.b + cMax.b + 1 ) >> 1;
+}
+
+
+
+void computeAlphaBlockCenter( uint8_t * out_center, const uint8_t in_BLOCK_A[4][4] ) {
+	uint8_t aMin = 255;
+	uint8_t aMax = 0;
+	computeAlphaBlockMinMax( &aMin, &aMax, in_BLOCK_A );
+	*out_center = ( aMin + aMax + 1 ) >> 1;
 }
 
 
@@ -541,7 +651,7 @@ void computeBlockChromas( rgb8_t out_c0[8], rgb8_t out_c1[8], const rgb8_t in_BL
 
 
 
-void computeBlockChromas2( rgb8_t * out_c0, rgb8_t * out_c1, const rgb8_t in_BLOCK_RGB[4][4] ) {
+static void computeBlockChromas2( rgb8_t * out_c0, rgb8_t * out_c1, const rgb8_t in_BLOCK_RGB[4][4] ) {
 	float blocks[4][4][3];
 	float cf0[3], cf1[3];
 	float dX, dY, dZ, dist, maxDist = -MAXFLOAT;
@@ -919,16 +1029,24 @@ void computeMinMaxAvgCenterMedian( rgb8_t * out_min, rgb8_t * out_max, rgb8_t ou
 
 
 bool isUniformColorBlock( const rgb8_t in_BLOCK_RGB[4][4] ) {
-    rgb8_t cMin8, cMax8;
-    computeBlockMinMax( &cMin8, &cMax8, in_BLOCK_RGB );
-    return ( ( cMin8.r == cMax8.r ) and ( cMin8.g == cMax8.g ) and ( cMin8.b == cMax8.b ) );
+    rgb8_t cMin, cMax;
+    computeBlockMinMax( &cMin, &cMax, in_BLOCK_RGB );
+    return ( ( cMin.r == cMax.r ) and ( cMin.g == cMax.g ) and ( cMin.b == cMax.b ) );
+}
+
+
+
+bool isUniformAlphaBlock( const uint8_t in_BLOCK_A[4][4] ) {
+    uint8_t aMin, aMax;
+    computeAlphaBlockMinMax( &aMin, &aMax, in_BLOCK_A );
+    return ( aMin == aMax );
 }
 
 
 
 bool isUniformColorSubBlock( const rgb8_t in_SUB_BLOCK_RGB[2][4] ) {
-    rgb8_t cMin8, cMax8;
-    computeSubBlockMinMax( &cMin8, &cMax8, in_SUB_BLOCK_RGB );
-    return ( ( cMin8.r == cMax8.r ) and ( cMin8.g == cMax8.g ) and ( cMin8.b == cMax8.b ) );
+    rgb8_t cMin, cMax;
+    computeSubBlockMinMax( &cMin, &cMax, in_SUB_BLOCK_RGB );
+    return ( ( cMin.r == cMax.r ) and ( cMin.g == cMax.g ) and ( cMin.b == cMax.b ) );
 }
 

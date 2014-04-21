@@ -15,6 +15,7 @@
 #include "ETC_Compress_T.h"
 #include "ETC_Compress_H.h"
 #include "ETC_Compress_P.h"
+#include "ETC_Compress_Alpha.h"
 #include "ETC_Decompress.h"
 
 #include "../lib.h"
@@ -51,7 +52,8 @@ static void compressETCBlockRGB( ETCBlockColor_t * out_block, const rgb8_t in_BL
 
 #pragma mark - exposed interface
 
-
+// TODO: The H-Mode is state of the art. make all other modes comply with it
+// TODO: the H-Mode and T-Mode have much code in common. reduce it!
 
 void compressETC1BlockRGB( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4], const Strategy_t in_STRATEGY ) {
     uint32_t (*compressionMode[])( ETCBlockColor_t *, const rgb8_t[4][4], const Strategy_t) = {
@@ -74,6 +76,25 @@ void compressETC2BlockRGB( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RG
     };
     const int compressionModeCount = sizeof( compressionMode ) / sizeof( void * );
     compressETCBlockRGB( out_block, in_BLOCK_RGB, in_STRATEGY, compressionMode, compressionModeCount );
+}
+
+
+
+void compressETC2BlockRGBA( ETC2BlockRGBA_t * out_block, const rgba8_t in_BLOCK_RGBA[4][4], const Strategy_t in_STRATEGY ) {
+	rgb8_t blockRGB[4][4];
+	uint8_t blockA[4][4];
+	
+	for ( int by = 0; by < 4; by++ ) {
+		for ( int bx = 0; bx < 4; bx++ ) {
+			blockRGB[by][bx].r = in_BLOCK_RGBA[by][bx].r;
+			blockRGB[by][bx].g = in_BLOCK_RGBA[by][bx].g;
+			blockRGB[by][bx].b = in_BLOCK_RGBA[by][bx].b;
+			blockA[by][bx]     = in_BLOCK_RGBA[by][bx].a;
+		}
+	}
+	
+	compressETC2BlockRGB( &out_block->color, blockRGB, in_STRATEGY );
+	compressAlpha( &out_block->alpha, blockA, in_STRATEGY );
 }
 
 
