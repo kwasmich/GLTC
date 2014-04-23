@@ -205,7 +205,7 @@ uint32_t computeAlphaBlockError( uint8_t out_modulation[4][4], const uint8_t in_
 			uint8_t pixel = in_BLOCK_A[by][bx];
 			lowestPixelError = 0xFFFFFFFF;
 			
-			for ( int p = 0; p < 4; p++ ) {
+			for ( int p = 0; p < ETC_ALPHA_PALETTE_SIZE; p++ ) {
 				dA = pixel - in_PALETTE[p];
 				pixelError = dA * dA;
 				
@@ -393,8 +393,8 @@ void computeAlphaBlockWidth( int * out_t, int * out_mul, const uint8_t in_BLOCK_
 	
 	int t0 = 0;
 	
-	for ( int i = 0; i < 8; i++ ) {
-		if ( width < spans[i] )
+	for ( int i = 7; i >= 0; i-- ) {
+		if ( width < spans[i] * mul )
 			t0 = i;
 	}
 	

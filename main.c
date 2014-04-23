@@ -468,6 +468,36 @@ int main( int argc, char * argv[] ) {
                 pngFree( (uint8_t **)&imageData );
             }
                 break;
+				
+			case kRGB_ETC2:
+			{
+                rgb8_t * imageData;
+                pngRead( optFArg, false, (uint8_t **)&imageData, (uint32_t *)&w, (uint32_t *)&h, &c );
+                assert( c == 3 );
+				etcWriteETC2RGB( optOArg, imageData, w, h, optStrategy );
+                pngFree( (uint8_t **)&imageData );
+            }
+                break;
+				
+			case kRGBA_ETC2:
+			{
+                rgba8_t * imageData;
+                pngRead( optFArg, false, (uint8_t **)&imageData, (uint32_t *)&w, (uint32_t *)&h, &c );
+                assert( c == 4 );
+				etcWriteETC2RGBA( optOArg, imageData, w, h, optStrategy );
+                pngFree( (uint8_t **)&imageData );
+            }
+                break;
+				
+//			case kRGBA_ETC2_PUNCH_THROUGH:
+//			{
+//                rgba8_t * imageData;
+//                pngRead( optFArg, false, (uint8_t **)&imageData, (uint32_t *)&w, (uint32_t *)&h, &c );
+//                assert( c == 4 );
+//				etcWriteETC2RGBAPunchThrough( optOArg, imageData, w, h, optStrategy );
+//                pngFree( (uint8_t **)&imageData );
+//            }
+//				break;
                 
             case kRGBA_PVR4BPP:
             {
@@ -478,9 +508,7 @@ int main( int argc, char * argv[] ) {
                 pngFree( (uint8_t **)&imageData );
             }
                 break;
-				
-			case kRGB_ETC2:
-			case kRGBA_ETC2:
+			
 			case kRGBA_ETC2_PUNCH_THROUGH:
             case kRGBA_PVR2BPP:
             case kINVALID:

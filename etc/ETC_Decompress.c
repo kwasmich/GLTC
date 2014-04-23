@@ -478,7 +478,7 @@ void decompressETC2BlockRGBA( rgba8_t out_blockRGBA[4][4], const ETC2BlockRGBA_t
 void decompressETC2BlockRGBAPunchThrough( rgba8_t out_blockRGBA[4][4], const ETCBlockColor_t in_BLOCK ) {
 	ETCMode_t mode = etcGetBlockMode( in_BLOCK, true );
 	rgba8_t palette[8];
-	rgb8_t palette2[4];
+	rgb8_t palette2[3];
 	rgba8_t col = {{ 0, 0, 0, 255 }};
 	int paletteIndex, paletteShift;
 	uint32_t bitField = in_BLOCK.cBitField;
@@ -522,9 +522,9 @@ void decompressETC2BlockRGBAPunchThrough( rgba8_t out_blockRGBA[4][4], const ETC
 			
 			for ( int by = 0; by < 4; by++ ) {
 				for ( int bx = 0; bx < 4; bx++ ) {
-					col.r = computePlaneColor( bx, by, palette[0].r, palette[1].r, palette[2].r );
-					col.g = computePlaneColor( bx, by, palette[0].g, palette[1].g, palette[2].g );
-					col.b = computePlaneColor( bx, by, palette[0].b, palette[1].b, palette[2].b );
+					col.r = computePlaneColor( bx, by, palette2[0].r, palette2[1].r, palette2[2].r );
+					col.g = computePlaneColor( bx, by, palette2[0].g, palette2[1].g, palette2[2].g );
+					col.b = computePlaneColor( bx, by, palette2[0].b, palette2[1].b, palette2[2].b );
 					out_blockRGBA[by][bx] = col;
 				}
 			}
@@ -533,7 +533,6 @@ void decompressETC2BlockRGBAPunchThrough( rgba8_t out_blockRGBA[4][4], const ETC
 			
 		case kETC_I:
 		case kETC_INVALID:
-		default:
 			assert( false );
 	}
 }
