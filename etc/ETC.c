@@ -305,7 +305,6 @@ bool etcWriteETC2RGBA( const char in_FILE[], const rgba8_t * in_IMAGE, const uin
 		ETCBlockColor_t *color = &(blockPtr->color);
 		switchEndianness( REINTERPRET(endian64*)alpha );
 		switchEndianness( REINTERPRET(endian64*)color );
-		color->b64 = 0;
         blockPtr++;
         imageRGBA_ptr++;
     }

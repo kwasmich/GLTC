@@ -375,30 +375,25 @@ void computeSubBlockWidth( int * out_t, const rgb8_t in_SUB_BLOCK_RGB[2][4] ) {
 }
 
 
-
+//#error 0 and 255 needs to be represented exactly!!!
 void computeAlphaBlockWidth( int * out_t, int * out_mul, const uint8_t in_BLOCK_A[4][4] ) {
 	uint8_t aMin, aMax;
-	int width;
-	int mul = 1;
     computeAlphaBlockMinMax( &aMin, &aMax, in_BLOCK_A );
-	width = aMax - aMin;
-	
-	// this is a reduced set of the tables with more or less equal distributions
-	const int spans[8] = {  6, 12, 18, 20, 22, 24, 26, 30 }; // widths of the corresponding alpha table
+	int center = ( aMin + aMax + 1 ) >> 1;
+	int mul, t;
 	const int table[8] = { 13,  3, 15,  9,  7,  4,  1,  0 };
 	
-	while ( width / mul > 33 ) {
-		mul++;
+	for ( mul = 1; mul < 16; mul++ ) {
+		for ( t = 0; t < 8; t++ ) {
+			if ( ( aMin >= center + ETC_ALPHA_MODIFIER_TABLE[table[t]][3] * mul ) and ( aMax <= center + ETC_ALPHA_MODIFIER_TABLE[table[t]][7] * mul ) )
+				goto exit;
+			
+		}
 	}
 	
-	int t0 = 0;
+exit:
 	
-	for ( int i = 7; i >= 0; i-- ) {
-		if ( width < spans[i] * mul )
-			t0 = i;
-	}
-	
-	*out_t = table[t0];
+	*out_t = table[t];
 	*out_mul = mul;
 }
 
