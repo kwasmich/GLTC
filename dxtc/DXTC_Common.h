@@ -10,7 +10,7 @@
 #ifndef GLTC_DXTC_Common_h
 #define GLTC_DXTC_Common_h
 
-#include "colorSpaceReduction.h"
+#include "../colorSpaceReduction.h"
 
 #include <stdbool.h>
 #include <stdlib.h>

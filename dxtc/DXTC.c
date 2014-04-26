@@ -12,8 +12,7 @@
 #include "DXTC_Common.h"
 #include "DXTC_CompressAlpha.h"
 #include "DXTC_Decompress.h"
-#include "lib.h"
-#include "PNG.h"
+#include "../lib.h"
 
 #include <assert.h>
 #include <math.h>

@@ -10,7 +10,7 @@
 #ifndef GLTC_PVRTC_h
 #define GLTC_PVRTC_h
 
-#include "colorSpaceReduction.h"
+#include "../colorSpaceReduction.h"
 
 #include <stdbool.h>
 

@@ -10,7 +10,6 @@
 #ifndef GLTC_DXTC_Read_h
 #define GLTC_DXTC_Read_h
 
-#include "colorSpaceReduction.h"
 #include "DXTC_Common.h"
 
 #pragma mark - pallette decompression

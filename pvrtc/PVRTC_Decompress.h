@@ -10,7 +10,7 @@
 #ifndef GLTC_PVRTC_Decompress_h
 #define GLTC_PVRTC_Decompress_h
 
-#include "colorSpaceReduction.h"
+#include "../colorSpaceReduction.h"
 #include "PVRTC_Common.h"
 
 void decodeBaseColorA( rgba8_t * out_RGBA, const uint16_t in_COLOR_A );

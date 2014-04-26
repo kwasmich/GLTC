@@ -10,7 +10,7 @@
 #include "DXTC_CompressAlpha.h"
 
 #include "DXTC_Decompress.h"
-#include "lib.h"
+#include "../lib.h"
 
 #include <iso646.h>
 #include <string.h>

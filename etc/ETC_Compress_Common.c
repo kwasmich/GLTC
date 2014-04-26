@@ -646,7 +646,7 @@ void computeBlockChromas( rgb8_t out_c0[8], rgb8_t out_c1[8], const rgb8_t in_BL
 
 
 
-static void computeBlockChromas2( rgb8_t * out_c0, rgb8_t * out_c1, const rgb8_t in_BLOCK_RGB[4][4] ) {
+static void _computeBlockChromas2( rgb8_t * out_c0, rgb8_t * out_c1, const rgb8_t in_BLOCK_RGB[4][4] ) {
 	float blocks[4][4][3];
 	float cf0[3], cf1[3];
 	float dX, dY, dZ, dist, maxDist = -MAXFLOAT;

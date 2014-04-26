@@ -9,9 +9,9 @@
 
 #include "PNG.h"
 #include "colorSpaceReduction.h"
-#include "DXTC.h"
-#include "ETC.h"
-#include "PVRTC.h"
+#include "dxtc/DXTC.h"
+#include "etc/ETC.h"
+#include "pvrtc/PVRTC.h"
 #include "lib.h"
 
 
@@ -28,132 +28,8 @@
 
 
 
-/*
-// set FLIP_Y of read_png to TRUE to use image output in OpenGL
-void testColorSpaceReduction() {
-    fillLUT();
-    prepareBayer();
-    
-    rgb565_t color565 = { 0, 0, 0 };
-    rgba4444_t color4444 = { 0, 0, 0, 0 };
-    rgba5551_t color5551 = { 0, 0, 0, 0 };
-    rgb8_t * imageRGB8 = NULL;
-    rgb8_t * imageRGB8Ptr = NULL;
-    rgba8_t * imageRGBA8 = NULL;
-    rgba8_t * imageRGBA8Ptr = NULL;
-    rgb565_t * imageRGB565 = NULL;
-    rgb565_t * imageRGB565Ptr = NULL;
-    rgba4444_t * imageRGBA4444 = NULL;
-    rgba4444_t * imageRGBA4444Ptr = NULL;
-    rgba5551_t * imageRGBA5551 = NULL;
-    rgba5551_t * imageRGBA5551Ptr = NULL;
-	unsigned long w = 0;
-	unsigned long h = 0;
-	int c = 0;
-    FILE * outputFileStream = NULL;
-    
-    
-    pngRead( "PNG512A.png", false, (png_byte **)&imageRGBA8, &w, &h, &c );
-    imageRGBA8Ptr = imageRGBA8;
-    imageRGBA4444 = malloc( w * h * sizeof( rgba4444_t ) );
-    imageRGBA4444Ptr = imageRGBA4444;
-    
-    for ( int y = 0; y < h; y++ ) {
-        for ( int x = 0; x < w; x++ ) {
-            ditherRGBA( imageRGBA8Ptr, kRGBA4444, x, y );
-            convert8888to4444( &color4444, *imageRGBA8Ptr );
-            convert4444to8888( imageRGBA8Ptr, color4444 );
-            *imageRGBA4444Ptr = color4444;
-            imageRGBA8Ptr++;
-            imageRGBA4444Ptr++;
-        }
-    }
-    
-    pngWrite( "PNG512A.4444.png", (png_byte *)imageRGBA8, w, h, c );
-	free( imageRGBA8 );
-	imageRGBA8 = NULL;
-    imageRGBA8Ptr = NULL;
-    
-    outputFileStream = fopen( "PNG512A.4444", "wb" );
-    fwrite( imageRGBA4444, sizeof( rgba4444_t ), w * h, outputFileStream );
-    fclose( outputFileStream );
-    outputFileStream = NULL;
-    free( imageRGBA4444 );
-    imageRGBA4444 = NULL;
-    imageRGBA4444Ptr = NULL;
-    
-    
-    
-    pngRead( "PNG512A.png", false, (png_byte **)&imageRGBA8, &w, &h, &c );
-    imageRGBA8Ptr = imageRGBA8;
-    imageRGBA5551 = malloc( w * h * sizeof( rgba5551_t ) );
-    imageRGBA5551Ptr = imageRGBA5551;
-    
-    for ( int y = 0; y < h; y++ ) {
-        for ( int x = 0; x < w; x++ ) {
-            ditherRGBA( imageRGBA8Ptr, kRGBA5551A, x, y );
-            convert8888to5551( &color5551, *imageRGBA8Ptr );
-            convert5551to8888( imageRGBA8Ptr, color5551 );
-            *imageRGBA5551Ptr = color5551;
-            imageRGBA8Ptr++;
-            imageRGBA5551Ptr++;
-        }
-    }
-    
-    pngWrite( "PNG512A.5551.png", (png_byte *)imageRGBA8, w, h, c );
-	free( imageRGBA8 );
-	imageRGBA8 = NULL;
-    imageRGBA8Ptr = NULL;
-    
-    outputFileStream = fopen( "PNG512A.5551", "wb" );
-    fwrite( imageRGBA5551, sizeof( rgba5551_t ), w * h, outputFileStream );
-    fclose( outputFileStream );
-    outputFileStream = NULL;
-    free( imageRGBA5551 );
-    imageRGBA5551 = NULL;
-    imageRGBA5551Ptr = NULL;
-    
-    
-    
-    pngRead( "PNG512.png", false, (png_byte **)&imageRGB8, &w, &h, &c );
-    imageRGB8Ptr = imageRGB8;
-    imageRGB565 = malloc( w * h * sizeof( rgb565_t ) );
-    imageRGB565Ptr = imageRGB565;
-    
-    for ( int y = 0; y < h; y++ ) {
-        for ( int x = 0; x < w; x++ ) {
-            ditherRGB( imageRGB8Ptr, kRGB565, x, y );
-            convert888to565( &color565, *imageRGB8Ptr );
-            convert565to888( imageRGB8Ptr, color565 );
-            *imageRGB565Ptr = color565;
-            imageRGB8Ptr++;
-            imageRGB565Ptr++;
-        }
-    }
-    
-    pngWrite( "PNG512.565.png", (png_byte *)imageRGB8, w, h, c );
-	free( imageRGB8 );
-	imageRGB8 = NULL;
-    imageRGB8Ptr = NULL;
-    
-    outputFileStream = fopen( "PNG512.565", "wb" );
-    fwrite( imageRGB565, sizeof( rgb565_t ), w * h, outputFileStream );
-    fclose( outputFileStream );
-    outputFileStream = NULL;
-    free( imageRGB565 );
-    imageRGB565 = NULL;
-    imageRGB565Ptr = NULL;
-}
-*/
-
-static void usage( const char in_EXEC[] ) {
-    printf( "Usage:\n" );
-    printf( "%s\n -qwertz\n", in_EXEC );
-    exit( EXIT_FAILURE );
-}
-
 typedef enum {
-    //kRGB565, kRGBA4444, kRGBA5551, 
+    //kRGB565, kRGBA4444, kRGBA5551,
     kRGB_DXT1,
 	kRGBA_DXT1,
 	kRGBA_DXT3,
@@ -167,97 +43,62 @@ typedef enum {
 	kINVALID
 } tcType_t;
 
-/*
-static int main1( int argc, char * argv[] ) {
-    uint32_t w = 0;
-    uint32_t h = 0;
-    uint32_t c = 0;
-    rgba8_t * a = NULL;
-    rgba8_t * b = NULL;
-    rgb8_t * ab = NULL;
-    uint8_t * m = NULL;
-    
-    pngRead( "/Users/kwasmich/Desktop/Test/GLTC/_A.png", false, (uint8_t **)&a, (uint32_t *)&w, (uint32_t *)&h, &c );
-    assert( c == 4 );
-    pngRead( "/Users/kwasmich/Desktop/Test/GLTC/_B.png", false, (uint8_t **)&b, (uint32_t *)&w, (uint32_t *)&h, &c );
-    assert( c == 4 );
-    pngRead( "/Users/kwasmich/Desktop/Test/TextureTool/TestRGB256.pvrtc2.ref.png", false, (uint8_t **)&ab, (uint32_t *)&w, (uint32_t *)&h, &c );
-    assert( c == 3 );
-    m = malloc( w * h * sizeof(uint8_t) );
-    
-    for ( int xy = 0; xy < w * h; xy++ ) {
-        uint32_t bestError = 0xFFFFFFFF;
-        uint8_t bestM = 0;
-//#warning sdf
-//#error        finde m/8, sodass    m * a + (1 - m) * b = ab
-        
-        for ( int m = 0; m <= 8; m++ ) {
-            uint32_t error = 0;
-            
-            for ( int i = 0; i < 3; i++ ) {
-                int tmp = ( a[xy].array[i] * m + b[xy].array[i] * ( 8 - m ) ) >> 3;
-                int tmp2 = ab[xy].array[i] - tmp;
-                error += tmp2 * tmp2;
-            }
-            
-            if ( error < bestError ) {
-                bestError = error;
-                bestM = m;
-            }
-        }
-        
-        printf( "%i (%i)\n", bestM, bestError );
-        
-        m[xy] = bestM * 31;
-    }
-    
-    pngWrite( "/Users/kwasmich/Desktop/Test/GLTC/_M.ref.png", m, w, h, 1 );
-    
-    return 0;
+
+
+static void usage( const char in_EXEC[], const char in_FALLACY[] ) {
+	puts( in_FALLACY );
+    printf("\nUsage:\n"
+		   "%s -cd <mode> -0123456789h? -f <input_image> [-o <output_image>]\n"
+		   "\n"
+		   "the following options are available:\n"
+		   "-c <mode>\n"
+		   "       Compress the input image and store the compressed result in output image.\n"
+		   "       This option is mutual exclusive with -d.\n"
+		   "\n"
+		   "-d <mode>\n"
+		   "       Decompress a previously compressed input image and store the uncompressed result in output image.\n"
+		   "       This option is mutual exclusive with -c.\n"
+		   "\n"
+		   "-0, -1, -2, -3, -4, -5, -6, -7, -8, -9\n"
+		   "       When compressing an image these options tell the compressor how exhaustive the search for the best image quality should be.\n"
+		   "       -0 is the fastest possible compression and -9 provides least the same quality as a brute force search.\n"
+		   "\n"
+		   "-h, -?\n"
+		   "       Prints this help.\n"
+		   "\n"
+		   "-f <input_image>\n"
+		   "       The image to be processed.\n"
+		   "\n"
+		   "-o <output_image>\n"
+		   "       Path where the output image will be stored. If not specified the output will be stored in /dev/null.\n"
+		   "\n"
+		   "List of valid values for <mode>:\n"
+		   "\n"
+		   "   ETC1\n"
+		   "   ETC2RGB\n"
+		   "   ETC2RGBA\n"
+		   "   ETC2RGBAPUNCH\n"
+		   "   DXT1RGB\n"
+		   "   DXT1RGBA\n"
+		   "   DXT3\n"
+		   "   DXT5\n"
+		   "   PVR2BPP\n"
+		   "   PVR4BPP\n"
+		   "   \n"
+		   "List of    supported file formats:\n"
+		   "   \n"
+		   "   KTX\n"
+		   "   PNG\n"
+		   "\n", in_EXEC );
+    exit( EXIT_FAILURE );
 }
 
-static int main2( int argc, char * argv[] ) {
-	int w = 4096 * 4;
-	int h = 4096 * 4;
-	int c = 3;
-	rgb8_t * imageData = malloc( w * h * sizeof(rgb8_t) );
-	
-	for ( int b = 0; b < 256; b++ ) {
-		for ( int g = 0; g < 256; g++ ) {
-			for ( int r = 0; r < 256; r++ ) {
-				int x = r + ( b % 16 ) * 256;
-				int y = g + ( b / 16 ) * 256;
-				int pos = x + y * 4096;
-				
-				for ( int dy = 0; dy < 4; dy++ ) {
-					for ( int dx = 0; dx < 4; dx++ ) {
-						int newPos = x * 4 + dx + ( y * 4 + dy ) * 4 * 4096;
-						imageData[newPos].r = r;
-						imageData[newPos].g = g;
-						imageData[newPos].b = b;
-					}
-				}
-			}
-		}
-	}
-	
-	pngWrite( "trueColor4.png", REINTERPRET(uint8_t *)imageData, w, h, c );
-	
-	return 0;
-}
-*/
 
 
 int main( int argc, char * argv[] ) {
     printf( "use KTX as container format! - visit http://www.khronos.org/opengles/sdk/tools/KTX/\n" );
     fillLUT();
 	
-	
-//	for ( int i = 1; i < 512; i++ ) {
-//		printf( "%i\n", (i >> 1) * ( (i bitand 0x1) ? -1 : 1 ) );
-//	}
-//	
-//	return EXIT_SUCCESS;
 	
 	if ( false ) {
 		uint32_t w = 0;
@@ -360,31 +201,18 @@ int main( int argc, char * argv[] ) {
 			case 'h':
 			case '?':
 			default:
-				usage( execName );
+				usage( execName, "" );
 		}
 	}
 	
     argc -= optind;
 	argv += optind;
 
-    printf( "c: %i \"%s\"\n", optC, optCDArg );
-    printf( "d: %i \"%s\"\n", optD, optCDArg );
-    printf( "-%i\n", optStrategy );
-    printf( "f: %i \"%s\" -> \"%s\"\n", optF, optFArg, expandTilde( optFArg ) );
-    printf( "o: %i \"%s\" -> \"%s\"\n", optO, optOArg, expandTilde( optOArg ) );
-	
-	optFArg = expandTilde( optFArg );
-	optOArg = expandTilde( optOArg );
-	
-    for ( int i = 0; i < argc; i++ ) {
-        printf( "%i: \"%s\"\n", i, argv[i] );
-    }
-	
-    // either compress or decompress
+	// either compress or decompress
 	if ( not ( optC xor optD ) ) {
-		usage( execName );
+		usage( execName, "You must specify if you want to compress (-c) or decompress (-d)." );
 	}
-    
+	
     // determine type of compression
     tcType_t type = kINVALID;
     
@@ -399,12 +227,34 @@ int main( int argc, char * argv[] ) {
     type = ( strcmp( optCDArg, "PVR4BPP" ) == 0 ) ? kRGBA_PVR4BPP : type;
     type = ( strcmp( optCDArg, "PVR2BPP" ) == 0 ) ? kRGBA_PVR2BPP : type;
     
+	if ( type == kINVALID ) {
+		usage( execName, "Invalid argument provided for <mode>." );
+	}
+	
 	if ( not optF ) {
         if ( argc > 0 ) {
             optFArg = argv[0];
         } else {
-            usage( execName );
+            usage( execName, "Missing input image file" );
         }
+    }
+	
+	optFArg = expandTilde( optFArg );
+	
+	if ( not optO ) {
+		optOArg = "/dev/null";
+	}
+	
+	optOArg = expandTilde( optOArg );
+	
+	printf( "c: %i \"%s\"\n", optC, optCDArg );
+    printf( "d: %i \"%s\"\n", optD, optCDArg );
+    printf( "-%i\n", optStrategy );
+    printf( "f: %i \"%s\" -> \"%s\"\n", optF, optFArg, expandTilde( optFArg ) );
+    printf( "o: %i \"%s\" -> \"%s\"\n", optO, optOArg, expandTilde( optOArg ) );
+	
+    for ( int i = 0; i < argc; i++ ) {
+        printf( "%i: \"%s\"\n", i, argv[i] );
     }
 	
     // compress

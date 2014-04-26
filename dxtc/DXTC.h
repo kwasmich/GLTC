@@ -11,7 +11,7 @@
 #define GLTC_DXTC_h
 
 
-#include "colorSpaceReduction.h"
+#include "../colorSpaceReduction.h"
 
 #include <stdbool.h>
 
