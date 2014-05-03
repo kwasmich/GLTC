@@ -334,7 +334,6 @@ bool etcResumeWriteETC1RGB( const char in_FILE[], const rgb8_t * in_IMAGE, const
 	uint32_t w = in_WIDTH;
     uint32_t h = in_HEIGHT;
     uint32_t blockCount = 0;
-    size_t itemsRead = 0;
     ETCBlockColor_t * block = NULL;
     ETCBlockColor_t * blockPtr = NULL;
     rgb8_t blockRGB[4][4];
@@ -348,7 +347,7 @@ bool etcResumeWriteETC1RGB( const char in_FILE[], const rgb8_t * in_IMAGE, const
 	
 	if ( inputETCFileStream ) {
 		assert( inputETCFileStream != NULL );
-		itemsRead = fread( &w, sizeof( uint32_t ), 1, inputETCFileStream );
+		size_t itemsRead = fread( &w, sizeof( uint32_t ), 1, inputETCFileStream );
 		assert( itemsRead == 1 );
 		assert( w == in_WIDTH );
 		itemsRead = fread( &h, sizeof( uint32_t ), 1, inputETCFileStream );

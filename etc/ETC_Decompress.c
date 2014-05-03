@@ -66,13 +66,11 @@ void computeBaseColorsID( rgb8_t * out_c0, rgb8_t * out_c1, const ETCBlockColor_
 
 
 void computeRGBColorPaletteCommonID( rgb8_t out_colorPalette[4], const rgb8_t in_C, const int in_TABLE_INDEX, const int in_TABLE[8][4] ) {
-	rgb8_t col;
-	int luminance = 0;
 	const int *LUT = in_TABLE[in_TABLE_INDEX];
 	
 	for ( int i = 0; i < 4; i++ ) {
-		col = in_C;
-		luminance = LUT[i];
+		rgb8_t col = in_C;
+		int luminance = LUT[i];
 		col.r = clampi( col.r + luminance, 0, 255 );
 		col.g = clampi( col.g + luminance, 0, 255 );
 		col.b = clampi( col.b + luminance, 0, 255 );
@@ -84,7 +82,6 @@ void computeRGBColorPaletteCommonID( rgb8_t out_colorPalette[4], const rgb8_t in
 
 static void computeRGBAColorPaletteCommonID( rgba8_t out_colorPalette[8], const rgb8_t in_C0, const rgb8_t in_C1, const int in_TABLE_INDEX[2], const bool in_OPAQUE ) {
 	rgb8_t palette[8];
-	bool punchThrough = false;
 	
 	if ( in_OPAQUE ) {
 		computeRGBColorPaletteCommonID( &palette[0], in_C0, in_TABLE_INDEX[0], ETC_MODIFIER_TABLE );
@@ -95,7 +92,7 @@ static void computeRGBAColorPaletteCommonID( rgba8_t out_colorPalette[8], const 
 	}
 	
 	for ( int p = 0; p < 8; p++ ) {
-		punchThrough = ( not in_OPAQUE ) and ( ( p bitand 0x3 ) == 0x2 );
+		bool punchThrough = ( not in_OPAQUE ) and ( ( p bitand 0x3 ) == 0x2 );
 		
 		if ( punchThrough ) {
 			out_colorPalette[p].r = 0;
@@ -224,11 +221,10 @@ static void computeRGBAColorPaletteTHP( rgba8_t out_colorPalette[4], const ETCBl
 	assert( in_MODE != kETC_P );
 	rgb8_t palette[4];
 	bool opaque = in_BLOCK.differential or (in_MODE == kETC_P);
-	bool punchThrough = false;
 	computeRGBColorPaletteTHP( palette, in_BLOCK, in_MODE );
 	
 	for ( int p = 0; p < 4; p++ ) {
-		punchThrough = ( not opaque ) and ( p == 0x2 );
+		bool punchThrough = ( not opaque ) and ( p == 0x2 );
 		
 		if ( punchThrough ) {
 			out_colorPalette[p].r = 0;

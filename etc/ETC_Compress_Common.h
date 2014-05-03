@@ -23,7 +23,6 @@ typedef struct {
 
 
 
-void changeCounter( const int32_t in_INC );
 void printCounter( void );
 
 void fillUniformColorLUTGaps( ETCUniformColorComposition_t in_out_lut[256] );
@@ -43,11 +42,11 @@ void computeSubBlockWidth( int * out_t, const rgb8_t in_SUB_BLOCK_RGB[2][4] );
 void computeAlphaBlockWidth( int * out_t, int * out_mul, const uint8_t in_BLOCK_A[4][4] );
 void computeBlockMinMax( rgb8_t * out_min, rgb8_t * out_max, const rgb8_t in_BLOCK_RGB[4][4] );
 void computeBlockCenter( rgb8_t * out_center, const rgb8_t in_BLOCK_RGB[4][4] );
-void computeBlockChromas( rgb8_t out_c0[8], rgb8_t out_c1[8], const rgb8_t in_BLOCK_RGB[4][4] );
+//void computeBlockChromas( rgb8_t out_c0[8], rgb8_t out_c1[8], const rgb8_t in_BLOCK_RGB[4][4] );
 void computeAlphaBlockMinMax( uint8_t * out_min, uint8_t * out_max, const uint8_t in_BLOCK_A[4][4] );
 void computeAlphaBlockCenter( uint8_t * out_center, const uint8_t in_BLOCK_A[4][4] );
 
-void computeMinMaxAvgCenterMedian( rgb8_t * out_min, rgb8_t * out_max, rgb8_t out_acm[3], int * out_t0, int * out_t1, const rgb8_t in_SUB_BLOCK_RGB[2][4] );
+//void computeMinMaxAvgCenterMedian( rgb8_t * out_min, rgb8_t * out_max, rgb8_t out_acm[3], int * out_t0, int * out_t1, const rgb8_t in_SUB_BLOCK_RGB[2][4] );
 
 bool isUniformColorBlock( const rgb8_t in_BLOCK_RGB[4][4] );
 bool isUniformAlphaBlock( const uint8_t in_BLOCK_A[4][4] );

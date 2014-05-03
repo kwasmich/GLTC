@@ -230,12 +230,6 @@ uint32_t computeAlphaBlockError( uint8_t out_modulation[4][4], const uint8_t in_
 
 
 
-void changeCounter( const int32_t in_INC ) {
-	g_counter += in_INC;
-}
-
-
-
 void printCounter() {
 	printf( "Calls for Error : %u\n", g_counter );
 }
@@ -496,7 +490,7 @@ static int edgeSort( const void * in_A, const void * in_B ) {
 
 
 
-void computeBlockChromas( rgb8_t out_c0[8], rgb8_t out_c1[8], const rgb8_t in_BLOCK_RGB[4][4] ) {
+static void _computeBlockChromas( rgb8_t out_c0[8], rgb8_t out_c1[8], const rgb8_t in_BLOCK_RGB[4][4] ) {
 	int clusterPartition[16];
 	struct cluster_t clusterSize[16];
 	struct edge_t edge[120];
@@ -853,11 +847,9 @@ static void _computeBlockChromas2( rgb8_t * out_c0, rgb8_t * out_c1, const rgb8_
 	df1[1] /= cnt1;
 	df1[2] /= cnt1;
 	
-	float tmp;
-	
 	if ( cnt0 > cnt1 ) {
 		for ( int i = 0; i < 3; i++ ) {
-			tmp = df0[i];
+			float tmp = df0[i];
 			df0[i] = df1[i];
 			df1[i] = tmp;
 		}
@@ -880,7 +872,7 @@ static void _computeBlockChromas2( rgb8_t * out_c0, rgb8_t * out_c1, const rgb8_
 
 
 
-void computeMinMaxAvgCenterMedian( rgb8_t * out_min, rgb8_t * out_max, rgb8_t out_acm[11], int * out_t0, int * out_t1, const rgb8_t in_SUB_BLOCK_RGB[2][4] ) {
+static void _computeMinMaxAvgCenterMedian( rgb8_t * out_min, rgb8_t * out_max, rgb8_t out_acm[11], int * out_t0, int * out_t1, const rgb8_t in_SUB_BLOCK_RGB[2][4] ) {
 	rgb8_t pixel;
 	uint8_t mR[8];
 	uint8_t mG[8];

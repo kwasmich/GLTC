@@ -1,5 +1,5 @@
 //
-//  PNG.h
+//  simplePNG.h
 //  GLTC
 //
 //  Created by Michael Kwasnicki on 19.03.11.
@@ -9,8 +9,8 @@
 
 #pragma once
 
-#ifndef __PNG_H__
-#define __PNG_H__
+#ifndef __simplePNG_H__
+#define __simplePNG_H__
 
 
 #include <stdbool.h>
@@ -34,4 +34,4 @@ extern "C" {
 #endif
 
 
-#endif //__PNG_H__
+#endif //__simplePNG_H__

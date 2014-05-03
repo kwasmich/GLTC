@@ -12,7 +12,7 @@
 #include "PVRTC_Common.h"
 #include "PVRTC_Compress.h"
 #include "PVRTC_Decompress.h"
-#include "../PNG.h"
+#include "../simplePNG.h"
 
 #include <assert.h>
 #include <iso646.h>

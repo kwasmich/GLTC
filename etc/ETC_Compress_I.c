@@ -288,8 +288,6 @@ uint32_t compressI( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4]
 
 
 void computeUniformColorLUTI() {
-	int col8;
-	int col;
 	ETCUniformColorComposition_t tmp = { 0, 65535 };
 	
 	// set everything to undefined
@@ -303,11 +301,11 @@ void computeUniformColorLUTI() {
 	
 	// compute all colors that can be constructed with 4bpp
 	for ( uint8_t col4 = 0; col4 < 16; col4++ ) {
-		col8 = extend4to8bits( col4 );
+		int col8 = extend4to8bits( col4 );
 		
 		for ( int t = 0; t < ETC_TABLE_COUNT; t++ ) {
 			for ( int p = 0; p < ETC_PALETTE_SIZE; p++ ) {
-				col = clampi( col8 + ETC_MODIFIER_TABLE[t][p], 0, 255 );
+				int col = clampi( col8 + ETC_MODIFIER_TABLE[t][p], 0, 255 );
 				ETC_UNIFORM_COLOR_LUT_I[t][p][col] = (ETCUniformColorComposition_t){ col4, 0 };
 			}
 		}

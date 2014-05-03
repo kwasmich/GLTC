@@ -19,7 +19,7 @@ SOURCES=blockCompressionCommon.c\
         etc/ETC_Decompress.c\
         lib.c\
         main.c\
-        PNG.c\
+        simplePNG.c\
         pvrtc/PVRTC.c\
         pvrtc/PVRTC_Compress.c\
         pvrtc/PVRTC_Decompress.c

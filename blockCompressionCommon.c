@@ -16,7 +16,7 @@
 #include <string.h>
 
 
-static void twiddleBlocks( uint8_t * in_out_image, const uint32_t in_WIDTH, const uint32_t in_HEIGHT, const uint8_t in_CHANNELS, const bool in_REVERSE ) {
+static void _twiddleBlocks( uint8_t * in_out_image, const uint32_t in_WIDTH, const uint32_t in_HEIGHT, const uint8_t in_CHANNELS, const bool in_REVERSE ) {
     assert( in_WIDTH % 4 == 0 );
     assert( in_HEIGHT % 4 == 0 );
     

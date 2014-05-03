@@ -7,7 +7,7 @@
 //  This content is released under the MIT License.
 //
 
-#include "PNG.h"
+#include "simplePNG.h"
 #include "colorSpaceReduction.h"
 #include "dxtc/DXTC.h"
 #include "etc/ETC.h"

@@ -1,5 +1,5 @@
 //
-//  PNG.c
+//  simplePNG.c
 //  GLTC
 //
 //  Created by Michael Kwasnicki on 19.03.11.
@@ -8,7 +8,7 @@
 //
 
 
-#include "PNG.h"
+#include "simplePNG.h"
 
 #include <png.h>
 
@@ -81,8 +81,10 @@ int pngCheck( const char * in_FILE ) {
 		return 0;
 
 	/* Read in some of the signature bytes */
-	if (fread(buf, 1, PNG_BYTES_TO_CHECK, fp) != PNG_BYTES_TO_CHECK)
+	if (fread(buf, 1, PNG_BYTES_TO_CHECK, fp) != PNG_BYTES_TO_CHECK) {
+		fclose( fp );
 		return 0;
+	}
 
 	/* Compare the first PNG_BYTES_TO_CHECK bytes of the signature.
 	 Return nonzero (true) if they match */

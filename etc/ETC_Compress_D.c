@@ -274,7 +274,7 @@ earlyExit:
 uint32_t compressD( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4], const Strategy_t in_STRATEGY ) {
 	rgb5_t c[2], bestC0;
 	rgb3_t bestD1;
-	int d[3], t[2], bestT[2], bestFlip;
+	int t[2], bestT[2], bestFlip;
 	rgb8_t blockRGB[4][4];
 	uint8_t modulation[4][4];
 	uint8_t outModulation[4][4];
@@ -330,6 +330,7 @@ uint32_t compressD( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4]
                 }
             }
             
+			int d[3];
             d[0] = c[1].r - c[0].r;
             d[1] = c[1].g - c[0].g;
             d[2] = c[1].b - c[0].b;
@@ -377,8 +378,6 @@ uint32_t compressD( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4]
 
 
 void computeUniformColorLUTD() {
-	int col8;
-	int col;
 	ETCUniformColorComposition_t tmp = { 0, 65535 };
 	
 	// set everything to undefined
@@ -392,11 +391,11 @@ void computeUniformColorLUTD() {
 	
 	// compute all colors that can be constructed with 5bpp
 	for ( int col5 = 0; col5 < 32; col5++ ) {
-		col8 = extend5to8bits( col5 );
+		int col8 = extend5to8bits( col5 );
 		
 		for ( int t = 0; t < ETC_TABLE_COUNT; t++ ) {
 			for ( int p = 0; p < ETC_PALETTE_SIZE; p++ ) {
-				col = clampi( col8 + ETC_MODIFIER_TABLE[t][p], 0, 255 );
+				int col = clampi( col8 + ETC_MODIFIER_TABLE[t][p], 0, 255 );
 				ETC_UNIFORM_COLOR_LUT_D[t][p][col] = (ETCUniformColorComposition_t){ col5, 0 };
 			}
 		}
