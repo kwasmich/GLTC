@@ -33,7 +33,7 @@ static void swapToEncodeLSB( rgb4_t * in_out_c0, rgb4_t * in_out_c1, const int i
 
 
 
-static void buildBlock( ETCBlockColor_t * out_block, const rgb4_t in_C0, const rgb4_t in_C1, const int in_D, const rgb8_t in_BLOCK_RGB[4][4] ) {
+static void buildBlock( ETCBlockColor_t * out_block, const rgb4_t in_C0, const rgb4_t in_C1, const int in_D, const rgb8_t in_BLOCK_RGB[4][4], const bool in_OPAQUE ) {
 	rgb4_t c0 = in_C0;
 	rgb4_t c1 = in_C1;
 	rgb8_t col8[2], palette[4];
@@ -179,7 +179,7 @@ static void computeBlockChroma( rgb8_t * out_c0, rgb8_t * out_c1, int * out_d, c
 
 
 
-static uint32_t quick( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, const rgb8_t in_BLOCK_RGB[4][4] ) {
+static uint32_t quick( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, const rgb8_t in_BLOCK_RGB[4][4], const bool in_OPAQUE ) {
 	rgb8_t col8[2], palette[4];
 	rgb4_t c0, c1;
 	int d;
@@ -201,7 +201,7 @@ static uint32_t quick( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, const rgb8
 
 
 
-static uint32_t brute( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, const rgb8_t in_BLOCK_RGB[4][4] ) {
+static uint32_t brute( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, const rgb8_t in_BLOCK_RGB[4][4], const bool in_OPAQUE ) {
 	rgb8_t palette[4];
 	rgb8_t center;
 	rgb8_t col8[2];
@@ -279,7 +279,7 @@ earlyExit:
 
 
 
-uint32_t compressH( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4], const Strategy_t in_STRATEGY ) {
+uint32_t compressH( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4], const Strategy_t in_STRATEGY, const bool in_OPAQUE ) {
 	rgb4_t c0, c1;
 	int d;
 	uint32_t blockError = 0xFFFFFFFF;
@@ -289,16 +289,16 @@ uint32_t compressH( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4]
 	} else {
 		switch ( in_STRATEGY ) {
 			case kFAST:
-				blockError = quick( &c0, &c1, &d, in_BLOCK_RGB );
+				blockError = quick( &c0, &c1, &d, in_BLOCK_RGB, in_OPAQUE );
 				break;
 				
 			case kBEST:
-				blockError = brute( &c0, &c1, &d, in_BLOCK_RGB );
+				blockError = brute( &c0, &c1, &d, in_BLOCK_RGB, in_OPAQUE );
 				break;
 		}
 	}
 	
-	buildBlock( out_block, c0, c1, d, in_BLOCK_RGB );
+	buildBlock( out_block, c0, c1, d, in_BLOCK_RGB, in_OPAQUE );
 	return blockError;
 }
 

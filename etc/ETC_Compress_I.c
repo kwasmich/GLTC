@@ -16,7 +16,7 @@
 
 
 
-static ETCUniformColorComposition_t ETC_UNIFORM_COLOR_LUT_I[ETC_TABLE_COUNT][ETC_PALETTE_SIZE][256];
+static ETCUniformColorComposition_t ETC_UNIFORM_COLOR_LUT[ETC_TABLE_COUNT][ETC_PALETTE_SIZE][256];
 
 
 
@@ -52,12 +52,12 @@ static uint32_t uniformColor( rgb4_t * out_c, int * out_t, uint8_t out_modulatio
 		
 	for ( int t = 0; t < ETC_TABLE_COUNT; t++ ) {
 		for ( int p = 0; p < ETC_PALETTE_SIZE; p++ ) {
-			error  = ETC_UNIFORM_COLOR_LUT_I[t][p][col8.r].error;
-			error += ETC_UNIFORM_COLOR_LUT_I[t][p][col8.g].error;
-			error += ETC_UNIFORM_COLOR_LUT_I[t][p][col8.b].error;
-			col4.r = ETC_UNIFORM_COLOR_LUT_I[t][p][col8.r].c;
-			col4.g = ETC_UNIFORM_COLOR_LUT_I[t][p][col8.g].c;
-			col4.b = ETC_UNIFORM_COLOR_LUT_I[t][p][col8.b].c;
+			error  = ETC_UNIFORM_COLOR_LUT[t][p][col8.r].error;
+			error += ETC_UNIFORM_COLOR_LUT[t][p][col8.g].error;
+			error += ETC_UNIFORM_COLOR_LUT[t][p][col8.b].error;
+			col4.r = ETC_UNIFORM_COLOR_LUT[t][p][col8.r].c;
+			col4.g = ETC_UNIFORM_COLOR_LUT[t][p][col8.g].c;
+			col4.b = ETC_UNIFORM_COLOR_LUT[t][p][col8.b].c;
 			
 			if ( error < bestError ) {
 				bestError = error;
@@ -219,7 +219,7 @@ earlyExit:
 #pragma mark - exposed interface
 
 
-uint32_t compressI( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4], const Strategy_t in_STRATEGY ) {
+uint32_t compressI( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4], const Strategy_t in_STRATEGY, const bool UNUSED(in_OPAQUE) ) {
 	rgb4_t c[2], bestC[2];
 	int t[2], bestT[2], bestFlip;
 	rgb8_t blockRGB[4][4];
@@ -294,7 +294,7 @@ void computeUniformColorLUTI() {
 	for ( int t = 0; t < ETC_TABLE_COUNT; t++ ) {
 		for ( int p = 0; p < ETC_PALETTE_SIZE; p++ ) {
 			for ( int c = 0; c < 256; c++ ) {
-				ETC_UNIFORM_COLOR_LUT_I[t][p][c] = tmp;
+				ETC_UNIFORM_COLOR_LUT[t][p][c] = tmp;
 			}
 		}
 	}
@@ -306,13 +306,13 @@ void computeUniformColorLUTI() {
 		for ( int t = 0; t < ETC_TABLE_COUNT; t++ ) {
 			for ( int p = 0; p < ETC_PALETTE_SIZE; p++ ) {
 				int col = clampi( col8 + ETC_MODIFIER_TABLE[t][p], 0, 255 );
-				ETC_UNIFORM_COLOR_LUT_I[t][p][col] = (ETCUniformColorComposition_t){ col4, 0 };
+				ETC_UNIFORM_COLOR_LUT[t][p][col] = (ETCUniformColorComposition_t){ col4, 0 };
 			}
 		}
 	}
     
 	// fill the gaps with the nearest color
-	fillUniformColorPaletteLUTGaps( ETC_UNIFORM_COLOR_LUT_I );
+	fillUniformColorPaletteLUTGaps( ETC_UNIFORM_COLOR_LUT );
 }
 
 

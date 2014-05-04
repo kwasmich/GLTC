@@ -334,20 +334,20 @@ int main( int argc, char * argv[] ) {
                 rgba8_t * imageData;
                 pngRead( optFArg, false, (uint8_t **)&imageData, (uint32_t *)&w, (uint32_t *)&h, &c );
                 assert( c == 4 );
-				etcWriteETC2RGBA( optOArg, imageData, w, h, optStrategy );
+				etcWriteETC2RGBA8( optOArg, imageData, w, h, optStrategy );
                 pngFree( (uint8_t **)&imageData );
             }
                 break;
 				
-//			case kRGBA_ETC2_PUNCH_THROUGH:
-//			{
-//                rgba8_t * imageData;
-//                pngRead( optFArg, false, (uint8_t **)&imageData, (uint32_t *)&w, (uint32_t *)&h, &c );
-//                assert( c == 4 );
-//				etcWriteETC2RGBAPunchThrough( optOArg, imageData, w, h, optStrategy );
-//                pngFree( (uint8_t **)&imageData );
-//            }
-//				break;
+			case kRGBA_ETC2_PUNCH_THROUGH:
+			{
+                rgba8_t * imageData;
+                pngRead( optFArg, false, (uint8_t **)&imageData, (uint32_t *)&w, (uint32_t *)&h, &c );
+                assert( c == 4 );
+				etcWriteETC2RGB8A1( optOArg, imageData, w, h, optStrategy );
+                pngFree( (uint8_t **)&imageData );
+            }
+				break;
                 
             case kRGBA_PVR4BPP:
             {
@@ -358,8 +358,7 @@ int main( int argc, char * argv[] ) {
                 pngFree( (uint8_t **)&imageData );
             }
                 break;
-			
-			case kRGBA_ETC2_PUNCH_THROUGH:
+
             case kRGBA_PVR2BPP:
             case kINVALID:
 				fprintf( stderr, "Invalid type %i\n", type );
@@ -430,7 +429,7 @@ int main( int argc, char * argv[] ) {
 			case kRGBA_ETC2:
             {
                 rgba8_t * imageData;
-				etcReadETC2RGBA( optFArg, &imageData, &w, &h );
+				etcReadETC2RGBA8( optFArg, &imageData, &w, &h );
                 pngWrite( optOArg, REINTERPRET(uint8_t *)imageData, w, h, 4 );
                 etcFreeRGBA( &imageData );
             }
@@ -439,7 +438,7 @@ int main( int argc, char * argv[] ) {
 			case kRGBA_ETC2_PUNCH_THROUGH:
             {
                 rgba8_t * imageData;
-				etcReadETC2RGBAPunchThrough( optFArg, &imageData, &w, &h );
+				etcReadETC2RGB8A1( optFArg, &imageData, &w, &h );
                 pngWrite( optOArg, REINTERPRET(uint8_t *)imageData, w, h, 4 );
                 etcFreeRGBA( &imageData );
             }

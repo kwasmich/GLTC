@@ -11,7 +11,7 @@
 #define GLTC_colorSpaceReduction_h
 
 #include <iso646.h>
-#include <stdlib.h>
+#include <stdint.h>
 
 typedef union {
     struct {

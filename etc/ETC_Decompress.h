@@ -34,7 +34,7 @@ ETCMode_t etcGetBlockMode( const ETCBlockColor_t in_BLOCK, const bool in_PUNCH_T
 void decompressETC1BlockRGB( rgb8_t out_blockRGB[4][4], const ETCBlockColor_t in_BLOCK );
 void decompressETC2BlockRGB( rgb8_t out_blockRGB[4][4], const ETCBlockColor_t in_BLOCK );
 
-void decompressETC2BlockRGBA( rgba8_t out_blockRGBA[4][4], const ETC2BlockRGBA_t in_BLOCK );
-void decompressETC2BlockRGBAPunchThrough( rgba8_t out_blockRGBA[4][4], const ETCBlockColor_t in_BLOCK );
+void decompressETC2BlockRGBA8( rgba8_t out_blockRGBA[4][4], const ETC2BlockRGBA_t in_BLOCK );
+void decompressETC2BlockRGB8A1( rgba8_t out_blockRGBA[4][4], const ETCBlockColor_t in_BLOCK );
 
 #endif

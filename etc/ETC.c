@@ -189,7 +189,7 @@ void etcFreeRGB( rgb8_t ** in_out_image ) {
 
 
 
-bool etcReadETC2RGBA( const char in_FILE[], rgba8_t ** out_image, uint32_t * out_width, uint32_t * out_height ) {
+bool etcReadETC2RGBA8( const char in_FILE[], rgba8_t ** out_image, uint32_t * out_width, uint32_t * out_height ) {
 	uint32_t w = 0;
     uint32_t h = 0;
     uint32_t blockCount = 0;
@@ -221,7 +221,7 @@ bool etcReadETC2RGBA( const char in_FILE[], rgba8_t ** out_image, uint32_t * out
 			ETCBlockColor_t *color = &(blockPtr->color);
 			switchEndianness( REINTERPRET(endian64*)alpha );
 			switchEndianness( REINTERPRET(endian64*)color );
-            decompressETC2BlockRGBA( imageRGBA_ptr->block, *blockPtr );
+            decompressETC2BlockRGBA8( imageRGBA_ptr->block, *blockPtr );
             blockPtr++;
             imageRGBA_ptr++;
         }
@@ -239,7 +239,7 @@ bool etcReadETC2RGBA( const char in_FILE[], rgba8_t ** out_image, uint32_t * out
 
 
 
-bool etcReadETC2RGBAPunchThrough( const char in_FILE[], rgba8_t ** out_image, uint32_t * out_width, uint32_t * out_height ) {
+bool etcReadETC2RGB8A1( const char in_FILE[], rgba8_t ** out_image, uint32_t * out_width, uint32_t * out_height ) {
 	uint32_t w = 0;
     uint32_t h = 0;
     uint32_t blockCount = 0;
@@ -268,7 +268,7 @@ bool etcReadETC2RGBAPunchThrough( const char in_FILE[], rgba8_t ** out_image, ui
     for ( int y = 0; y < h; y += 4 ) {
         for ( int x = 0; x < w; x += 4 ) {
 			switchEndianness( REINTERPRET(endian64*)blockPtr );
-            decompressETC2BlockRGBAPunchThrough( imageRGBA_ptr->block, *blockPtr );
+            decompressETC2BlockRGB8A1( imageRGBA_ptr->block, *blockPtr );
             blockPtr++;
             imageRGBA_ptr++;
         }
@@ -286,7 +286,7 @@ bool etcReadETC2RGBAPunchThrough( const char in_FILE[], rgba8_t ** out_image, ui
 
 
 
-bool etcWriteETC2RGBA( const char in_FILE[], const rgba8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT, const Strategy_t in_STRATEGY ) {
+bool etcWriteETC2RGBA8( const char in_FILE[], const rgba8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT, const Strategy_t in_STRATEGY ) {
 	computeUniformColorLUT();
     const uint32_t blockCount = in_WIDTH * in_HEIGHT >> 4;    // FIXME : we have to round up w and h to multiple of 4
     ETC2BlockRGBA_t * block = NULL;
@@ -300,11 +300,43 @@ bool etcWriteETC2RGBA( const char in_FILE[], const rgba8_t * in_IMAGE, const uin
     blockPtr = block;
     
     for ( uint32_t b = 0; b < blockCount; b++ ) {
-        compressETC2BlockRGBA( blockPtr, imageRGBA_ptr->block, in_STRATEGY );
+        compressETC2BlockRGBA8( blockPtr, imageRGBA_ptr->block, in_STRATEGY );
 		ETCBlockAlpha_t *alpha = &(blockPtr->alpha);
 		ETCBlockColor_t *color = &(blockPtr->color);
 		switchEndianness( REINTERPRET(endian64*)alpha );
 		switchEndianness( REINTERPRET(endian64*)color );
+        blockPtr++;
+        imageRGBA_ptr++;
+    }
+	
+	printCounter();
+    
+    FILE * outputETCFileStream = fopen( in_FILE, "wb" );
+    fwrite( &in_WIDTH, sizeof( uint32_t ), 1, outputETCFileStream );
+    fwrite( &in_HEIGHT, sizeof( uint32_t ), 1, outputETCFileStream );
+    fwrite( block, sizeof( ETC2BlockRGBA_t ), blockCount, outputETCFileStream );
+    fclose( outputETCFileStream );
+	return true;
+}
+
+
+
+bool etcWriteETC2RGB8A1( const char in_FILE[], const rgba8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT, const Strategy_t in_STRATEGY ) {
+	computeUniformColorLUT();
+    const uint32_t blockCount = in_WIDTH * in_HEIGHT >> 4;    // FIXME : we have to round up w and h to multiple of 4
+    ETCBlockColor_t * block = NULL;
+    ETCBlockColor_t * blockPtr = NULL;
+    rgba8_t * imageRGBA = malloc( in_WIDTH * in_HEIGHT * sizeof( rgba8_t ) );
+    LinearBlock4x4RGBA_t * imageRGBA_ptr = REINTERPRET(LinearBlock4x4RGBA_t*)imageRGBA;
+    memcpy( imageRGBA, in_IMAGE, in_WIDTH * in_HEIGHT * sizeof( rgba8_t ) );
+    twiddleBlocksRGBA( imageRGBA, in_WIDTH, in_HEIGHT, false );
+    
+    block = malloc( blockCount * sizeof( ETCBlockColor_t ) );
+    blockPtr = block;
+    
+    for ( uint32_t b = 0; b < blockCount; b++ ) {
+        compressETC2BlockRGB8A1( blockPtr, imageRGBA_ptr->block, in_STRATEGY );
+		switchEndianness( REINTERPRET(endian64*)blockPtr );
         blockPtr++;
         imageRGBA_ptr++;
     }

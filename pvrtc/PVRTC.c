@@ -17,6 +17,7 @@
 #include <assert.h>
 #include <iso646.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 
 typedef struct {

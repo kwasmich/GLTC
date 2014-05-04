@@ -453,7 +453,7 @@ void decompressETC2BlockRGB( rgb8_t out_blockRGB[4][4], const ETCBlockColor_t in
 
 
 
-void decompressETC2BlockRGBA( rgba8_t out_blockRGBA[4][4], const ETC2BlockRGBA_t in_BLOCK ) {
+void decompressETC2BlockRGBA8( rgba8_t out_blockRGBA[4][4], const ETC2BlockRGBA_t in_BLOCK ) {
 	rgb8_t color[4][4];
 	uint8_t alpha[4][4];
 	decompressETC2BlockRGB( color, in_BLOCK.color );
@@ -471,7 +471,7 @@ void decompressETC2BlockRGBA( rgba8_t out_blockRGBA[4][4], const ETC2BlockRGBA_t
 
 
 
-void decompressETC2BlockRGBAPunchThrough( rgba8_t out_blockRGBA[4][4], const ETCBlockColor_t in_BLOCK ) {
+void decompressETC2BlockRGB8A1( rgba8_t out_blockRGBA[4][4], const ETCBlockColor_t in_BLOCK ) {
 	ETCMode_t mode = etcGetBlockMode( in_BLOCK, true );
 	rgba8_t palette[8];
 	rgb8_t palette2[3];

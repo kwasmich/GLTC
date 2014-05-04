@@ -16,7 +16,7 @@
 
 void computeUniformColorLUTP( void );
 
-uint32_t compressP( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4], const Strategy_t in_STRATEGY );
+uint32_t compressP( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4], const Strategy_t in_STRATEGY, const bool in_OPAQUE );
 
 void printInfoP( ETCBlockColor_t * in_BLOCK );
 

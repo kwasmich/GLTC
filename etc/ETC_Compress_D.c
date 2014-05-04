@@ -16,7 +16,8 @@
 
 
 
-static ETCUniformColorComposition_t ETC_UNIFORM_COLOR_LUT_D[ETC_TABLE_COUNT][ETC_PALETTE_SIZE][256];
+static ETCUniformColorComposition_t ETC_UNIFORM_COLOR_LUT[ETC_TABLE_COUNT][ETC_PALETTE_SIZE][256];
+static ETCUniformColorComposition_t ETC_UNIFORM_COLOR_LUT_NON_OPAQUE[ETC_TABLE_COUNT][ETC_PALETTE_SIZE][256];
 
 
 
@@ -40,24 +41,25 @@ static void buildBlock( ETCBlockColor_t * out_block, const rgb5_t in_C, const rg
 
 
 
-static uint32_t uniformColor( rgb5_t * out_c, int * out_t, uint8_t out_modulation[2][4], const rgb8_t in_SUB_BLOCK_RGB[2][4] ) {
+static uint32_t uniformColor( rgb5_t * out_c, int * out_t, uint8_t out_modulation[2][4], const rgb8_t in_SUB_BLOCK_RGB[2][4], const bool in_OPAQUE ) {
 	rgb8_t col8, palette[4];
 	rgb5_t col5 = { 0, 0, 0 };
 	uint32_t error = 0;
 	uint32_t bestError = 0xFFFFFFFF;
 	int bestT = 0;
 	rgb5_t bestC = { 0, 0, 0 };
+	ETCUniformColorComposition_t (* lut)[ETC_PALETTE_SIZE][256] = ( in_OPAQUE ) ? &ETC_UNIFORM_COLOR_LUT[0] : &ETC_UNIFORM_COLOR_LUT_NON_OPAQUE[0];
 	
 	computeSubBlockCenter( &col8, in_SUB_BLOCK_RGB );
 	
 	for ( int t = 0; t < ETC_TABLE_COUNT; t++ ) {
 		for ( int p = 0; p < ETC_PALETTE_SIZE; p++ ) {
-			error  = ETC_UNIFORM_COLOR_LUT_D[t][p][col8.r].error;
-			error += ETC_UNIFORM_COLOR_LUT_D[t][p][col8.g].error;
-			error += ETC_UNIFORM_COLOR_LUT_D[t][p][col8.b].error;
-			col5.r = ETC_UNIFORM_COLOR_LUT_D[t][p][col8.r].c;
-			col5.g = ETC_UNIFORM_COLOR_LUT_D[t][p][col8.g].c;
-			col5.b = ETC_UNIFORM_COLOR_LUT_D[t][p][col8.b].c;
+			error  = lut[t][p][col8.r].error;
+			error += lut[t][p][col8.g].error;
+			error += lut[t][p][col8.b].error;
+			col5.r = lut[t][p][col8.r].c;
+			col5.g = lut[t][p][col8.g].c;
+			col5.b = lut[t][p][col8.b].c;
 			
 			if ( error < bestError ) {
 				bestError = error;
@@ -271,7 +273,7 @@ earlyExit:
 
 
 
-uint32_t compressD( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4], const Strategy_t in_STRATEGY ) {
+uint32_t compressD( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4], const Strategy_t in_STRATEGY, const bool in_OPAQUE ) {
 	rgb5_t c[2], bestC0;
 	rgb3_t bestD1;
 	int t[2], bestT[2], bestFlip;
@@ -283,8 +285,8 @@ uint32_t compressD( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4]
     uint32_t subBlockError = 0xFFFFFFFF;
 	
     if ( isUniformColorBlock( in_BLOCK_RGB ) ) {
-        bestBlockError  = uniformColor( &bestC0, &bestT[0], &outModulation[0], &in_BLOCK_RGB[0] );
-        bestBlockError += uniformColor( &bestC0, &bestT[1], &outModulation[2], &in_BLOCK_RGB[2] );
+        bestBlockError  = uniformColor( &bestC0, &bestT[0], &outModulation[0], &in_BLOCK_RGB[0], in_OPAQUE );
+        bestBlockError += uniformColor( &bestC0, &bestT[1], &outModulation[2], &in_BLOCK_RGB[2], in_OPAQUE );
         bestD1 = (rgb3_t){ 0, 0, 0 };
         bestFlip = 0;
     } else {
@@ -312,7 +314,7 @@ uint32_t compressD( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4]
             } else {
                 for ( int sb = 0; sb < 2; sb++ ) {
                     if ( isUniformColorSubBlock( &blockRGB[sb * 2] ) ) {
-                        blockError += uniformColor( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
+                        blockError += uniformColor( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2], in_OPAQUE );
                     } else {
                         subBlockError = 0xFFFFFFFF;
                         
@@ -384,7 +386,8 @@ void computeUniformColorLUTD() {
 	for ( int t = 0; t < ETC_TABLE_COUNT; t++ ) {
 		for ( int p = 0; p < ETC_PALETTE_SIZE; p++ ) {
 			for ( int c = 0; c < 256; c++ ) {
-				ETC_UNIFORM_COLOR_LUT_D[t][p][c] = tmp;
+				ETC_UNIFORM_COLOR_LUT[t][p][c] = tmp;
+				ETC_UNIFORM_COLOR_LUT_NON_OPAQUE[t][p][c] = tmp;
 			}
 		}
 	}
@@ -396,13 +399,19 @@ void computeUniformColorLUTD() {
 		for ( int t = 0; t < ETC_TABLE_COUNT; t++ ) {
 			for ( int p = 0; p < ETC_PALETTE_SIZE; p++ ) {
 				int col = clampi( col8 + ETC_MODIFIER_TABLE[t][p], 0, 255 );
-				ETC_UNIFORM_COLOR_LUT_D[t][p][col] = (ETCUniformColorComposition_t){ col5, 0 };
+				ETC_UNIFORM_COLOR_LUT[t][p][col] = (ETCUniformColorComposition_t){ col5, 0 };
+				
+				if ( p != 2 ) {
+					col = clampi( col8 + ETC_MODIFIER_TABLE_NON_OPAQUE[t][p], 0, 255 );
+					ETC_UNIFORM_COLOR_LUT_NON_OPAQUE[t][p][col] = (ETCUniformColorComposition_t){ col5, 0 };
+				}
 			}
 		}
 	}
 	
 	// fill the gaps with the nearest color
-	fillUniformColorPaletteLUTGaps( ETC_UNIFORM_COLOR_LUT_D );
+	fillUniformColorPaletteLUTGaps( ETC_UNIFORM_COLOR_LUT );
+	fillUniformColorPaletteLUTGaps( ETC_UNIFORM_COLOR_LUT_NON_OPAQUE );
 }
 
 
