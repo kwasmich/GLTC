@@ -21,7 +21,7 @@ static ETCUniformColorComposition_t ETC_UNIFORM_COLOR_LUT_NON_OPAQUE[ETC_TABLE_C
 
 
 
-static void buildBlock( ETCBlockColor_t * out_block, const rgb5_t in_C, const rgb3_t in_DC, const int in_T0, const int in_T1, const bool in_FLIP, const uint8_t in_MODULATION[4][4] ) {
+static void buildBlock( ETCBlockColor_t * out_block, const rgb5_t in_C, const rgb3_t in_DC, const int in_T0, const int in_T1, const bool in_FLIP, const uint8_t in_MODULATION[4][4], const bool in_OPAQUE ) {
 	uint32_t bitField = generateBitField( in_MODULATION );
 	
 	ETCBlockD_t block;
@@ -48,7 +48,7 @@ static uint32_t uniformColor( rgb5_t * out_c, int * out_t, uint8_t out_modulatio
 	uint32_t bestError = 0xFFFFFFFF;
 	int bestT = 0;
 	rgb5_t bestC = { 0, 0, 0 };
-	ETCUniformColorComposition_t (* lut)[ETC_PALETTE_SIZE][256] = ( in_OPAQUE ) ? &ETC_UNIFORM_COLOR_LUT[0] : &ETC_UNIFORM_COLOR_LUT_NON_OPAQUE[0];
+	ETCUniformColorComposition_t (* lut)[ETC_PALETTE_SIZE][256] = ( in_OPAQUE ) ? ETC_UNIFORM_COLOR_LUT : ETC_UNIFORM_COLOR_LUT_NON_OPAQUE;
 	
 	computeSubBlockCenter( &col8, in_SUB_BLOCK_RGB );
 	
@@ -84,7 +84,7 @@ earlyExit:
 
 
 
-static uint32_t quick( rgb5_t * out_c, int * out_t, uint8_t out_modulation[2][4], const rgb8_t in_SUB_BLOCK_RGB[2][4] ) {
+static uint32_t quick( rgb5_t * out_c, int * out_t, uint8_t out_modulation[2][4], const rgb8_t in_SUB_BLOCK_RGB[2][4], const bool in_OPAQUE ) {
 	rgb5_t col5;
 	rgb8_t center, palette[4];
 	int t;
@@ -155,7 +155,7 @@ earlyExit:
 */
 
 
-static uint32_t bruteBlock( rgb5_t * out_c0, rgb5_t * out_c1, int * out_t0, int * out_t1, uint8_t out_modulation[4][4], const rgb8_t in_BLOCK_RGB[4][4] ) {
+static uint32_t bruteBlock( rgb5_t * out_c0, rgb5_t * out_c1, int * out_t0, int * out_t1, uint8_t out_modulation[4][4], const rgb8_t in_BLOCK_RGB[4][4], const bool in_OPAQUE ) {
     rgb8_t palette[4];
 	rgb8_t center[2];
 	rgb8_t col8;
@@ -310,7 +310,7 @@ uint32_t compressD( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4]
             blockError = 0;
             
             if ( in_STRATEGY == kBEST ) {
-                blockError = bruteBlock( &c[0], &c[1], &t[0], &t[1], modulation, blockRGB );
+                blockError = bruteBlock( &c[0], &c[1], &t[0], &t[1], modulation, blockRGB, in_OPAQUE );
             } else {
                 for ( int sb = 0; sb < 2; sb++ ) {
                     if ( isUniformColorSubBlock( &blockRGB[sb * 2] ) ) {
@@ -320,7 +320,7 @@ uint32_t compressD( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4]
                         
                         switch ( in_STRATEGY ) {
 							case kFAST:
-                                subBlockError = quick( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2] );
+                                subBlockError = quick( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2], in_OPAQUE );
                                 break;
 								
 							case kBEST:
@@ -370,7 +370,7 @@ uint32_t compressD( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4]
 	}
 	
 	if ( bestBlockError < 0xFFFFFFFF )
-		buildBlock( out_block, bestC0, bestD1, bestT[0], bestT[1], bestFlip, (const uint8_t(*)[4])outModulation );
+		buildBlock( out_block, bestC0, bestD1, bestT[0], bestT[1], bestFlip, (const uint8_t(*)[4])outModulation, in_OPAQUE );
 	else
 		out_block->b64 = 0x0ULL;
 	

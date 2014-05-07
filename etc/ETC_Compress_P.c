@@ -21,15 +21,15 @@ static ETCUniformColorComposition_t ETC_UNIFORM_COLOR_LUT_7[256];
 
 
 
-static void buildBlock( ETCBlockColor_t * out_block, const rgb676_t in_C0, const rgb676_t in_CH, const rgb676_t in_CV ) {
+static void buildBlock( ETCBlockColor_t * out_block, const rgb676_t in_CO, const rgb676_t in_CH, const rgb676_t in_CV ) {
 	ETCBlockP_t block;
 	block.one = 1;
-	block.r0 = in_C0.r;
-	block.g01 = in_C0.g >> 6;
-	block.g02 = in_C0.g bitand 0x3F;
-	block.b01 = in_C0.b >> 5;
-	block.b02 = ( in_C0.b >> 3 ) bitand 0x3;
-	block.b03 = in_C0.b bitand 0x7;
+	block.rO = in_CO.r;
+	block.gO1 = in_CO.g >> 6;
+	block.gO2 = in_CO.g bitand 0x3F;
+	block.bO1 = in_CO.b >> 5;
+	block.bO2 = ( in_CO.b >> 3 ) bitand 0x3;
+	block.bO3 = in_CO.b bitand 0x7;
 	block.rH1 = in_CH.r >> 1;
 	block.rH2 = in_CH.r bitand 0x1;
 	block.gH = in_CH.g;
@@ -38,10 +38,10 @@ static void buildBlock( ETCBlockColor_t * out_block, const rgb676_t in_C0, const
 	block.gV = in_CV.g;
 	block.bV = in_CV.b;
 	
-	block.dummy0 = ( in_C0.r >> 1 ) bitand 0x1;
-	block.dummy1 = ( in_C0.g >> 1 ) bitand 0x1;
+	block.dummy0 = ( in_CO.r >> 1 ) bitand 0x1;
+	block.dummy1 = ( in_CO.g >> 1 ) bitand 0x1;
 	
-	if ( ( ( in_C0.b >> 3 ) bitand 0x3 ) + ( ( in_C0.b >> 1 ) bitand 0x3 ) < 4 ) {
+	if ( ( ( in_CO.b >> 3 ) bitand 0x3 ) + ( ( in_CO.b >> 1 ) bitand 0x3 ) < 4 ) {
 		block.dummy2 = 0x0;
 		block.dummy3 = 0x1;
 	} else {
@@ -54,7 +54,7 @@ static void buildBlock( ETCBlockColor_t * out_block, const rgb676_t in_C0, const
 
 
 
-static uint32_t uniformColor( rgb676_t * out_c0, rgb676_t * out_cH, rgb676_t * out_cV, const rgb8_t in_BLOCK_RGB[4][4] ) {
+static uint32_t uniformColor( rgb676_t * out_cO, rgb676_t * out_cH, rgb676_t * out_cV, const rgb8_t in_BLOCK_RGB[4][4] ) {
 	rgb8_t cAvg;
 	rgb676_t c = { 0, 0, 0 };
 	
@@ -64,7 +64,7 @@ static uint32_t uniformColor( rgb676_t * out_c0, rgb676_t * out_cH, rgb676_t * o
 	c.g = ETC_UNIFORM_COLOR_LUT_7[cAvg.g].c;
 	c.b = ETC_UNIFORM_COLOR_LUT_6[cAvg.b].c;
 	
-	*out_c0 = c;
+	*out_cO = c;
 	*out_cH = c;
 	*out_cV = c;
 	
@@ -75,17 +75,17 @@ static uint32_t uniformColor( rgb676_t * out_c0, rgb676_t * out_cH, rgb676_t * o
 
 
 
-static uint32_t brute( rgb676_t * out_c0, rgb676_t * out_cH, rgb676_t * out_cV, const rgb8_t in_BLOCK_RGB[4][4] ) {
-	rgb8_t col, pixel, c0, cH, cV;
+static uint32_t brute( rgb676_t * out_cO, rgb676_t * out_cH, rgb676_t * out_cV, const rgb8_t in_BLOCK_RGB[4][4] ) {
+	rgb8_t col, pixel, cO, cH, cV;
 	uint32_t error = 0xFFFFFFFF;
 	uint32_t bestError[3] = { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
-	rgb676_t bestC0, bestCH, bestCV;
+	rgb676_t bestCO, bestCH, bestCV;
 	int dR, dG, dB;
 	int r0, g0, b0, rH, gH, bH, rV, gV, bV;
 	int bx, by;
 		
 	for ( r0 = 0; r0 < 64; r0++ ) {
-		c0.r = extend6to8bits( r0 );
+		cO.r = extend6to8bits( r0 );
 		
 		for ( rH = 0; rH < 64; rH++ ) {
 			cH.r = extend6to8bits( rH );
@@ -97,7 +97,7 @@ static uint32_t brute( rgb676_t * out_c0, rgb676_t * out_cH, rgb676_t * out_cV, 
 				for ( by = 0; by < 4; by++ ) {
 					for ( bx = 0; bx < 4; bx++ ) {
 						pixel = in_BLOCK_RGB[by][bx];
-						col.r = computePlaneColor( bx, by, c0.r, cH.r, cV.r );
+						col.r = computePlaneColor( bx, by, cO.r, cH.r, cV.r );
 						dR = col.r - pixel.r;
 						error += dR * dR;
 					}
@@ -105,7 +105,7 @@ static uint32_t brute( rgb676_t * out_c0, rgb676_t * out_cH, rgb676_t * out_cV, 
 				
 				if ( error < bestError[0] ) {
 					bestError[0] = error;
-					bestC0.r = r0;
+					bestCO.r = r0;
 					bestCH.r = rH;
 					bestCV.r = rV;
 					
@@ -119,7 +119,7 @@ static uint32_t brute( rgb676_t * out_c0, rgb676_t * out_cH, rgb676_t * out_cV, 
 earlyExitR:
 	
 	for ( g0 = 0; g0 < 128; g0++ ) {
-		c0.g = extend7to8bits( g0 );
+		cO.g = extend7to8bits( g0 );
 		
 		for ( gH = 0; gH < 128; gH++ ) {
 			cH.g = extend7to8bits( gH );
@@ -131,7 +131,7 @@ earlyExitR:
 				for ( by = 0; by < 4; by++ ) {
 					for ( bx = 0; bx < 4; bx++ ) {
 						pixel = in_BLOCK_RGB[by][bx];
-						col.g = computePlaneColor( bx, by, c0.g, cH.g, cV.g );
+						col.g = computePlaneColor( bx, by, cO.g, cH.g, cV.g );
 						dG = col.g - pixel.g;
 						error += dG * dG;
 					}
@@ -139,7 +139,7 @@ earlyExitR:
 				
 				if ( error < bestError[1] ) {
 					bestError[1] = error;
-					bestC0.g = g0;
+					bestCO.g = g0;
 					bestCH.g = gH;
 					bestCV.g = gV;
 					
@@ -153,7 +153,7 @@ earlyExitR:
 earlyExitG:
 	
 	for ( b0 = 0; b0 < 64; b0++ ) {
-		c0.b = extend6to8bits( b0 );
+		cO.b = extend6to8bits( b0 );
 		
 		for ( bH = 0; bH < 64; bH++ ) {
 			cH.b = extend6to8bits( bH );
@@ -165,7 +165,7 @@ earlyExitG:
 				for ( by = 0; by < 4; by++ ) {
 					for ( bx = 0; bx < 4; bx++ ) {
 						pixel = in_BLOCK_RGB[by][bx];
-						col.b = computePlaneColor( bx, by, c0.b, cH.b, cV.b );
+						col.b = computePlaneColor( bx, by, cO.b, cH.b, cV.b );
 						dB = col.b - pixel.b;
 						error += dB * dB;
 					}
@@ -173,7 +173,7 @@ earlyExitG:
 				
 				if ( error < bestError[2] ) {
 					bestError[2] = error;
-					bestC0.b = b0;
+					bestCO.b = b0;
 					bestCH.b = bH;
 					bestCV.b = bV;
 					
@@ -186,7 +186,7 @@ earlyExitG:
 	
 earlyExitB:
 	
-	*out_c0 = bestC0;
+	*out_cO = bestCO;
 	*out_cH = bestCH;
 	*out_cV = bestCV;
 	return bestError[0] + bestError[1] + bestError[2];
@@ -194,9 +194,9 @@ earlyExitB:
 
 
 
-static uint32_t analytical( rgb676_t * out_c0, rgb676_t * out_cH, rgb676_t * out_cV, const rgb8_t in_BLOCK_RGB[4][4] ) {
-	rgb8_t pixel, c0, cH, cV;
-	rgb676_t bestC0, bestCH, bestCV;
+static uint32_t analytical( rgb676_t * out_cO, rgb676_t * out_cH, rgb676_t * out_cV, const rgb8_t in_BLOCK_RGB[4][4] ) {
+	rgb8_t pixel, cO, cH, cV;
+	rgb676_t bestCO, bestCH, bestCV;
 
 	static const int matrix[3][16] = {
 		{ 23,  17,  11,   5,  17,  11,   5,  -1,  11,   5,  -1,  -7,   5,  -1,  -7, -13 },
@@ -232,26 +232,26 @@ static uint32_t analytical( rgb676_t * out_c0, rgb676_t * out_cH, rgb676_t * out
 		sumV[i] = clampi( sumV[i] / SCALE, 0, 255 );
 	}
 
-	bestC0.r = reduce8to6bits( sum0[0] );
+	bestCO.r = reduce8to6bits( sum0[0] );
 	bestCH.r = reduce8to6bits( sumH[0] );
 	bestCV.r = reduce8to6bits( sumV[0] );
 	
-	bestC0.g = reduce8to7bits( sum0[1] );
+	bestCO.g = reduce8to7bits( sum0[1] );
 	bestCH.g = reduce8to7bits( sumH[1] );
 	bestCV.g = reduce8to7bits( sumV[1] );
 	
-	bestC0.b = reduce8to6bits( sum0[2] );
+	bestCO.b = reduce8to6bits( sum0[2] );
 	bestCH.b = reduce8to6bits( sumH[2] );
 	bestCV.b = reduce8to6bits( sumV[2] );
 	
-	*out_c0 = bestC0;
+	*out_cO = bestCO;
 	*out_cH = bestCH;
 	*out_cV = bestCV;
 	
-	convert676to888( &c0, bestC0 );
+	convert676to888( &cO, bestCO );
 	convert676to888( &cH, bestCH );
 	convert676to888( &cV, bestCV );
-	return computeBlockErrorP( c0, cH, cV, in_BLOCK_RGB );
+	return computeBlockErrorP( cO, cH, cV, in_BLOCK_RGB );
 }
 
 
@@ -261,24 +261,24 @@ static uint32_t analytical( rgb676_t * out_c0, rgb676_t * out_cH, rgb676_t * out
 
 
 uint32_t compressP( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4], const Strategy_t in_STRATEGY, const bool UNUSED(in_OPAQUE) ) {
-	rgb676_t c0, cH, cV;
+	rgb676_t cO, cH, cV;
 	uint32_t blockError = 0xFFFFFFFF;
 	
 	if ( isUniformColorBlock( in_BLOCK_RGB ) ) {
-		blockError = uniformColor( &c0, &cH, &cV, in_BLOCK_RGB );
+		blockError = uniformColor( &cO, &cH, &cV, in_BLOCK_RGB );
 	} else {
 		switch ( in_STRATEGY ) {
 			case kFAST:
-				blockError = analytical( &c0, &cH, &cV, in_BLOCK_RGB );
+				blockError = analytical( &cO, &cH, &cV, in_BLOCK_RGB );
 				break;
 				
 			case kBEST:
-				blockError = brute( &c0, &cH, &cV, in_BLOCK_RGB );
+				blockError = brute( &cO, &cH, &cV, in_BLOCK_RGB );
 				break;
 		}
 	}
 	
-	buildBlock( out_block, c0, cH, cV );
+	buildBlock( out_block, cO, cH, cV );
 	return blockError;
 }
 
@@ -315,9 +315,9 @@ void computeUniformColorLUTP() {
 
 void printInfoP( ETCBlockColor_t * in_BLOCK ) {
 	ETCBlockP_t * block = (ETCBlockP_t *)in_BLOCK;
-	int tmpG = ( block->g01 << 6 ) bitor block->g02;
-	int tmpB = ( block->b01 << 5 ) bitor ( block->b02 << 3 ) bitor block->b03;
+	int tmpG = ( block->gO1 << 6 ) bitor block->gO2;
+	int tmpB = ( block->bO1 << 5 ) bitor ( block->bO2 << 3 ) bitor block->bO3;
 	int tmpR = ( block->rH1 << 1 ) bitor block->rH2;
-	printf( "P: (%3i %3i %3i) (%3i %3i %3i) (%3i %3i %3i)\n", block->r0, tmpG, tmpB, tmpR, block->gH, block->bH, block->rV, block->gV, block->bV );
-	printf( "P: (%3i %3i %3i) (%3i %3i %3i) (%3i %3i %3i)\n", extend6to8bits( block->r0 ), extend7to8bits( tmpG ), extend6to8bits( tmpB ), extend6to8bits( tmpR ), extend7to8bits( block->gH ), extend6to8bits( block->bH ), extend6to8bits( block->rV ), extend7to8bits( block->gV ), extend6to8bits( block->bV ) );
+	printf( "P: (%3i %3i %3i) (%3i %3i %3i) (%3i %3i %3i)\n", block->rO, tmpG, tmpB, tmpR, block->gH, block->bH, block->rV, block->gV, block->bV );
+	printf( "P: (%3i %3i %3i) (%3i %3i %3i) (%3i %3i %3i)\n", extend6to8bits( block->rO ), extend7to8bits( tmpG ), extend6to8bits( tmpB ), extend6to8bits( tmpR ), extend7to8bits( block->gH ), extend6to8bits( block->bH ), extend6to8bits( block->rV ), extend7to8bits( block->gV ), extend6to8bits( block->bV ) );
 }

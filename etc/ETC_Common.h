@@ -135,15 +135,15 @@ typedef union {
 		uint32_t rH2 : 1;
 		uint32_t one : 1;
         uint32_t rH1 : 5;
-		uint32_t b03 : 3;
+		uint32_t bO3 : 3;
 		uint32_t dummy3 : 1;
-		uint32_t b02 : 2;
+		uint32_t bO2 : 2;
 		uint32_t dummy2 : 3;
-		uint32_t b01 : 1;
-		uint32_t g02 : 6;
+		uint32_t bO1 : 1;
+		uint32_t gO2 : 6;
 		uint32_t dummy1 : 1;
-		uint32_t g01 : 1;
-        uint32_t r0 : 6;
+		uint32_t gO1 : 1;
+        uint32_t rO : 6;
 		uint32_t dummy0 : 1;
     };
     
