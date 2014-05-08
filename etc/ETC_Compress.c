@@ -20,13 +20,10 @@
 
 #include "../lib.h"
 
-#include <assert.h>
 #include <iso646.h>
 #include <math.h>
-#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <string.h> // memcpy
 
 
 
@@ -37,7 +34,7 @@ static void compressETCBlockRGB( ETCBlockColor_t * out_block, const rgb8_t in_BL
     ETCBlockColor_t bestBlock;
     
     for ( int m = 0; m < in_COMPRESSION_MODE_COUNT; m++ ) {
-        error = in_COMPRESSION_MODE[m]( &block, in_BLOCK_RGB, in_STRATEGY, false );
+        error = in_COMPRESSION_MODE[m]( &block, in_BLOCK_RGB, in_STRATEGY, true );
         
         if ( error < bestError ) {
             bestError = error;

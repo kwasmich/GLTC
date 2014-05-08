@@ -42,7 +42,7 @@ static void buildBlock( ETCBlockColor_t * out_block, const rgb4_t in_C0, const r
 	convert444to888( &col8[0], c0 );
 	convert444to888( &col8[1], c1 );
 	computeRGBColorPaletteH( &palette[0], col8[0], col8[1], in_D, in_OPAQUE );
-	computeBlockError( modulation, in_BLOCK_RGB, palette );
+	computeBlockError( modulation, in_BLOCK_RGB, palette, in_OPAQUE );
 	uint32_t bitField = generateBitField( modulation );
 	
 	ETCBlockH_t block;
@@ -191,7 +191,7 @@ static uint32_t quick( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, const rgb8
 	convert444to888( &col8[0], c0 );
 	convert444to888( &col8[1], c1 );
 	computeRGBColorPaletteH( &palette[0], col8[0], col8[1], d, in_OPAQUE );
-	uint32_t error = computeBlockError( NULL, in_BLOCK_RGB, palette );
+	uint32_t error = computeBlockError( NULL, in_BLOCK_RGB, palette, in_OPAQUE );
 	
 	*out_c0 = c0;
 	*out_c1 = c1;
@@ -245,7 +245,7 @@ static uint32_t brute( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, const rgb8
 							
 							for ( d = 0; d < ETC_DISTANCE_TABLE_COUNT; d++ ) {
 								computeRGBColorPaletteH( &palette[0], col8[0], col8[1], d, in_OPAQUE );
-								error = computeBlockError( NULL, in_BLOCK_RGB, palette );
+								error = computeBlockError( NULL, in_BLOCK_RGB, palette, in_OPAQUE );
 								
 								if ( ( error < bestError ) or ( ( error == bestError ) and ( distance[1] < bestDistance ) ) ) {
 									bestError = error;

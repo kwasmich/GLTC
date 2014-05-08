@@ -130,7 +130,7 @@ uint32_t computeSubBlockError( uint8_t out_modulation[2][4], const rgb8_t in_SUB
 
 
 // computes the error for a 4x4 RGB block
-uint32_t computeBlockError( uint8_t out_modulation[4][4], const rgb8_t in_BLOCK_RGB[4][4], const rgb8_t in_PALETTE[4] ) {
+uint32_t computeBlockError( uint8_t out_modulation[4][4], const rgb8_t in_BLOCK_RGB[4][4], const rgb8_t in_PALETTE[4], const bool in_OPAQUE ) {
 	uint32_t blockError = 0;
 	uint32_t pixelError = 0;
 	uint32_t lowestPixelError = 0;
@@ -142,6 +142,9 @@ uint32_t computeBlockError( uint8_t out_modulation[4][4], const rgb8_t in_BLOCK_
 			lowestPixelError = 0xFFFFFFFF;
 			
 			for ( int p = 0; p < 4; p++ ) {
+				if ( !in_OPAQUE and p == 2 )
+					continue;
+				
 				dR = pixel.r - in_PALETTE[p].r;
 				dG = pixel.g - in_PALETTE[p].g;
 				dB = pixel.b - in_PALETTE[p].b;
