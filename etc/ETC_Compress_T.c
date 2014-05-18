@@ -21,13 +21,13 @@ static ETCUniformColorComposition_t ETC_UNIFORM_COLOR_LUT_NON_OPAQUE[ETC_DISTANC
 
 
 
-static void buildBlock( ETCBlockColor_t * out_block, const rgb4_t in_C0, const rgb4_t in_C1, const int in_D, const rgb8_t in_BLOCK_RGB[4][4], const bool in_OPAQUE ) {
-	rgb8_t col8[2], palette[4];
+static void buildBlock( ETCBlockColor_t * out_block, const rgb4_t in_C0, const rgb4_t in_C1, const int in_D, const rgba8_t in_BLOCK_RGBA[4][4], const bool in_OPAQUE ) {
+	rgba8_t col8[2], palette[4];
 	uint8_t modulation[4][4];
-	convert444to888( &col8[0], in_C0 );
-	convert444to888( &col8[1], in_C1 );
+	convert444to8888( &col8[0], in_C0 );
+	convert444to8888( &col8[1], in_C1 );
 	computeRGBColorPaletteT( &palette[0], col8[0], col8[1], in_D, in_OPAQUE );
-	computeBlockError( modulation, in_BLOCK_RGB, palette, in_OPAQUE );
+	computeBlockError( modulation, in_BLOCK_RGBA, palette, in_OPAQUE );
 	uint32_t bitField = generateBitField( modulation );
 	
 	ETCBlockT_t block;
@@ -56,8 +56,8 @@ static void buildBlock( ETCBlockColor_t * out_block, const rgb4_t in_C0, const r
 
 
 
-static uint32_t uniformColor( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, const rgb8_t in_BLOCK_RGB[4][4], const bool in_OPAQUE ) {
-	rgb8_t col8;
+static uint32_t uniformColor( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, const rgba8_t in_BLOCK_RGBA[4][4], const bool in_OPAQUE ) {
+	rgba8_t col8;
 	rgb4_t col4 = { 0, 0, 0 };
 	uint32_t error = 0;
 	uint32_t bestError = 0xFFFFFFFF;
@@ -65,7 +65,7 @@ static uint32_t uniformColor( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, con
 	rgb4_t bestC = { 0, 0, 0 };
 	ETCUniformColorComposition_t (* lut)[ETC_PALETTE_SIZE][256] = ( in_OPAQUE ) ? &ETC_UNIFORM_COLOR_LUT[0] : &ETC_UNIFORM_COLOR_LUT_NON_OPAQUE[0];
 	
-	computeBlockCenter( &col8, in_BLOCK_RGB );
+	computeBlockCenter( &col8, in_BLOCK_RGBA );
 	
 	for ( int t = 0; t < ETC_DISTANCE_TABLE_COUNT; t++ ) {
 		for ( int p = 0; p < ETC_PALETTE_SIZE; p++ ) {
@@ -98,12 +98,12 @@ earlyExit:
 
 
 
-static void computeBlockChroma( rgb8_t * out_c0, rgb8_t * out_c1, int * out_d, const rgb8_t in_BLOCK_RGB[4][4] ) {
-	const rgb8_t * data = &in_BLOCK_RGB[0][0];
+static void computeBlockChroma( rgba8_t * out_c0, rgba8_t * out_c1, int * out_d, const rgba8_t in_BLOCK_RGBA[4][4] ) {
+	const rgba8_t * data = &in_BLOCK_RGBA[0][0];
 	int partitionMap[16];
 	int maxA, maxB, cluster, counter;
 	uint32_t maxDistance = 0;
-	rgb8_t clusterCenter[2];
+	rgba8_t clusterCenter[2];
 	int32_t dR, dG, dB;
 	int32_t sumR, sumG, sumB;
 	
@@ -167,7 +167,7 @@ static void computeBlockChroma( rgb8_t * out_c0, rgb8_t * out_c1, int * out_d, c
 	int clusterSpread[2];
 
 	for ( int c = 0; c < 2; c++ ) {
-		rgb8_t pixel;
+		rgba8_t pixel;
 		uint32_t dot;
 		uint32_t min = 0xFFFFFFFF;
 		uint32_t max = 0;
@@ -202,19 +202,19 @@ static void computeBlockChroma( rgb8_t * out_c0, rgb8_t * out_c1, int * out_d, c
 
 
 
-static uint32_t quick( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, const rgb8_t in_BLOCK_RGB[4][4], const bool in_OPAQUE ) {
-	rgb8_t col8[2], palette[4];
+static uint32_t quick( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, const rgba8_t in_BLOCK_RGBA[4][4], const bool in_OPAQUE ) {
+	rgba8_t col8[2], palette[4];
 	rgb4_t c0, c1;
 	int d;
 	
-	computeBlockChroma( &col8[0], &col8[1], &d, in_BLOCK_RGB );
+	computeBlockChroma( &col8[0], &col8[1], &d, in_BLOCK_RGBA );
 	
-	convert888to444( &c0, col8[0] );
-	convert888to444( &c1, col8[1] );
-	convert444to888( &col8[0], c0 );
-	convert444to888( &col8[1], c1 );
+	convert8888to444( &c0, col8[0] );
+	convert8888to444( &c1, col8[1] );
+	convert444to8888( &col8[0], c0 );
+	convert444to8888( &col8[1], c1 );
 	computeRGBColorPaletteT( &palette[0], col8[0], col8[1], d, in_OPAQUE );
-	uint32_t error = computeBlockError( NULL, in_BLOCK_RGB, palette, in_OPAQUE );
+	uint32_t error = computeBlockError( NULL, in_BLOCK_RGBA, palette, in_OPAQUE );
 	
 	*out_c0 = c0;
 	*out_c1 = c1;
@@ -224,10 +224,8 @@ static uint32_t quick( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, const rgb8
 
 
 
-static uint32_t brute( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, const rgb8_t in_BLOCK_RGB[4][4], const bool in_OPAQUE ) {
-	rgb8_t palette[4];
-	rgb8_t center;
-	rgb8_t col8[2];
+static uint32_t brute( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, const rgba8_t in_BLOCK_RGBA[4][4], const bool in_OPAQUE ) {
+	rgba8_t col8[2], center, palette[4];
 	rgb4_t c0, bestC0;
 	rgb4_t c1, bestC1;
 	uint32_t error = 0xFFFFFFFF;
@@ -237,13 +235,13 @@ static uint32_t brute( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, const rgb8
 	int distance[2], dR, dG, dB;
 	int r0, g0, b0, r1, g1, b1;
 	
-	computeBlockCenter( &center, in_BLOCK_RGB );
+	computeBlockCenter( &center, in_BLOCK_RGBA );
 	
 	for ( r0 = 0; r0 < 16; r0++ ) {
 		for ( g0 = 0; g0 < 16; g0++ ) {
 			for ( b0 = 0; b0 < 16; b0++ ) {
 				c0 = (rgb4_t){ b0, g0, r0 };
-				convert444to888( &col8[0], c0 );
+				convert444to8888( &col8[0], c0 );
 				dR = center.r - col8[0].r;
 				dG = center.g - col8[0].g;
 				dB = center.b - col8[0].b;
@@ -253,7 +251,7 @@ static uint32_t brute( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, const rgb8
 					for ( g1 = 0; g1 < 16; g1++ ) {
 						for ( b1 = 0; b1 < 16; b1++ ) {
 							c1 = (rgb4_t){ b1, g1, r1 };
-							convert444to888( &col8[1], c1 );
+							convert444to8888( &col8[1], c1 );
 							dR = center.r - col8[1].r;
 							dG = center.g - col8[1].g;
 							dB = center.b - col8[1].b;
@@ -261,7 +259,7 @@ static uint32_t brute( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, const rgb8
 							
 							for ( d = 0; d < ETC_DISTANCE_TABLE_COUNT; d++ ) {
 								computeRGBColorPaletteT( &palette[0], col8[0], col8[1], d, in_OPAQUE );
-								error = computeBlockError( NULL, in_BLOCK_RGB, palette, in_OPAQUE );
+								error = computeBlockError( NULL, in_BLOCK_RGBA, palette, in_OPAQUE );
 								
 								if ( ( error < bestError ) or ( ( error == bestError ) and ( distance[1] < bestDistance ) ) ) {
 									bestError = error;
@@ -295,26 +293,26 @@ earlyExit:
 
 
 
-uint32_t compressT( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4], const Strategy_t in_STRATEGY, const bool in_OPAQUE ) {
+uint32_t compressT( ETCBlockColor_t * out_block, const rgba8_t in_BLOCK_RGBA[4][4], const Strategy_t in_STRATEGY, const bool in_OPAQUE ) {
 	rgb4_t c0, c1;
 	int d;
 	uint32_t blockError = 0xFFFFFFFF;
 	
-	if ( isUniformColorBlock( in_BLOCK_RGB ) ) {
-		blockError = uniformColor( &c0, &c1, &d, in_BLOCK_RGB, in_OPAQUE );
+	if ( isUniformColorBlock( in_BLOCK_RGBA ) ) {
+		blockError = uniformColor( &c0, &c1, &d, in_BLOCK_RGBA, in_OPAQUE );
 	} else {
 		switch ( in_STRATEGY ) {
 			case kFAST:
-				blockError = quick( &c0, &c1, &d, in_BLOCK_RGB, in_OPAQUE );
+				blockError = quick( &c0, &c1, &d, in_BLOCK_RGBA, in_OPAQUE );
 				break;
 				
 			case kBEST:
-				blockError = brute( &c0, &c1, &d, in_BLOCK_RGB, in_OPAQUE );
+				blockError = brute( &c0, &c1, &d, in_BLOCK_RGBA, in_OPAQUE );
 				break;
 		}
 	}
 	
-	buildBlock( out_block, c0, c1, d, in_BLOCK_RGB, in_OPAQUE );
+	buildBlock( out_block, c0, c1, d, in_BLOCK_RGBA, in_OPAQUE );
 	return blockError;
 }
 

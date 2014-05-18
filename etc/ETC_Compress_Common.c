@@ -91,7 +91,7 @@ void fillUniformColorPaletteLUTGaps( ETCUniformColorComposition_t in_out_lut[8][
 
 
 // computes the error for a 4x2 RGB sub-block
-uint32_t computeSubBlockError( uint8_t out_modulation[2][4], const rgb8_t in_SUB_BLOCK_RGB[2][4], const rgb8_t in_PALETTE[4] ) {
+uint32_t computeSubBlockError( uint8_t out_modulation[2][4], const rgba8_t in_SUB_BLOCK_RGBA[2][4], const rgba8_t in_PALETTE[4] ) {
 	uint32_t subBlockError = 0;
 	uint32_t pixelError = 0;
 	uint32_t lowestPixelError = 0;
@@ -99,7 +99,7 @@ uint32_t computeSubBlockError( uint8_t out_modulation[2][4], const rgb8_t in_SUB
 	
 	for ( int sby = 0; sby < 2; sby++ ) {
 		for ( int sbx = 0; sbx < 4; sbx++ ) {
-			rgb8_t pixel = in_SUB_BLOCK_RGB[sby][sbx];
+			rgba8_t pixel = in_SUB_BLOCK_RGBA[sby][sbx];
 			lowestPixelError = 0xFFFFFFFF;
 			
 			for ( int p = 0; p < 4; p++ ) {
@@ -130,7 +130,7 @@ uint32_t computeSubBlockError( uint8_t out_modulation[2][4], const rgb8_t in_SUB
 
 
 // computes the error for a 4x4 RGB block
-uint32_t computeBlockError( uint8_t out_modulation[4][4], const rgb8_t in_BLOCK_RGB[4][4], const rgb8_t in_PALETTE[4], const bool in_OPAQUE ) {
+uint32_t computeBlockError( uint8_t out_modulation[4][4], const rgba8_t in_BLOCK_RGBA[4][4], const rgba8_t in_PALETTE[4], const bool in_OPAQUE ) {
 	uint32_t blockError = 0;
 	uint32_t pixelError = 0;
 	uint32_t lowestPixelError = 0;
@@ -138,7 +138,7 @@ uint32_t computeBlockError( uint8_t out_modulation[4][4], const rgb8_t in_BLOCK_
 	
 	for ( int by = 0; by < 4; by++ ) {
 		for ( int bx = 0; bx < 4; bx++ ) {
-			rgb8_t pixel = in_BLOCK_RGB[by][bx];
+			rgba8_t pixel = in_BLOCK_RGBA[by][bx];
 			lowestPixelError = 0xFFFFFFFF;
 			
 			for ( int p = 0; p < 4; p++ ) {
@@ -172,14 +172,14 @@ uint32_t computeBlockError( uint8_t out_modulation[4][4], const rgb8_t in_BLOCK_
 
 
 // computes the error for a 4x4 RGB block in planar mode
-uint32_t computeBlockErrorP( const rgb8_t in_C0, const rgb8_t in_CH, const rgb8_t in_CV, const rgb8_t in_BLOCK_RGB[4][4] ) {
+uint32_t computeBlockErrorP( const rgba8_t in_C0, const rgba8_t in_CH, const rgba8_t in_CV, const rgba8_t in_BLOCK_RGBA[4][4] ) {
 	uint32_t blockError = 0;
 	int32_t dR, dG, dB;
-	rgb8_t col8;
+	rgba8_t col8;
 	
 	for ( int by = 0; by < 4; by++ ) {
 		for ( int bx = 0; bx < 4; bx++ ) {
-			rgb8_t pixel = in_BLOCK_RGB[by][bx];
+			rgba8_t pixel = in_BLOCK_RGBA[by][bx];
 			col8.r = computePlaneColor( bx, by, in_C0.r, in_CH.r, in_CV.r );
 			col8.g = computePlaneColor( bx, by, in_C0.g, in_CH.g, in_CV.g );
 			col8.b = computePlaneColor( bx, by, in_C0.b, in_CH.b, in_CV.b );
@@ -269,22 +269,24 @@ uint64_t generateAlphaBitField( const uint8_t in_MODULATION[4][4] ) {
 
 
 
-void computeSubBlockMinMax( rgb8_t * out_min, rgb8_t * out_max, const rgb8_t in_SUB_BLOCK_RGB[2][4] ) {
-    rgb8_t pixel;
-	rgb8_t cMin = {{ 255, 255, 255 }};
-	rgb8_t cMax = {{ 0, 0, 0 }};
+void computeSubBlockMinMax( rgba8_t * out_min, rgba8_t * out_max, const rgba8_t in_SUB_BLOCK_RGBA[2][4] ) {
+    rgba8_t pixel;
+	rgba8_t cMin = {{ 255, 255, 255, 255 }};
+	rgba8_t cMax = {{ 0, 0, 0, 0 }};
 	
 	for ( int sby = 0; sby < 2; sby++ ) {
 		for ( int sbx = 0; sbx < 4; sbx++ ) {
-			pixel = in_SUB_BLOCK_RGB[sby][sbx];
+			pixel = in_SUB_BLOCK_RGBA[sby][sbx];
 			
 			cMin.r = ( pixel.r < cMin.r ) ? pixel.r : cMin.r;
 			cMin.g = ( pixel.g < cMin.g ) ? pixel.g : cMin.g;
 			cMin.b = ( pixel.b < cMin.b ) ? pixel.b : cMin.b;
+			cMin.b = ( pixel.a < cMin.a ) ? pixel.a : cMin.a;
 			
 			cMax.r = ( pixel.r > cMax.r ) ? pixel.r : cMax.r;
 			cMax.g = ( pixel.g > cMax.g ) ? pixel.g : cMax.g;
 			cMax.b = ( pixel.b > cMax.b ) ? pixel.b : cMax.b;
+			cMax.b = ( pixel.a > cMax.a ) ? pixel.a : cMax.a;
 		}
 	}
     
@@ -294,19 +296,20 @@ void computeSubBlockMinMax( rgb8_t * out_min, rgb8_t * out_max, const rgb8_t in_
 
 
 
-void computeSubBlockCenter( rgb8_t * out_center, const rgb8_t in_SUB_BLOCK_RGB[2][4] ) {
-	rgb8_t cMin = {{ 255, 255, 255 }};
-	rgb8_t cMax = {{ 0, 0, 0 }};
-	computeSubBlockMinMax( &cMin, &cMax, in_SUB_BLOCK_RGB );
+void computeSubBlockCenter( rgba8_t * out_center, const rgba8_t in_SUB_BLOCK_RGBA[2][4] ) {
+	rgba8_t cMin = {{ 255, 255, 255, 255 }};
+	rgba8_t cMax = {{ 0, 0, 0, 0 }};
+	computeSubBlockMinMax( &cMin, &cMax, in_SUB_BLOCK_RGBA );
 	out_center->r = ( cMin.r + cMax.r + 1 ) >> 1;
 	out_center->g = ( cMin.g + cMax.g + 1 ) >> 1;
 	out_center->b = ( cMin.b + cMax.b + 1 ) >> 1;
+	out_center->a = ( cMin.a + cMax.a + 1 ) >> 1;
 }
 
 
 
-void computeSubBlockMedian( rgb8_t * out_median, const rgb8_t in_SUB_BLOCK_RGB[2][4] ) {
-    rgb8_t pixel;
+void computeSubBlockMedian( rgba8_t * out_median, const rgba8_t in_SUB_BLOCK_RGBA[2][4] ) {
+    rgba8_t pixel;
     uint8_t mR[8];
     uint8_t mG[8];
     uint8_t mB[8];
@@ -314,7 +317,7 @@ void computeSubBlockMedian( rgb8_t * out_median, const rgb8_t in_SUB_BLOCK_RGB[2
     
     for ( int sby = 0; sby < 2; sby++ ) {
         for ( int sbx = 0; sbx < 4; sbx++ ) {
-            pixel = in_SUB_BLOCK_RGB[sby][sbx];
+            pixel = in_SUB_BLOCK_RGBA[sby][sbx];
             
             mR[index] = pixel.r;
             mG[index] = pixel.g;
@@ -337,15 +340,15 @@ void computeSubBlockMedian( rgb8_t * out_median, const rgb8_t in_SUB_BLOCK_RGB[2
 // Project all pixels onto the diagonal ( 1, 1, 1 )
 // Get the maximum and minimum to compute the width
 // Find a table index that matches the span
-void computeSubBlockWidth( int * out_t, const rgb8_t in_SUB_BLOCK_RGB[2][4] ) {
-	rgb8_t pixel;
+void computeSubBlockWidth( int * out_t, const rgba8_t in_SUB_BLOCK_RGBA[2][4] ) {
+	rgba8_t pixel;
 	uint32_t dot;
 	uint32_t min = 0xFFFFFFFF;
 	uint32_t max = 0;
 	
 	for ( int sby = 0; sby < 2; sby++ ) {
 		for ( int sbx = 0; sbx < 4; sbx++ ) {
-			pixel = in_SUB_BLOCK_RGB[sby][sbx];
+			pixel = in_SUB_BLOCK_RGBA[sby][sbx];
 			
 			dot = pixel.r + pixel.g + pixel.b;
 			min = ( dot < min ) ? dot : min;
@@ -396,22 +399,24 @@ exit:
 
 
 
-void computeBlockMinMax( rgb8_t * out_min, rgb8_t * out_max, const rgb8_t in_BLOCK_RGB[4][4] ) {
-    rgb8_t pixel;
-	rgb8_t cMin = {{ 255, 255, 255 }};
-	rgb8_t cMax = {{ 0, 0, 0 }};
+void computeBlockMinMax( rgba8_t * out_min, rgba8_t * out_max, const rgba8_t in_BLOCK_RGBA[4][4] ) {
+    rgba8_t pixel;
+	rgba8_t cMin = {{ 255, 255, 255, 255 }};
+	rgba8_t cMax = {{ 0, 0, 0, 0 }};
 	
 	for ( int by = 0; by < 4; by++ ) {
 		for ( int bx = 0; bx < 4; bx++ ) {
-			pixel = in_BLOCK_RGB[by][bx];
+			pixel = in_BLOCK_RGBA[by][bx];
 			
 			cMin.r = ( pixel.r < cMin.r ) ? pixel.r : cMin.r;
 			cMin.g = ( pixel.g < cMin.g ) ? pixel.g : cMin.g;
 			cMin.b = ( pixel.b < cMin.b ) ? pixel.b : cMin.b;
+			cMin.a = ( pixel.a < cMin.a ) ? pixel.a : cMin.a;
 			
 			cMax.r = ( pixel.r > cMax.r ) ? pixel.r : cMax.r;
 			cMax.g = ( pixel.g > cMax.g ) ? pixel.g : cMax.g;
 			cMax.b = ( pixel.b > cMax.b ) ? pixel.b : cMax.b;
+			cMax.a = ( pixel.a > cMax.a ) ? pixel.a : cMax.a;
 		}
 	}
     
@@ -441,13 +446,14 @@ void computeAlphaBlockMinMax( uint8_t * out_min, uint8_t * out_max, const uint8_
 
 
 
-void computeBlockCenter( rgb8_t * out_center, const rgb8_t in_BLOCK_RGB[4][4] ) {
-	rgb8_t cMin = {{ 255, 255, 255 }};
-	rgb8_t cMax = {{ 0, 0, 0 }};
-	computeBlockMinMax( &cMin, &cMax, in_BLOCK_RGB );
+void computeBlockCenter( rgba8_t * out_center, const rgba8_t in_BLOCK_RGBA[4][4] ) {
+	rgba8_t cMin = {{ 255, 255, 255, 255 }};
+	rgba8_t cMax = {{ 0, 0, 0, 0 }};
+	computeBlockMinMax( &cMin, &cMax, in_BLOCK_RGBA );
 	out_center->r = ( cMin.r + cMax.r + 1 ) >> 1;
 	out_center->g = ( cMin.g + cMax.g + 1 ) >> 1;
 	out_center->b = ( cMin.b + cMax.b + 1 ) >> 1;
+	out_center->a = ( cMin.a + cMax.a + 1 ) >> 1;
 }
 
 
@@ -1018,9 +1024,9 @@ static void _computeMinMaxAvgCenterMedian( rgb8_t * out_min, rgb8_t * out_max, r
 
 
 
-bool isUniformColorBlock( const rgb8_t in_BLOCK_RGB[4][4] ) {
-    rgb8_t cMin, cMax;
-    computeBlockMinMax( &cMin, &cMax, in_BLOCK_RGB );
+bool isUniformColorBlock( const rgba8_t in_BLOCK_RGBA[4][4] ) {
+    rgba8_t cMin, cMax;
+    computeBlockMinMax( &cMin, &cMax, in_BLOCK_RGBA );
     return ( ( cMin.r == cMax.r ) and ( cMin.g == cMax.g ) and ( cMin.b == cMax.b ) );
 }
 
@@ -1034,9 +1040,9 @@ bool isUniformAlphaBlock( const uint8_t in_BLOCK_A[4][4] ) {
 
 
 
-bool isUniformColorSubBlock( const rgb8_t in_SUB_BLOCK_RGB[2][4] ) {
-    rgb8_t cMin, cMax;
-    computeSubBlockMinMax( &cMin, &cMax, in_SUB_BLOCK_RGB );
+bool isUniformColorSubBlock( const rgba8_t in_SUB_BLOCK_RGBA[2][4] ) {
+    rgba8_t cMin, cMax;
+    computeSubBlockMinMax( &cMin, &cMax, in_SUB_BLOCK_RGBA );
     return ( ( cMin.r == cMax.r ) and ( cMin.g == cMax.g ) and ( cMin.b == cMax.b ) );
 }
 

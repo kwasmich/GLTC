@@ -153,6 +153,49 @@ void convert5551to8888( rgba8_t * out_rgba, const rgba5551_t in_RGBA ) {
 
 
 
+void convert8888to444( rgb4_t * out_rgb, const rgba8_t in_RGBA ) {
+	out_rgb->r = LUT_4[in_RGBA.r];
+    out_rgb->g = LUT_4[in_RGBA.g];
+    out_rgb->b = LUT_4[in_RGBA.b];
+}
+
+
+
+void convert444to8888( rgba8_t * out_rgba, const rgb4_t in_RGB ) {
+	out_rgba->r = extend4to8bits( in_RGB.r );
+    out_rgba->g = extend4to8bits( in_RGB.g );
+    out_rgba->b = extend4to8bits( in_RGB.b );
+    out_rgba->a = 255;
+}
+
+
+
+void convert8888to555( rgb5_t * out_rgb, const rgba8_t in_RGBA ) {
+	out_rgb->r = LUT_5[in_RGBA.r];
+    out_rgb->g = LUT_5[in_RGBA.g];
+    out_rgb->b = LUT_5[in_RGBA.b];
+}
+
+
+
+void convert555to8888( rgba8_t * out_rgba, const rgb5_t in_RGB ) {
+	out_rgba->r = extend5to8bits( in_RGB.r );
+    out_rgba->g = extend5to8bits( in_RGB.g );
+    out_rgba->b = extend5to8bits( in_RGB.b );
+    out_rgba->a = 255;
+}
+
+
+
+void convert676to8888( rgba8_t * out_rgba, const rgb676_t in_RGB ) {
+    out_rgba->r = extend6to8bits( in_RGB.r );
+    out_rgba->g = extend7to8bits( in_RGB.g );
+    out_rgba->b = extend6to8bits( in_RGB.b );
+	out_rgba->a = 255;
+}
+
+
+
 //const uint8_t BAYER_2X2[2][2] = { 0, 2, 3, 1 };
 const uint8_t BAYER_4X4[4][4] = {
 	{  0, 12,  2, 14 },

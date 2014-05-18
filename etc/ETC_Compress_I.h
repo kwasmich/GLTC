@@ -16,7 +16,7 @@
 
 void computeUniformColorLUTI( void );
 
-uint32_t compressI( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4], const Strategy_t in_STRATEGY, const bool in_OPAQUE );
+uint32_t compressI( ETCBlockColor_t * out_block, const rgba8_t in_BLOCK_RGBA[4][4], const Strategy_t in_STRATEGY, const bool in_OPAQUE );
 
 void printInfoI( ETCBlockColor_t * in_BLOCK );
 

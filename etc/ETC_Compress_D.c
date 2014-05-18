@@ -41,8 +41,8 @@ static void buildBlock( ETCBlockColor_t * out_block, const rgb5_t in_C, const rg
 
 
 
-static uint32_t uniformColor( rgb5_t * out_c, int * out_t, uint8_t out_modulation[2][4], const rgb8_t in_SUB_BLOCK_RGB[2][4], const bool in_OPAQUE ) {
-	rgb8_t col8, palette[4];
+static uint32_t uniformColor( rgb5_t * out_c, int * out_t, uint8_t out_modulation[2][4], const rgba8_t in_SUB_BLOCK_RGBA[2][4], const bool in_OPAQUE ) {
+	rgba8_t col8, palette[4];
 	rgb5_t col5 = { 0, 0, 0 };
 	uint32_t error = 0;
 	uint32_t bestError = 0xFFFFFFFF;
@@ -50,7 +50,7 @@ static uint32_t uniformColor( rgb5_t * out_c, int * out_t, uint8_t out_modulatio
 	rgb5_t bestC = { 0, 0, 0 };
 	ETCUniformColorComposition_t (* lut)[ETC_PALETTE_SIZE][256] = ( in_OPAQUE ) ? ETC_UNIFORM_COLOR_LUT : ETC_UNIFORM_COLOR_LUT_NON_OPAQUE;
 	
-	computeSubBlockCenter( &col8, in_SUB_BLOCK_RGB );
+	computeSubBlockCenter( &col8, in_SUB_BLOCK_RGBA );
 	
 	for ( int t = 0; t < ETC_TABLE_COUNT; t++ ) {
 		for ( int p = 0; p < ETC_PALETTE_SIZE; p++ ) {
@@ -77,35 +77,33 @@ earlyExit:
 	*out_c = bestC;
 	*out_t = bestT;
 	
-	convert555to888( &col8, bestC );
+	convert555to8888( &col8, bestC );
 	computeRGBColorPaletteCommonID( palette, col8, bestT, ETC_MODIFIER_TABLE );
-	return computeSubBlockError( out_modulation, in_SUB_BLOCK_RGB, palette );
+	return computeSubBlockError( out_modulation, in_SUB_BLOCK_RGBA, palette );
 }
 
 
 
-static uint32_t quick( rgb5_t * out_c, int * out_t, uint8_t out_modulation[2][4], const rgb8_t in_SUB_BLOCK_RGB[2][4], const bool in_OPAQUE ) {
+static uint32_t quick( rgb5_t * out_c, int * out_t, uint8_t out_modulation[2][4], const rgba8_t in_SUB_BLOCK_RGBA[2][4], const bool in_OPAQUE ) {
 	rgb5_t col5;
-	rgb8_t center, palette[4];
+	rgba8_t center, palette[4];
 	int t;
-	computeSubBlockMedian( &center, in_SUB_BLOCK_RGB );
-	computeSubBlockWidth( &t, in_SUB_BLOCK_RGB );
-	convert888to555( &col5, center );
-	convert555to888( &center, col5 );
+	computeSubBlockMedian( &center, in_SUB_BLOCK_RGBA );
+	computeSubBlockWidth( &t, in_SUB_BLOCK_RGBA );
+	convert8888to555( &col5, center );
+	convert555to8888( &center, col5 );
 	computeRGBColorPaletteCommonID( palette, center, t, ETC_MODIFIER_TABLE );
 	
 	*out_c = col5;
 	*out_t = t;
 	
-	return computeSubBlockError( out_modulation, &in_SUB_BLOCK_RGB[0], palette );
+	return computeSubBlockError( out_modulation, &in_SUB_BLOCK_RGBA[0], palette );
 }
 
 
 /*
-static uint32_t bruteSubBlock( rgb5_t * out_c, int * out_t, uint8_t out_modulation[2][4], const rgb8_t in_SUB_BLOCK_RGB[2][4] ) {
-	rgb8_t palette[4];
-	rgb8_t center;
-	rgb8_t col8;
+static uint32_t bruteSubBlock( rgb5_t * out_c, int * out_t, uint8_t out_modulation[2][4], const rgba8_t in_SUB_BLOCK_RGBA[2][4] ) {
+	rgba8_t col8, center, palette[4];
 	rgb5_t col5, bestC;
 	uint32_t error = 0xFFFFFFFF;
 	uint32_t bestError = 0xFFFFFFFF;
@@ -114,16 +112,16 @@ static uint32_t bruteSubBlock( rgb5_t * out_c, int * out_t, uint8_t out_modulati
 	int t, bestT;
 	int r, g, b;
 	
-	computeSubBlockCenter( &center, &in_SUB_BLOCK_RGB[0] );
+	computeSubBlockCenter( &center, &in_SUB_BLOCK_RGBA[0] );
 	
 	for ( t = 0; t < ETC_TABLE_COUNT; t++ ) {
 		for ( b = 0; b < 32; b++ ) {
 			for ( g = 0; g < 32; g++ ) {
 				for ( r = 0; r < 32; r++ ) {
 					col5 = (rgb5_t){ b, g, r };
-					convert555to888( &col8, col5 );
+					convert555to8888( &col8, col5 );
 					computeRGBColorPaletteCommonID( palette, col8, t, ETC_MODIFIER_TABLE );
-					error = computeSubBlockError( NULL, &in_SUB_BLOCK_RGB[0], palette );
+					error = computeSubBlockError( NULL, &in_SUB_BLOCK_RGBA[0], palette );
 					dR = center.r - col8.r;
 					dG = center.g - col8.g;
 					dB = center.b - col8.b;
@@ -148,17 +146,15 @@ earlyExit:
 	*out_c = bestC;
 	*out_t = bestT;
 	
-	convert555to888( &col8, bestC );
+	convert555to8888( &col8, bestC );
 	computeRGBColorPaletteCommonID( palette, col8, bestT, ETC_MODIFIER_TABLE );
-	return computeSubBlockError( out_modulation, &in_SUB_BLOCK_RGB[0], palette );
+	return computeSubBlockError( out_modulation, &in_SUB_BLOCK_RGBA[0], palette );
 }
 */
 
 
-static uint32_t bruteBlock( rgb5_t * out_c0, rgb5_t * out_c1, int * out_t0, int * out_t1, uint8_t out_modulation[4][4], const rgb8_t in_BLOCK_RGB[4][4], const bool in_OPAQUE ) {
-    rgb8_t palette[4];
-	rgb8_t center[2];
-	rgb8_t col8;
+static uint32_t bruteBlock( rgb5_t * out_c0, rgb5_t * out_c1, int * out_t0, int * out_t1, uint8_t out_modulation[4][4], const rgba8_t in_BLOCK_RGBA[4][4], const bool in_OPAQUE ) {
+    rgba8_t col8, center[2], palette[4];
 	rgb5_t col5, bestC0, bestC1;
 	uint32_t blockError = 0xFFFFFFFF;
 	uint32_t error[2] = { 0xFFFFFFFF, 0xFFFFFFFF };
@@ -174,26 +170,26 @@ static uint32_t bruteBlock( rgb5_t * out_c0, rgb5_t * out_c1, int * out_t0, int 
 			for ( g1 = 0; g1 < 32; g1++ ) {
 				for ( r1 = 0; r1 < 32; r1++ ) {
 					col5 = (rgb5_t){ b1, g1, r1 };
-					convert555to888( &col8, col5 );
+					convert555to8888( &col8, col5 );
 					computeRGBColorPaletteCommonID( palette, col8, t1, ETC_MODIFIER_TABLE );
-					errors[t1][b1][g1][r1] = computeSubBlockError( NULL, &in_BLOCK_RGB[2], palette );
+					errors[t1][b1][g1][r1] = computeSubBlockError( NULL, &in_BLOCK_RGBA[2], palette );
 				}
 			}
 		}
 	}
     
 	bestError = 0xFFFFFFFF;
-	computeSubBlockCenter( &center[0], &in_BLOCK_RGB[0] );
-	computeSubBlockCenter( &center[1], &in_BLOCK_RGB[2] );
+	computeSubBlockCenter( &center[0], &in_BLOCK_RGBA[0] );
+	computeSubBlockCenter( &center[1], &in_BLOCK_RGBA[2] );
 	
 	for ( t0 = 0; t0 < ETC_TABLE_COUNT; t0++ ) {
 		for ( b0 = 0; b0 < 32; b0++ ) {
 			for ( g0 = 0; g0 < 32; g0++ ) {
 				for ( r0 = 0; r0 < 32; r0++ ) {
 					col5 = (rgb5_t){ b0, g0, r0 };
-					convert555to888( &col8, col5 );
+					convert555to8888( &col8, col5 );
 					computeRGBColorPaletteCommonID( palette, col8, t0, ETC_MODIFIER_TABLE );
-					error[0] = computeSubBlockError( NULL, &in_BLOCK_RGB[0], palette );
+					error[0] = computeSubBlockError( NULL, &in_BLOCK_RGBA[0], palette );
 					dR = center[0].r - col8.r;
 					dG = center[0].g - col8.g;
 					dB = center[0].b - col8.b;
@@ -248,17 +244,17 @@ earlyExit:
 	col5.g = bestC0.g;
 	col5.b = bestC0.b;
 	t0 = bestT0;
-	convert555to888( &col8, col5 );
+	convert555to8888( &col8, col5 );
 	computeRGBColorPaletteCommonID( palette, col8, t0, ETC_MODIFIER_TABLE );
-	blockError  = computeSubBlockError( &out_modulation[0], &in_BLOCK_RGB[0], palette );
+	blockError  = computeSubBlockError( &out_modulation[0], &in_BLOCK_RGBA[0], palette );
 	
 	col5.r = bestC1.r;
 	col5.g = bestC1.g;
 	col5.b = bestC1.b;
 	t1 = bestT1;
-	convert555to888( &col8, col5 );
+	convert555to8888( &col8, col5 );
 	computeRGBColorPaletteCommonID( palette, col8, t1, ETC_MODIFIER_TABLE );
-	blockError += computeSubBlockError( &out_modulation[2], &in_BLOCK_RGB[2], palette );
+	blockError += computeSubBlockError( &out_modulation[2], &in_BLOCK_RGBA[2], palette );
 	
 	*out_c0 = bestC0;
 	*out_c1 = bestC1;
@@ -273,20 +269,20 @@ earlyExit:
 
 
 
-uint32_t compressD( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4], const Strategy_t in_STRATEGY, const bool in_OPAQUE ) {
+uint32_t compressD( ETCBlockColor_t * out_block, const rgba8_t in_BLOCK_RGBA[4][4], const Strategy_t in_STRATEGY, const bool in_OPAQUE ) {
 	rgb5_t c[2], bestC0;
 	rgb3_t bestD1;
 	int t[2], bestT[2], bestFlip;
-	rgb8_t blockRGB[4][4];
+	rgba8_t blockRGBA[4][4];
 	uint8_t modulation[4][4];
 	uint8_t outModulation[4][4];
 	uint32_t blockError = 0xFFFFFFFF;
 	uint32_t bestBlockError = 0xFFFFFFFF;
     uint32_t subBlockError = 0xFFFFFFFF;
 	
-    if ( isUniformColorBlock( in_BLOCK_RGB ) ) {
-        bestBlockError  = uniformColor( &bestC0, &bestT[0], &outModulation[0], &in_BLOCK_RGB[0], in_OPAQUE );
-        bestBlockError += uniformColor( &bestC0, &bestT[1], &outModulation[2], &in_BLOCK_RGB[2], in_OPAQUE );
+    if ( isUniformColorBlock( in_BLOCK_RGBA ) ) {
+        bestBlockError  = uniformColor( &bestC0, &bestT[0], &outModulation[0], &in_BLOCK_RGBA[0], in_OPAQUE );
+        bestBlockError += uniformColor( &bestC0, &bestT[1], &outModulation[2], &in_BLOCK_RGBA[2], in_OPAQUE );
         bestD1 = (rgb3_t){ 0, 0, 0 };
         bestFlip = 0;
     } else {
@@ -303,24 +299,24 @@ uint32_t compressD( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4]
         for ( int flip = 0; flip < 2; flip++ ) {
             for ( int by = 0; by < 4; by++ ) {
                 for ( int bx = 0; bx < 4; bx++ ) {
-                    blockRGB[by][bx] = ( flip ) ? in_BLOCK_RGB[by][bx] : in_BLOCK_RGB[bx][by];
+                    blockRGBA[by][bx] = ( flip ) ? in_BLOCK_RGBA[by][bx] : in_BLOCK_RGBA[bx][by];
                 }
             }
             
             blockError = 0;
             
             if ( in_STRATEGY == kBEST ) {
-                blockError = bruteBlock( &c[0], &c[1], &t[0], &t[1], modulation, blockRGB, in_OPAQUE );
+                blockError = bruteBlock( &c[0], &c[1], &t[0], &t[1], modulation, blockRGBA, in_OPAQUE );
             } else {
                 for ( int sb = 0; sb < 2; sb++ ) {
-                    if ( isUniformColorSubBlock( &blockRGB[sb * 2] ) ) {
-                        blockError += uniformColor( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2], in_OPAQUE );
+                    if ( isUniformColorSubBlock( &blockRGBA[sb * 2] ) ) {
+                        blockError += uniformColor( &c[sb], &t[sb], &modulation[sb * 2], (const rgba8_t(*)[4])&blockRGBA[sb * 2], in_OPAQUE );
                     } else {
                         subBlockError = 0xFFFFFFFF;
                         
                         switch ( in_STRATEGY ) {
 							case kFAST:
-                                subBlockError = quick( &c[sb], &t[sb], &modulation[sb * 2], (const rgb8_t(*)[4])&blockRGB[sb * 2], in_OPAQUE );
+                                subBlockError = quick( &c[sb], &t[sb], &modulation[sb * 2], (const rgba8_t(*)[4])&blockRGBA[sb * 2], in_OPAQUE );
                                 break;
 								
 							case kBEST:

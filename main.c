@@ -99,25 +99,6 @@ int main( int argc, char * argv[] ) {
     printf( "use KTX as container format! - visit http://www.khronos.org/opengles/sdk/tools/KTX/\n" );
     fillLUT();
 	
-	
-	if ( false ) {
-		uint32_t w = 0;
-        uint32_t h = 0;
-        uint32_t c = 0;
-        rgb8_t * imageData;
-		pngRead( expandTilde( "~/Desktop/Test/TestRGB64.png" ), false, (uint8_t **)&imageData, (uint32_t *)&w, (uint32_t *)&h, &c );
-		assert( c == 3 );
-		etcReadRGBCompare( expandTilde( "~/Desktop/ETC/TestRGB64_I.etc" ),
-						  expandTilde( "~/Desktop/ETC/TestRGB64_D2.etc" ),
-						  expandTilde( "~/Desktop/ETC/TestRGB64_T.etc" ), 
-						  expandTilde( "~/Desktop/ETC/TestRGB64_H.etc" ), 
-						  expandTilde( "~/Desktop/ETC/TestRGB64_P.etc" ), imageData, w, h, kBEST );
-		pngFree( (uint8_t **)&imageData );
-		
-		return EXIT_SUCCESS;
-	}
-	
-	
     const char* execName = strrchr( argv[0], '/' );
 	execName++;
 	
@@ -126,13 +107,12 @@ int main( int argc, char * argv[] ) {
     bool optD = false;
     bool optF = false;
     bool optO = false;
-	bool optR = false;
     Strategy_t optStrategy = kFAST;
     char * optCDArg = NULL;
     char * optFArg = NULL;
 	char * optOArg = NULL;
 	
-	while ( ( ch = getopt( argc, argv, "c:d:f:o:r0123456789h?" ) ) != -1 ) {
+	while ( ( ch = getopt( argc, argv, "c:d:f:o:0123456789h?" ) ) != -1 ) {
 		switch ( ch ) {
 			case 'c':
 				optC = true;
@@ -152,10 +132,6 @@ int main( int argc, char * argv[] ) {
 			case 'o':
 				optO = true;
                 optOArg = optarg;
-				break;
-                
-			case 'r':
-				optR = true;
 				break;
             
             case '0':
@@ -309,12 +285,7 @@ int main( int argc, char * argv[] ) {
                 rgb8_t * imageData;
                 pngRead( optFArg, false, (uint8_t **)&imageData, (uint32_t *)&w, (uint32_t *)&h, &c );
                 assert( c == 3 );
-				
-				if ( optR )
-					etcResumeWriteETC1RGB( optOArg, imageData, w, h, optStrategy );
-				else
-					etcWriteETC1RGB( optOArg, imageData, w, h, optStrategy );
-                
+				etcWriteETC1RGB( optOArg, imageData, w, h, optStrategy );
                 pngFree( (uint8_t **)&imageData );
             }
                 break;

@@ -134,6 +134,12 @@ void convert4444to8888( rgba8_t * out_rgba, const rgba4444_t in_RGBA );
 void convert8888to5551( rgba5551_t * out_rgba, const rgba8_t in_RGBA );
 void convert5551to8888( rgba8_t * out_rgba, const rgba5551_t in_RGBA );
 
+void convert8888to444( rgb4_t * out_rgb, const rgba8_t in_RGBA );
+void convert444to8888( rgba8_t * out_rgba, const rgb4_t in_RGB );
+void convert8888to555( rgb5_t * out_rgb, const rgba8_t in_RGBA );
+void convert555to8888( rgba8_t * out_rgba, const rgb5_t in_RGB );
+void convert676to8888( rgba8_t * out_rgba, const rgb676_t in_RGB );
+
 typedef enum { kRGB565, kRGBA4444, kRGBA5551, kRGBA5551A } format_t;
 
 void prepareBayer( void );

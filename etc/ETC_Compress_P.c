@@ -54,11 +54,11 @@ static void buildBlock( ETCBlockColor_t * out_block, const rgb676_t in_CO, const
 
 
 
-static uint32_t uniformColor( rgb676_t * out_cO, rgb676_t * out_cH, rgb676_t * out_cV, const rgb8_t in_BLOCK_RGB[4][4] ) {
-	rgb8_t cAvg;
+static uint32_t uniformColor( rgb676_t * out_cO, rgb676_t * out_cH, rgb676_t * out_cV, const rgba8_t in_BLOCK_RGBA[4][4] ) {
+	rgba8_t cAvg;
 	rgb676_t c = { 0, 0, 0 };
 	
-	computeBlockCenter( &cAvg, in_BLOCK_RGB );
+	computeBlockCenter( &cAvg, in_BLOCK_RGBA );
 	
 	c.r = ETC_UNIFORM_COLOR_LUT_6[cAvg.r].c;
 	c.g = ETC_UNIFORM_COLOR_LUT_7[cAvg.g].c;
@@ -68,15 +68,15 @@ static uint32_t uniformColor( rgb676_t * out_cO, rgb676_t * out_cH, rgb676_t * o
 	*out_cH = c;
 	*out_cV = c;
 	
-	rgb8_t col8;
-	convert676to888( &col8, c );
-	return computeBlockErrorP( col8, col8, col8, in_BLOCK_RGB );
+	rgba8_t col8;
+	convert676to8888( &col8, c );
+	return computeBlockErrorP( col8, col8, col8, in_BLOCK_RGBA );
 }
 
 
 
-static uint32_t brute( rgb676_t * out_cO, rgb676_t * out_cH, rgb676_t * out_cV, const rgb8_t in_BLOCK_RGB[4][4] ) {
-	rgb8_t col, pixel, cO, cH, cV;
+static uint32_t brute( rgb676_t * out_cO, rgb676_t * out_cH, rgb676_t * out_cV, const rgba8_t in_BLOCK_RGBA[4][4] ) {
+	rgba8_t col, pixel, cO, cH, cV;
 	uint32_t error = 0xFFFFFFFF;
 	uint32_t bestError[3] = { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
 	rgb676_t bestCO, bestCH, bestCV;
@@ -96,7 +96,7 @@ static uint32_t brute( rgb676_t * out_cO, rgb676_t * out_cH, rgb676_t * out_cV, 
 				
 				for ( by = 0; by < 4; by++ ) {
 					for ( bx = 0; bx < 4; bx++ ) {
-						pixel = in_BLOCK_RGB[by][bx];
+						pixel = in_BLOCK_RGBA[by][bx];
 						col.r = computePlaneColor( bx, by, cO.r, cH.r, cV.r );
 						dR = col.r - pixel.r;
 						error += dR * dR;
@@ -130,7 +130,7 @@ earlyExitR:
 				
 				for ( by = 0; by < 4; by++ ) {
 					for ( bx = 0; bx < 4; bx++ ) {
-						pixel = in_BLOCK_RGB[by][bx];
+						pixel = in_BLOCK_RGBA[by][bx];
 						col.g = computePlaneColor( bx, by, cO.g, cH.g, cV.g );
 						dG = col.g - pixel.g;
 						error += dG * dG;
@@ -164,7 +164,7 @@ earlyExitG:
 				
 				for ( by = 0; by < 4; by++ ) {
 					for ( bx = 0; bx < 4; bx++ ) {
-						pixel = in_BLOCK_RGB[by][bx];
+						pixel = in_BLOCK_RGBA[by][bx];
 						col.b = computePlaneColor( bx, by, cO.b, cH.b, cV.b );
 						dB = col.b - pixel.b;
 						error += dB * dB;
@@ -194,8 +194,8 @@ earlyExitB:
 
 
 
-static uint32_t analytical( rgb676_t * out_cO, rgb676_t * out_cH, rgb676_t * out_cV, const rgb8_t in_BLOCK_RGB[4][4] ) {
-	rgb8_t pixel, cO, cH, cV;
+static uint32_t analytical( rgb676_t * out_cO, rgb676_t * out_cH, rgb676_t * out_cV, const rgba8_t in_BLOCK_RGBA[4][4] ) {
+	rgba8_t pixel, cO, cH, cV;
 	rgb676_t bestCO, bestCH, bestCV;
 
 	static const int matrix[3][16] = {
@@ -212,7 +212,7 @@ static uint32_t analytical( rgb676_t * out_cO, rgb676_t * out_cH, rgb676_t * out
 	
 	for ( int by = 0; by < 4; by++ ) {
 		for ( int bx = 0; bx < 4; bx++ ) {
-			pixel = in_BLOCK_RGB[by][bx];
+			pixel = in_BLOCK_RGBA[by][bx];
 			sum0[0] += matrix[0][index] * pixel.r;
 			sum0[1] += matrix[0][index] * pixel.g;
 			sum0[2] += matrix[0][index] * pixel.b;
@@ -248,10 +248,10 @@ static uint32_t analytical( rgb676_t * out_cO, rgb676_t * out_cH, rgb676_t * out
 	*out_cH = bestCH;
 	*out_cV = bestCV;
 	
-	convert676to888( &cO, bestCO );
-	convert676to888( &cH, bestCH );
-	convert676to888( &cV, bestCV );
-	return computeBlockErrorP( cO, cH, cV, in_BLOCK_RGB );
+	convert676to8888( &cO, bestCO );
+	convert676to8888( &cH, bestCH );
+	convert676to8888( &cV, bestCV );
+	return computeBlockErrorP( cO, cH, cV, in_BLOCK_RGBA );
 }
 
 
@@ -260,20 +260,20 @@ static uint32_t analytical( rgb676_t * out_cO, rgb676_t * out_cH, rgb676_t * out
 
 
 
-uint32_t compressP( ETCBlockColor_t * out_block, const rgb8_t in_BLOCK_RGB[4][4], const Strategy_t in_STRATEGY, const bool UNUSED(in_OPAQUE) ) {
+uint32_t compressP( ETCBlockColor_t * out_block, const rgba8_t in_BLOCK_RGBA[4][4], const Strategy_t in_STRATEGY, const bool UNUSED(in_OPAQUE) ) {
 	rgb676_t cO, cH, cV;
 	uint32_t blockError = 0xFFFFFFFF;
 	
-	if ( isUniformColorBlock( in_BLOCK_RGB ) ) {
-		blockError = uniformColor( &cO, &cH, &cV, in_BLOCK_RGB );
+	if ( isUniformColorBlock( in_BLOCK_RGBA ) ) {
+		blockError = uniformColor( &cO, &cH, &cV, in_BLOCK_RGBA );
 	} else {
 		switch ( in_STRATEGY ) {
 			case kFAST:
-				blockError = analytical( &cO, &cH, &cV, in_BLOCK_RGB );
+				blockError = analytical( &cO, &cH, &cV, in_BLOCK_RGBA );
 				break;
 				
 			case kBEST:
-				blockError = brute( &cO, &cH, &cV, in_BLOCK_RGB );
+				blockError = brute( &cO, &cH, &cV, in_BLOCK_RGBA );
 				break;
 		}
 	}
