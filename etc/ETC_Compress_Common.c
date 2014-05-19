@@ -281,12 +281,12 @@ void computeSubBlockMinMax( rgba8_t * out_min, rgba8_t * out_max, const rgba8_t 
 			cMin.r = ( pixel.r < cMin.r ) ? pixel.r : cMin.r;
 			cMin.g = ( pixel.g < cMin.g ) ? pixel.g : cMin.g;
 			cMin.b = ( pixel.b < cMin.b ) ? pixel.b : cMin.b;
-			cMin.b = ( pixel.a < cMin.a ) ? pixel.a : cMin.a;
+			cMin.a = ( pixel.a < cMin.a ) ? pixel.a : cMin.a;
 			
 			cMax.r = ( pixel.r > cMax.r ) ? pixel.r : cMax.r;
 			cMax.g = ( pixel.g > cMax.g ) ? pixel.g : cMax.g;
 			cMax.b = ( pixel.b > cMax.b ) ? pixel.b : cMax.b;
-			cMax.b = ( pixel.a > cMax.a ) ? pixel.a : cMax.a;
+			cMax.a = ( pixel.a > cMax.a ) ? pixel.a : cMax.a;
 		}
 	}
     

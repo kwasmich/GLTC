@@ -284,6 +284,8 @@ bool etcReadETC2RGBA8( const char in_FILE[], rgba8_t ** out_image, uint32_t * ou
             blockPtr++;
             imageRGBA_ptr++;
         }
+		
+		puts( "" );
     }
     
     free_s( block );
@@ -405,7 +407,7 @@ bool etcWriteETC2RGB8A1( const char in_FILE[], const rgba8_t * in_IMAGE, const u
     FILE * outputETCFileStream = fopen( in_FILE, "wb" );
     fwrite( &in_WIDTH, sizeof( uint32_t ), 1, outputETCFileStream );
     fwrite( &in_HEIGHT, sizeof( uint32_t ), 1, outputETCFileStream );
-    fwrite( block, sizeof( ETC2BlockRGBA_t ), blockCount, outputETCFileStream );
+    fwrite( block, sizeof( ETCBlockColor_t ), blockCount, outputETCFileStream );
     fclose( outputETCFileStream );
 	return true;
 }
