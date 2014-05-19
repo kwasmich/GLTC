@@ -25,9 +25,8 @@ static inline uint8_t computePlaneColor( const int in_BX, const int in_BY, const
 void computeAlphaPalette( uint8_t out_alphaPalette[ETC_ALPHA_PALETTE_SIZE], const uint8_t in_BASE, const int in_TABLE, const int in_MUL );
 void computeBaseColorsID( rgba8_t * out_c0, rgba8_t * out_c1, const ETCBlockColor_t in_BLOCK );
 void computeRGBColorPaletteCommonID( rgba8_t out_colorPalette[4], const rgba8_t in_C, const int in_TABLE_INDEX, const int in_TABLE[8][4] );
-void computeRGBColorPaletteT( rgba8_t out_colorPalette[4], const rgba8_t in_C0, const rgba8_t in_C1, const int in_DISTNACE, const bool in_OPAQUE );
-void computeRGBColorPaletteH( rgba8_t out_colorPalette[4], const rgba8_t in_C0, const rgba8_t in_C1, const int in_DISTNACE, const bool in_OPAQUE );
-void _computeRGBColorPaletteTHP( rgba8_t out_colorPalette[4], const ETCBlockColor_t in_BLOCK, const ETCMode_t in_MODE );
+void computeColorPaletteT( rgba8_t out_colorPalette[4], const rgba8_t in_C0, const rgba8_t in_C1, const int in_DISTNACE, const bool in_OPAQUE );
+void computeColorPaletteH( rgba8_t out_colorPalette[4], const rgba8_t in_C0, const rgba8_t in_C1, const int in_DISTNACE, const bool in_OPAQUE );
 
 ETCMode_t etcGetBlockMode( const ETCBlockColor_t in_BLOCK, const bool in_OPAQUE );
 

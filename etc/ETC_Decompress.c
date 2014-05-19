@@ -134,16 +134,18 @@ static void computeRGBAColorPaletteID( rgba8_t out_colorPalette[8], const ETCBlo
 
 
 
-void computeRGBColorPaletteT( rgba8_t out_colorPalette[4], const rgba8_t in_C0, const rgba8_t in_C1, const int in_DISTNACE, const bool in_OPAQUE ) {
+void computeColorPaletteT( rgba8_t out_colorPalette[4], const rgba8_t in_C0, const rgba8_t in_C1, const int in_DISTNACE, const bool in_OPAQUE ) {
 	int dist = ETC_DISTANCE_TABLE[in_DISTNACE];
 	out_colorPalette[0] = in_C0;
 	out_colorPalette[1].r = clampi( in_C1.r + dist, 0, 255 );
 	out_colorPalette[1].g = clampi( in_C1.g + dist, 0, 255 );
 	out_colorPalette[1].b = clampi( in_C1.b + dist, 0, 255 );
+	out_colorPalette[1].a = 255;
 	out_colorPalette[2] = in_C1;
 	out_colorPalette[3].r = clampi( in_C1.r - dist, 0, 255 );
 	out_colorPalette[3].g = clampi( in_C1.g - dist, 0, 255 );
 	out_colorPalette[3].b = clampi( in_C1.b - dist, 0, 255 );
+	out_colorPalette[3].a = 255;
 	
 	if ( !in_OPAQUE )
 		out_colorPalette[2] = (rgba8_t){{ 0, 0, 0, 0 }};
@@ -151,20 +153,24 @@ void computeRGBColorPaletteT( rgba8_t out_colorPalette[4], const rgba8_t in_C0, 
 
 
 
-void computeRGBColorPaletteH( rgba8_t out_colorPalette[4], const rgba8_t in_C0, const rgba8_t in_C1, const int in_DISTNACE, const bool in_OPAQUE ) {
+void computeColorPaletteH( rgba8_t out_colorPalette[4], const rgba8_t in_C0, const rgba8_t in_C1, const int in_DISTNACE, const bool in_OPAQUE ) {
 	int dist = ETC_DISTANCE_TABLE[in_DISTNACE];
 	out_colorPalette[0].r = clampi( in_C0.r + dist, 0, 255 );
 	out_colorPalette[0].g = clampi( in_C0.g + dist, 0, 255 );
 	out_colorPalette[0].b = clampi( in_C0.b + dist, 0, 255 );
+	out_colorPalette[0].a = 255;
 	out_colorPalette[1].r = clampi( in_C0.r - dist, 0, 255 );
 	out_colorPalette[1].g = clampi( in_C0.g - dist, 0, 255 );
 	out_colorPalette[1].b = clampi( in_C0.b - dist, 0, 255 );
+	out_colorPalette[1].a = 255;
 	out_colorPalette[2].r = clampi( in_C1.r + dist, 0, 255 );
 	out_colorPalette[2].g = clampi( in_C1.g + dist, 0, 255 );
 	out_colorPalette[2].b = clampi( in_C1.b + dist, 0, 255 );
+	out_colorPalette[2].a = 255;
 	out_colorPalette[3].r = clampi( in_C1.r - dist, 0, 255 );
 	out_colorPalette[3].g = clampi( in_C1.g - dist, 0, 255 );
 	out_colorPalette[3].b = clampi( in_C1.b - dist, 0, 255 );
+	out_colorPalette[3].a = 255;
 	
 	if ( !in_OPAQUE )
 		out_colorPalette[2] = (rgba8_t){{ 0, 0, 0, 0 }};
@@ -178,9 +184,11 @@ static void computeBaseColorsT( rgba8_t * out_c0, rgba8_t * out_c1, int * out_di
 	out_c0->r = extend4to8bits( tmpR );
 	out_c0->g = extend4to8bits( in_BLOCK.g0 );
 	out_c0->b = extend4to8bits( in_BLOCK.b0 );
+	out_c0->a = 255;
 	out_c1->r = extend4to8bits( in_BLOCK.r1 );
 	out_c1->g = extend4to8bits( in_BLOCK.g1 );
 	out_c1->b = extend4to8bits( in_BLOCK.b1 );
+	out_c1->a = 255;
 }
 
 
@@ -191,9 +199,11 @@ static void computeBaseColorsH( rgba8_t * out_c0, rgba8_t * out_c1, int * out_di
 	out_c0->r = extend4to8bits( in_BLOCK.r0 );
 	out_c0->g = extend4to8bits( tmpG );
 	out_c0->b = extend4to8bits( tmpB );
+	out_c0->a = 255;
 	out_c1->r = extend4to8bits( in_BLOCK.r1 );
 	out_c1->g = extend4to8bits( in_BLOCK.g1 );
 	out_c1->b = extend4to8bits( in_BLOCK.b1 );
+	out_c1->a = 255;
 	int tmpC0 = ( out_c0->r << 16 ) bitor ( out_c0->g << 8 ) bitor out_c0->b;
 	int tmpC1 = ( out_c1->r << 16 ) bitor ( out_c1->g << 8 ) bitor out_c1->b;
 	*out_distance = ( in_BLOCK.da << 2 ) bitor ( in_BLOCK.db << 1 ) bitor ( tmpC0 >= tmpC1 );
@@ -214,26 +224,6 @@ static void computeBaseColorsP( rgba8_t * out_cO, rgba8_t * out_cH, rgba8_t * ou
 	out_cV->r = extend6to8bits( in_BLOCK.rV );
 	out_cV->g = extend7to8bits( in_BLOCK.gV );
 	out_cV->b = extend6to8bits( in_BLOCK.bV );
-}
-
-
-void _computeRGBColorPaletteTHP( rgba8_t out_colorPalette[4], const ETCBlockColor_t in_BLOCK, const ETCMode_t in_MODE ) {
-	rgba8_t c0, c1;
-	int distance;
-	
-	// get the base colors of the sub blocks
-	if ( in_MODE == kETC_T ) {
-		ETCBlockT_t block = REINTERPRET(ETCBlockT_t)in_BLOCK;
-		computeBaseColorsT( &c0, &c1, &distance, block );
-		computeRGBColorPaletteT( out_colorPalette, c0, c1, distance, false );
-	} else if ( in_MODE == kETC_H ) {
-		ETCBlockH_t block = REINTERPRET(ETCBlockH_t)in_BLOCK;
-		computeBaseColorsH( &c0, &c1, &distance, block );
-		computeRGBColorPaletteH( out_colorPalette, c0, c1, distance, false );
-	} else if ( in_MODE == kETC_P ) {
-		ETCBlockP_t block = REINTERPRET(ETCBlockP_t)in_BLOCK;
-		computeBaseColorsP( &out_colorPalette[0], &out_colorPalette[1], &out_colorPalette[2], block );
-	}
 }
 
 
@@ -428,24 +418,7 @@ static void decodeRGBABlockTH( rgba8_t out_blockRGBA[4][4], const rgba8_t in_PAL
 
 
 
-static void decompressETC2PBlockRGB( rgba8_t out_blockRGBA[4][4], const ETCBlockColor_t in_BLOCK ) {
-	rgba8_t palette[3];
-	rgba8_t col = {{ 0, 0, 0, 0 }};
-	computeBaseColorsP( &palette[0], &palette[1], &palette[2], REINTERPRET(ETCBlockP_t)in_BLOCK );
-	
-	for ( int by = 0; by < 4; by++ ) {
-		for ( int bx = 0; bx < 4; bx++ ) {
-			col.r = computePlaneColor( bx, by, palette[0].r, palette[1].r, palette[2].r );
-			col.g = computePlaneColor( bx, by, palette[0].g, palette[1].g, palette[2].g );
-			col.b = computePlaneColor( bx, by, palette[0].b, palette[1].b, palette[2].b );
-			out_blockRGBA[by][bx] = col;
-		}
-	}
-}
-
-
-
-static void decompressETC2PBlockRGBA( rgba8_t out_blockRGBA[4][4], const ETCBlockColor_t in_BLOCK ) {
+static void decompressETC2BlockP( rgba8_t out_blockRGBA[4][4], const ETCBlockColor_t in_BLOCK ) {
 	rgba8_t palette[3];
 	rgba8_t col = {{ 0, 0, 0, 255 }};
 	computeBaseColorsP( &palette[0], &palette[1], &palette[2], REINTERPRET(ETCBlockP_t)in_BLOCK );
@@ -475,18 +448,18 @@ void decompressETC2BlockRGB( rgba8_t out_blockRGBA[4][4], const ETCBlockColor_t 
 			
 		case kETC_T:
 			computeBaseColorsT( &c0, &c1, &distance, REINTERPRET(ETCBlockT_t)in_BLOCK );
-			computeRGBColorPaletteT( palette, c0, c1, distance, true );
+			computeColorPaletteT( palette, c0, c1, distance, true );
 			decodeRGBBlockTH( out_blockRGBA, palette, in_BLOCK );
 			break;
 			
 		case kETC_H:
 			computeBaseColorsH( &c0, &c1, &distance, REINTERPRET(ETCBlockH_t)in_BLOCK );
-			computeRGBColorPaletteH( palette, c0, c1, distance, true );
+			computeColorPaletteH( palette, c0, c1, distance, true );
 			decodeRGBBlockTH( out_blockRGBA, palette, in_BLOCK );
 			break;
 			
 		case kETC_P:
-			decompressETC2PBlockRGB( out_blockRGBA, in_BLOCK );
+			decompressETC2BlockP( out_blockRGBA, in_BLOCK );
 			break;
 			
 		case kETC_INVALID:
@@ -542,18 +515,18 @@ void decompressETC2BlockRGB8A1( rgba8_t out_blockRGBA[4][4], const ETCBlockColor
 			
 		case kETC_T:
 			computeBaseColorsT( &c0, &c1, &distance, REINTERPRET(ETCBlockT_t)in_BLOCK );
-			computeRGBColorPaletteT( paletteRGBA, c0, c1, distance, in_BLOCK.differential );
+			computeColorPaletteT( paletteRGBA, c0, c1, distance, in_BLOCK.differential );
 			decodeRGBABlockTH( out_blockRGBA, paletteRGBA, in_BLOCK );
 			break;
 			
 		case kETC_H:
 			computeBaseColorsH( &c0, &c1, &distance, REINTERPRET(ETCBlockH_t)in_BLOCK );
-			computeRGBColorPaletteH( paletteRGBA, c0, c1, distance, in_BLOCK.differential );
+			computeColorPaletteH( paletteRGBA, c0, c1, distance, in_BLOCK.differential );
 			decodeRGBABlockTH( out_blockRGBA, paletteRGBA, in_BLOCK );
 			break;
 			
 		case kETC_P:
-			decompressETC2PBlockRGBA( out_blockRGBA, in_BLOCK );
+			decompressETC2BlockP( out_blockRGBA, in_BLOCK );
 			break;
 			
 		case kETC_I:
