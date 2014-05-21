@@ -147,7 +147,7 @@ void computeColorPaletteT( rgba8_t out_colorPalette[4], const rgba8_t in_C0, con
 	out_colorPalette[3].b = clampi( in_C1.b - dist, 0, 255 );
 	out_colorPalette[3].a = 255;
 	
-	if ( !in_OPAQUE )
+	if ( not in_OPAQUE )
 		out_colorPalette[2] = (rgba8_t){{ 0, 0, 0, 0 }};
 }
 
@@ -172,7 +172,7 @@ void computeColorPaletteH( rgba8_t out_colorPalette[4], const rgba8_t in_C0, con
 	out_colorPalette[3].b = clampi( in_C1.b - dist, 0, 255 );
 	out_colorPalette[3].a = 255;
 	
-	if ( !in_OPAQUE )
+	if ( not in_OPAQUE )
 		out_colorPalette[2] = (rgba8_t){{ 0, 0, 0, 0 }};
 }
 

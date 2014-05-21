@@ -28,7 +28,7 @@ void printCounter( void );
 void fillUniformColorLUTGaps( ETCUniformColorComposition_t in_out_lut[256] );
 void fillUniformColorPaletteLUTGaps( ETCUniformColorComposition_t in_out_lut[8][4][256] );
 
-uint32_t computeSubBlockError( uint8_t out_modulation[2][4], const rgba8_t in_SUB_BLOCK_RGBA[2][4], const rgba8_t in_PALETTE[ETC_PALETTE_SIZE] );
+uint32_t computeSubBlockError( uint8_t out_modulation[2][4], const rgba8_t in_SUB_BLOCK_RGBA[2][4], const rgba8_t in_PALETTE[ETC_PALETTE_SIZE], const bool in_OPAQUE );
 uint32_t computeBlockError( uint8_t out_modulation[4][4], const rgba8_t in_BLOCK_RGBA[4][4], const rgba8_t in_PALETTE[ETC_PALETTE_SIZE], const bool in_OPAQUE );
 uint32_t computeBlockErrorP( const rgba8_t in_C0, const rgba8_t in_CH, const rgba8_t in_CV, const rgba8_t in_BLOCK_RGBA[4][4] );
 uint32_t computeAlphaBlockError( uint8_t out_modulation[4][4], const uint8_t in_BLOCK_A[4][4], const uint8_t in_PALETTE[ETC_ALPHA_PALETTE_SIZE] );

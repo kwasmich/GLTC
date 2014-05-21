@@ -27,14 +27,14 @@
 
 
 
-static void compressETCBlockRGB( ETCBlockColor_t * out_block, const rgba8_t in_BLOCK_RGBA[4][4], const Strategy_t in_STRATEGY, uint32_t (*in_COMPRESSION_MODE[])( ETCBlockColor_t *, const rgba8_t[4][4], const Strategy_t, const bool ), const int in_COMPRESSION_MODE_COUNT ) {
+static void compressETCBlockRGB( ETCBlockColor_t * out_block, const rgba8_t in_BLOCK_RGBA[4][4], const Strategy_t in_STRATEGY, const bool in_OPAQUE, uint32_t (*in_COMPRESSION_MODE[])( ETCBlockColor_t *, const rgba8_t[4][4], const Strategy_t, const bool ), const int in_COMPRESSION_MODE_COUNT ) {
     uint32_t error;
 	uint32_t bestError = 0xFFFFFFFF;
     ETCBlockColor_t block;
     ETCBlockColor_t bestBlock;
     
     for ( int m = 0; m < in_COMPRESSION_MODE_COUNT; m++ ) {
-        error = in_COMPRESSION_MODE[m]( &block, in_BLOCK_RGBA, in_STRATEGY, true );
+        error = in_COMPRESSION_MODE[m]( &block, in_BLOCK_RGBA, in_STRATEGY, in_OPAQUE );
         
         if ( error < bestError ) {
             bestError = error;
@@ -58,7 +58,7 @@ void compressETC1BlockRGB( ETCBlockColor_t * out_block, const rgba8_t in_BLOCK_R
         &compressD
     };
     const int compressionModeCount = sizeof( compressionMode ) / sizeof( void * );
-    compressETCBlockRGB( out_block, in_BLOCK_RGBA, in_STRATEGY, compressionMode, compressionModeCount );
+    compressETCBlockRGB( out_block, in_BLOCK_RGBA, in_STRATEGY, true, compressionMode, compressionModeCount );
 }
 
 
@@ -72,7 +72,7 @@ void compressETC2BlockRGB( ETCBlockColor_t * out_block, const rgba8_t in_BLOCK_R
         &compressP
     };
     const int compressionModeCount = sizeof( compressionMode ) / sizeof( void * );
-    compressETCBlockRGB( out_block, in_BLOCK_RGBA, in_STRATEGY, compressionMode, compressionModeCount );
+    compressETCBlockRGB( out_block, in_BLOCK_RGBA, in_STRATEGY, true, compressionMode, compressionModeCount );
 }
 
 
@@ -85,58 +85,42 @@ static void compressETC2BlockRGBA( ETCBlockColor_t * out_block, const rgba8_t in
         &compressP	// to be omitted if not opaque
     };
     const int compressionModeCount = sizeof( compressionMode ) / sizeof( void * ) - ( ( in_OPAQUE ) ? 0 : 1 );
-    compressETCBlockRGB( out_block, in_BLOCK_RGBA, in_STRATEGY, compressionMode, compressionModeCount );
+	compressETCBlockRGB( out_block, in_BLOCK_RGBA, in_STRATEGY, in_OPAQUE, compressionMode, compressionModeCount );
 }
 
 
 
 void compressETC2BlockRGBA8( ETC2BlockRGBA_t * out_block, const rgba8_t in_BLOCK_RGBA[4][4], const Strategy_t in_STRATEGY ) {
-	rgba8_t blockRGBA[4][4];
 	uint8_t blockA[4][4];
 	
 	for ( int by = 0; by < 4; by++ ) {
 		for ( int bx = 0; bx < 4; bx++ ) {
-			blockRGBA[by][bx].r = in_BLOCK_RGBA[by][bx].r;
-			blockRGBA[by][bx].g = in_BLOCK_RGBA[by][bx].g;
-			blockRGBA[by][bx].b = in_BLOCK_RGBA[by][bx].b;
-			blockA[by][bx]      = in_BLOCK_RGBA[by][bx].a;
+			blockA[by][bx] = in_BLOCK_RGBA[by][bx].a;
 		}
 	}
 	
-	compressETC2BlockRGB( &out_block->color, blockRGBA, in_STRATEGY );
+	compressETC2BlockRGB( &out_block->color, in_BLOCK_RGBA, in_STRATEGY );
 	compressAlpha( &out_block->alpha, blockA, in_STRATEGY );
 }
 
 
 
 void compressETC2BlockRGB8A1( ETCBlockColor_t * out_block, const rgba8_t in_BLOCK_RGBA[4][4], const Strategy_t in_STRATEGY ) {
-	rgba8_t blockRGBA[4][4];
-	uint8_t blockA[4][4];
-	uint8_t minA = UINT8_MAX;
-	uint8_t maxA = 0;
+	rgba8_t min, max;
+	computeBlockMinMax( &min, &max, in_BLOCK_RGBA );
 	
-	for ( int by = 0; by < 4; by++ ) {
-		for ( int bx = 0; bx < 4; bx++ ) {
-			blockRGBA[by][bx].r = in_BLOCK_RGBA[by][bx].r;
-			blockRGBA[by][bx].g = in_BLOCK_RGBA[by][bx].g;
-			blockRGBA[by][bx].b = in_BLOCK_RGBA[by][bx].b;
-			blockA[by][bx]      = in_BLOCK_RGBA[by][bx].a;
-			minA = ( blockA[by][bx] < minA ) ? blockA[by][bx] : minA;
-			maxA = ( blockA[by][bx] > maxA ) ? blockA[by][bx] : maxA;
-		}
-	}
-	
-	if ( minA < 128 and maxA < 128 ) {
+	if ( min.a < 128 and max.a < 128 ) {
 		// completely transparent
 		out_block->b64 = 0x00000000FFFF0000ULL;
-	} else if ( minA >= 128 and maxA >= 128 ) {
+	} else if ( min.a >= 128 and max.a >= 128 ) {
 		// completely opaque
-		compressETC2BlockRGBA( out_block, blockRGBA, in_STRATEGY, true );
+		//out_block->b64 = 0x0000000000000000ULL;
+		compressETC2BlockRGBA( out_block, in_BLOCK_RGBA, in_STRATEGY, true );
 	} else {
 		// something in between
-		out_block->b64 = 0xFFFFFFFFFFFFFFFFULL;
-		compressETC2BlockRGBA( out_block, blockRGBA, in_STRATEGY, false );
-		out_block->differential = false;
+		//out_block->b64 = 0xFFFFFFFFFFFFFFFFULL;
+		compressETC2BlockRGBA( out_block, in_BLOCK_RGBA, in_STRATEGY, false );
+		//out_block->differential = false;
 	}
 }
 

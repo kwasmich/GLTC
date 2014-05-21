@@ -77,7 +77,7 @@ earlyExit:
 	
 	convert444to8888( &col8, bestC );
 	computeRGBColorPaletteCommonID( palette, col8, bestT, ETC_MODIFIER_TABLE );
-	return computeSubBlockError( out_modulation, in_SUB_BLOCK_RGBA, palette );
+	return computeSubBlockError( out_modulation, in_SUB_BLOCK_RGBA, palette, true );
 }
 
 
@@ -95,7 +95,7 @@ static uint32_t quick( rgb4_t * out_c, int * out_t, uint8_t out_modulation[2][4]
 	*out_c = col4;
 	*out_t = t;
 	
-	return computeSubBlockError( out_modulation, &in_SUB_BLOCK_RGBA[0], palette );
+	return computeSubBlockError( out_modulation, &in_SUB_BLOCK_RGBA[0], palette, true );
 }
 
 
@@ -119,7 +119,7 @@ static uint32_t brute( rgb4_t * out_c, int * out_t, uint8_t out_modulation[2][4]
 					col4 = (rgb4_t){ b, g, r };
 					convert444to8888( &col8, col4 );
 					computeRGBColorPaletteCommonID( palette, col8, t, ETC_MODIFIER_TABLE );
-					error = computeSubBlockError( NULL, &in_SUB_BLOCK_RGBA[0], palette );
+					error = computeSubBlockError( NULL, &in_SUB_BLOCK_RGBA[0], palette, true );
 					dR = center.r - col8.r;
 					dG = center.g - col8.g;
 					dB = center.b - col8.b;
@@ -146,7 +146,7 @@ earlyExit:
 	
 	convert444to8888( &col8, bestC );
 	computeRGBColorPaletteCommonID( palette, col8, bestT, ETC_MODIFIER_TABLE );
-	return computeSubBlockError( out_modulation, &in_SUB_BLOCK_RGBA[0], palette );
+	return computeSubBlockError( out_modulation, &in_SUB_BLOCK_RGBA[0], palette, true );
 }
 
 

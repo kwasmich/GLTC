@@ -91,7 +91,7 @@ void fillUniformColorPaletteLUTGaps( ETCUniformColorComposition_t in_out_lut[8][
 
 
 // computes the error for a 4x2 RGB sub-block
-uint32_t computeSubBlockError( uint8_t out_modulation[2][4], const rgba8_t in_SUB_BLOCK_RGBA[2][4], const rgba8_t in_PALETTE[4] ) {
+uint32_t computeSubBlockError( uint8_t out_modulation[2][4], const rgba8_t in_SUB_BLOCK_RGBA[2][4], const rgba8_t in_PALETTE[4], const bool in_OPAQUE ) {
 	uint32_t subBlockError = 0;
 	uint32_t pixelError = 0;
 	uint32_t lowestPixelError = 0;
@@ -102,7 +102,19 @@ uint32_t computeSubBlockError( uint8_t out_modulation[2][4], const rgba8_t in_SU
 			rgba8_t pixel = in_SUB_BLOCK_RGBA[sby][sbx];
 			lowestPixelError = 0xFFFFFFFF;
 			
+			if ( not in_OPAQUE and pixel.a < 128 ) {
+				lowestPixelError = 0;
+				
+				if ( out_modulation )
+					out_modulation[sby][sbx] = 2;
+				
+				continue;
+			}
+			
 			for ( int p = 0; p < 4; p++ ) {
+				if ( not in_OPAQUE and p == 2 )
+					continue;
+				
 				dR = pixel.r - in_PALETTE[p].r;
 				dG = pixel.g - in_PALETTE[p].g;
 				dB = pixel.b - in_PALETTE[p].b;
@@ -141,8 +153,17 @@ uint32_t computeBlockError( uint8_t out_modulation[4][4], const rgba8_t in_BLOCK
 			rgba8_t pixel = in_BLOCK_RGBA[by][bx];
 			lowestPixelError = 0xFFFFFFFF;
 			
+			if ( not in_OPAQUE and pixel.a < 128 ) {
+				lowestPixelError = 0;
+				
+				if ( out_modulation )
+					out_modulation[by][bx] = 2;
+				
+				continue;
+			}
+			
 			for ( int p = 0; p < 4; p++ ) {
-				if ( !in_OPAQUE and p == 2 )
+				if ( not in_OPAQUE and p == 2 )
 					continue;
 				
 				dR = pixel.r - in_PALETTE[p].r;

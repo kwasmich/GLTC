@@ -46,7 +46,7 @@ static void buildBlock( ETCBlockColor_t * out_block, const rgb4_t in_C0, const r
 	uint32_t bitField = generateBitField( modulation );
 	
 	ETCBlockH_t block;
-	block.one = 1;
+	block.opaque = in_OPAQUE;
 	block.r0 = c0.r;
 	block.g0a = c0.g >> 1;
 	block.g0b = c0.g bitand 0x1;

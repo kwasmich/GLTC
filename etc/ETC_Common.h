@@ -39,7 +39,7 @@ typedef union {
     struct {
 		uint32_t cBitField;
 		uint32_t flip : 1;
-		uint32_t differential : 1; // opacity
+		uint32_t differential : 1; // opacity in RGB8A1
 		uint32_t table1 : 3;
 		uint32_t table0 : 3;
 		int32_t dB : 3;
@@ -83,7 +83,7 @@ typedef union {
     struct {
 		uint32_t cBitField;
 		uint32_t db : 1;
-		uint32_t one : 1; // opacity
+		uint32_t opaque : 1; // 1 except for RGB8A1
 		uint32_t da : 2;
 		uint32_t b1 : 4;
         uint32_t g1 : 4;
@@ -105,7 +105,7 @@ typedef union {
     struct {
 		uint32_t cBitField;
 		uint32_t db : 1;
-		uint32_t one : 1; // opacity
+		uint32_t opaque : 1; // 1 except for RGB8A1
 		uint32_t da : 1;
 		uint32_t b1 : 4;
         uint32_t g1 : 4;
@@ -133,7 +133,7 @@ typedef union {
 		uint32_t bH : 6;
 		uint32_t gH : 7;
 		uint32_t rH2 : 1;
-		uint32_t one : 1;
+		uint32_t one : 1; // ALWAYS 1
         uint32_t rH1 : 5;
 		uint32_t bO3 : 3;
 		uint32_t dummy3 : 1;
