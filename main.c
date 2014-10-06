@@ -61,7 +61,7 @@ static void usage( const char in_EXEC[], const char in_FALLACY[] ) {
 		   "\n"
 		   "-0, -1, -2, -3, -4, -5, -6, -7, -8, -9\n"
 		   "       When compressing an image these options tell the compressor how exhaustive the search for the best image quality should be.\n"
-		   "       -0 is the fastest possible compression and -9 provides least the same quality as a brute force search.\n"
+		   "       -0 is the fastest possible compression and -9 provides at least the same quality as a brute force search.\n"
 		   "\n"
 		   "-h, -?\n"
 		   "       Prints this help.\n"

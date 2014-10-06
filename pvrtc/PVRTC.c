@@ -13,6 +13,7 @@
 #include "PVRTC_Compress.h"
 #include "PVRTC_Decompress.h"
 #include "../simplePNG.h"
+#include "../lib.h"
 
 #include <assert.h>
 #include <iso646.h>
@@ -20,25 +21,25 @@
 #include <stdlib.h>
 
 
+
 typedef struct {
-    uint32_t headerLength;
+    uint32_t version;
+    uint32_t flags;
+    uint32_t pixelFormat[2];    // actually this is a uint64_t but this fixes the alignment issue with this format
+    uint32_t colorSpace;
+    uint32_t channelType;
     uint32_t height;
     uint32_t width;
-    uint32_t numMipmaps;
-    uint32_t flags;
-    uint32_t dataLength;
-    uint32_t bpp;
-    uint32_t bitmaskRed;
-    uint32_t bitmaskGreen;
-    uint32_t bitmaskBlue;
-    uint32_t bitmaskAlpha;
-    uint32_t pvrTag;
-    uint32_t numSurfs;
+    uint32_t depth;
+    uint32_t numSurfaces;
+    uint32_t numFaces;
+    uint32_t numMIPMaps;
+    uint32_t metaDataSize;
 } PVRTexHeader_t;
 
 
 
-unsigned int spread( const unsigned short in_X ) {
+static unsigned int spread( const unsigned short in_X ) {
 	unsigned int x = in_X;
 	x = ( x bitor ( x << 8 ) ) bitand 0x00FF00FF;
 	x = ( x bitor ( x << 4 ) ) bitand 0x0F0F0F0F;
@@ -47,7 +48,7 @@ unsigned int spread( const unsigned short in_X ) {
 	return x;
 }
 
-unsigned short unspread( const unsigned int in_X ) {
+static unsigned short unspread( const unsigned int in_X ) {
 	unsigned int x = in_X;
 	x = ( x bitor ( x >> 1 ) ) bitand 0x33333333;
 	x = ( x bitor ( x >> 2 ) ) bitand 0x0F0F0F0F;
@@ -56,13 +57,13 @@ unsigned short unspread( const unsigned int in_X ) {
 	return x;
 }
 
-unsigned int zOrder( const unsigned short in_X, const unsigned short in_Y ) {
+static unsigned int zOrder( const unsigned short in_X, const unsigned short in_Y ) {
 	unsigned int x = spread( in_X );
 	unsigned int y = spread( in_Y );
 	return x | ( y << 1 );
 }
 
-void zUnorder( unsigned short * out_X, unsigned short * out_Y, const unsigned int in_Z ) {
+static void zUnorder( unsigned short * out_X, unsigned short * out_Y, const unsigned int in_Z ) {
 	unsigned int x = unspread( in_Z bitand 0x55555555 );
 	unsigned int y = unspread( ( in_Z >> 1 ) bitand 0x55555555 );
 	*out_X = x;
@@ -71,7 +72,7 @@ void zUnorder( unsigned short * out_X, unsigned short * out_Y, const unsigned in
 
 
 
-void bilinearFilter2( rgba8_t * out_RGBA, const int in_X, const int in_Y, const rgba8_t in_TL, const rgba8_t in_TR, const rgba8_t in_BL, const rgba8_t in_BR ) {
+static void bilinearFilter2( rgba8_t * out_RGBA, const int in_X, const int in_Y, const rgba8_t in_TL, const rgba8_t in_TR, const rgba8_t in_BL, const rgba8_t in_BR ) {
     for ( int i = 0; i < 4; i++ ) {
         uint32_t filtered = 0;
         filtered += in_TL.array[i] * ( 8 - in_X ) * ( 4 - in_Y );
@@ -100,18 +101,23 @@ bool pvrtcRead2BPPRGBA( const char in_FILE[], rgba8_t ** out_image, uint32_t * o
     size_t itemsRead = 0;
     PVRTC4Block_t * block = NULL;
     PVRTC4Block_t * blockPtr = NULL;
-    rgba8_t blockRGBA[4][4];
+    rgba8_t blockRGBA[4][8];
     rgba8_t * imageRGBA = NULL;
     PVRTexHeader_t header;
+    uint8_t dummy[1024];
     
     FILE * inputPVRFileStream = fopen( in_FILE, "rb" );
     assert( inputPVRFileStream != NULL );
     itemsRead = fread( &header, sizeof( PVRTexHeader_t ), 1, inputPVRFileStream);
     assert( itemsRead == 1 );
+    assert( header.version == 0x03525650 );
+    itemsRead = fread( &dummy[0], sizeof( uint8_t ), header.metaDataSize, inputPVRFileStream);
+    assert( itemsRead == header.metaDataSize );
     w = header.width;
     h = header.height;
     blockCount = w * h / 32;                                                                                            // FIXME : we have to round up w and h to multiple of 4
-    int stride = w / 8;
+    int strideY = w / 4;
+    int strideX = w / 8;
     // w >> 2 + ( w & 0x3 ) ? 1 : 0;
     block = malloc( blockCount * sizeof( PVRTC4Block_t ) );
     blockPtr = block;
@@ -119,266 +125,46 @@ bool pvrtcRead2BPPRGBA( const char in_FILE[], rgba8_t ** out_image, uint32_t * o
     itemsRead = fread( block, sizeof( PVRTC4Block_t ), blockCount, inputPVRFileStream );
     assert( itemsRead == blockCount );
     fclose( inputPVRFileStream );
+    const int repeatMask = header.width - 1;
+    const int repeatMaskBlockW = header.width / 8 - 1;
+    const int repeatMaskBlockH = header.height / 4 - 1;
     
-    rgba8_t * baseColorA = malloc( blockCount * sizeof( rgba8_t) );
-    rgba8_t * baseColorB = malloc( blockCount * sizeof( rgba8_t) );
-    
-    for ( int z = 0; z < blockCount; z++ ) {
-        uint16_t x;
-        uint16_t y;
-        zUnorder( &y, &x, z );
-        int pos = y * stride + x;
-        decodeBaseColorA( &baseColorA[pos], blockPtr->a );
-        decodeBaseColorB( &baseColorB[pos], blockPtr->b );
-        blockPtr++;
-    }
-    
-    rgba8_t * filteredA = malloc( w * h * sizeof( rgba8_t ) );
-    rgba8_t * filteredB = malloc( w * h * sizeof( rgba8_t ) );
-    uint8_t * filteredC = malloc( w * h * sizeof( uint8_t ) );
-    memset( filteredC, 0, w * h * sizeof( uint8_t ) );
-    
-    int repeatMaskX = stride - 1;
-    int repeatMaskY = ( stride * 2 ) - 1;
-    int repeatMask = w - 1;
-    
-    for ( int y = 0; y < h; y++ ) {
-        int baseT = ( y - 2 ) >> 2;
-        int baseB = baseT + 1;
-        baseT &= repeatMaskY;            // repeating instead of clamping
-        baseB &= repeatMaskY;            // repeating instead of clamping
-        
-        int bY = ( y - 2 ) bitand 0x3;
-        
-        for ( int x = 0; x < w; x++ ) {
-            int baseL = ( x - 4 ) >> 3;
-            int baseR = baseL + 1;
-            baseL &= repeatMaskX;        // repeating instead of clamping
-            baseR &= repeatMaskX;        // repeating instead of clamping
-            int bX = ( x - 4 ) bitand 0x7;
-            int posTL = baseT * stride + baseL;
-            int posTR = baseT * stride + baseR;
-            int posBL = baseB * stride + baseL;
-            int posBR = baseB * stride + baseR;
+    for ( int y = 0; y < strideY; y++ ) {
+        for ( int x = 0; x < strideX; x++ ) {
+            PVRTC4Block_t blockPVR[3][3];
+            int xx, yy, zz;
             
-            bilinearFilter2( &filteredA[y * w + x], bX, bY, baseColorA[posTL], baseColorA[posTR], baseColorA[posBL], baseColorA[posBR] );
-            bilinearFilter2( &filteredB[y * w + x], bX, bY, baseColorB[posTL], baseColorB[posTR], baseColorB[posBL], baseColorB[posBR] );
-        }
-    }
-    
-    pngWrite( "/Users/kwasmich/Desktop/Test/GLTC/__A.png", (uint8_t *)baseColorA, w / 8, h / 4, 4 );
-    pngWrite( "/Users/kwasmich/Desktop/Test/GLTC/__B.png", (uint8_t *)baseColorB, w / 8, h / 4, 4 );
-    
-    pngWrite( "/Users/kwasmich/Desktop/Test/GLTC/_A.png", (uint8_t *)filteredA, w, h, 4 );
-    pngWrite( "/Users/kwasmich/Desktop/Test/GLTC/_B.png", (uint8_t *)filteredB, w, h, 4 );
-    
-    
-    blockPtr = block;
-    
-    for ( int z = 0; z < blockCount; z++ ) {
-        uint16_t x;
-        uint16_t y;
-        zUnorder( &y, &x, z );
-        uint32_t modulationMask = blockPtr->mod;
-        bool modulationMode = blockPtr->a bitand 0x1;
-        int8_t modulation[4][8];
-        
-        if ( modulationMode ) {
-            PVRInterpolation_t interpolationMode = HV;            // H & V
-            
-            // pixel (0, 0) has 1 bit accuracy it's least significant bit is used to tell that we are only using interpolation in one dimension
-            if ( modulationMask bitand 0x1 ) {          // H or V only
-                // pixel (4, 2) has 1 bit accuracy it's least significant bit is used to tell in which direction to interpolate ( 0 = H, 1 = V )
-                if ( modulationMask bitand 0x100000 ) { // V only
-                    interpolationMode = V;
-                } else {                                // H only
-                    interpolationMode = H;
-                }
-                
-                // convert 1 bit accuracy to two bit accuracy;
-                if ( modulationMask bitand 0x200000 ) {
-                    modulationMask = modulationMask bitor 0x100000;
-                } else {
-                    modulationMask = modulationMask bitand 0xFFEFFFFF;
+            for ( int ny = 0; ny < 3; ny++ ) {
+                for ( int nx = 0; nx < 3; nx++ ) {
+                    xx = ( x + nx - 1 ) bitand repeatMaskBlockW;
+                    yy = ( y + ny - 1 ) bitand repeatMaskBlockH;
+                    zz = zOrder( yy, xx );
+                    blockPVR[ny][nx] = block[zz];
                 }
             }
             
-            // convert 1 bit accuracy to two bit accuracy;
-            if ( modulationMask bitand 0x2 ) {
-                modulationMask = modulationMask bitor 0x1;
-            } else {
-                modulationMask = modulationMask bitand 0xFFFFFFFE;
-            }
+            if ( true or x == 29 and y == 39 ) {
+            pvrtcDecodeBlock2BPP( blockRGBA, blockPVR );
             
-            // fill in the checkerboard modulation
-            for ( int by = 0; by < 4; by++ ) {
-                const int start = by bitand 0x1;
-                
-                for ( int bx = start; bx < 8; bx += 2 ) {
-                    switch ( modulationMask bitand 0x3 ) {
-                        case 0:
-                            modulation[by][bx] = 8;
-                            break;
-                            
-                        case 1:
-                            modulation[by][bx] = 5;
-                            break;
-                            
-                        case 2:
-                            modulation[by][bx] = 3;
-                            break;
-                            
-                        case 3:
-                            modulation[by][bx] = 0;
-                            break;
-                    }
-                    
-                    modulationMask >>= 2;
-                }
-                
-                for ( int bx = (not start); bx < 8; bx += 2 ) {
-                    modulation[by][bx] = 0;
-                }
-            }
-        } else {
             for ( int by = 0; by < 4; by++ ) {
                 for ( int bx = 0; bx < 8; bx++ ) {
-                    if ( modulationMask bitand 0x1 ) {
-                        modulation[by][bx] = 0;
-                    } else {
-                        modulation[by][bx] = 8;
-                    }
-
-                    modulationMask >>= 1;
+                    int posY = ( y * 4 + by ) bitand repeatMask;
+                    int posX = ( x * 8 + bx ) bitand repeatMask;
+                    int pos = posY * header.width + posX;
+                    imageRGBA[pos] = blockRGBA[by][bx];
                 }
             }
-        }
-        
-        for ( int by = 0; by < 4; by++ ) {
-            for ( int bx = 0; bx < 8; bx++ ) {
-                int arrayPosition = ( y * 4 + by ) * w + x * 8 + bx;
-                int m = modulation[by][bx];
-                filteredC[arrayPosition] = m;
             }
         }
-        
-        blockPtr++;
     }
-        
-    blockPtr = block;
-    
-    for ( int z = 0; z < blockCount; z++ ) {
-        uint16_t x;
-        uint16_t y;
-        zUnorder( &y, &x, z );
-        uint32_t modulationMask = blockPtr->mod;
-        bool modulationMode = blockPtr->a bitand 0x1;
-        
-        if ( modulationMode ) {
-            PVRInterpolation_t interpolationMode = HV;            // H & V
-            
-            // pixel (0, 0) has 1 bit accuracy it's least significant bit is used to tell that we are only using interpolation in one dimension
-            if ( modulationMask bitand 0x1 ) {          // H or V only
-                // pixel (4, 2) has 1 bit accuracy it's least significant bit is used to tell in which direction to interpolate ( 0 = H, 1 = V )
-                if ( modulationMask bitand 0x100000 ) { // V only
-                    interpolationMode = V;
-                } else {                                // H only
-                    interpolationMode = H;
-                }
-            }
-            
-            // fill the gaps
-            for ( int by = 0; by < 4; by++ ) {
-                int t  = ( y * 4 + by - 1 ) bitand repeatMask;
-                int tb = ( y * 4 + by )     bitand repeatMask;
-                int b  = ( y * 4 + by + 1 ) bitand repeatMask;
-                
-                for ( int bx = 0; bx < 8; bx++ ) {
-                    int l  = ( x * 8 + bx - 1 ) bitand repeatMask;
-                    int lr = ( x * 8 + bx )     bitand repeatMask;
-                    int r  = ( x * 8 + bx + 1 ) bitand repeatMask;
-                    
-                    if ( ( bx xor by ) bitand 0x1 ) {   // the gabs in the checkboard
-                        int avg = 0;
-                        
-                        switch ( interpolationMode ) {
-                            case HV:
-                                avg += filteredC[tb * w + l];
-                                avg += filteredC[tb * w + r];
-                                avg += filteredC[t * w + lr];
-                                avg += filteredC[b * w + lr];
-                                avg = ( avg + 2 ) >> 2;
-                                break;
-                                
-                            case H:
-                                avg += filteredC[tb * w + l];
-                                avg += filteredC[tb * w + r];
-                                avg = ( avg + 1 ) >> 1;
-                                break;
-                                
-                            case V:
-                                avg += filteredC[t * w + lr];
-                                avg += filteredC[b * w + lr];
-                                avg = ( avg + 1 ) >> 1;
-                                break;
-                        }
-                        
-                        filteredC[tb * w + lr] = avg;
-                    }
-                }
-            }
-        }
-        
-        for ( int by = 0; by < 4; by++ ) {
-            for ( int bx = 0; bx < 8; bx++ ) {
-                int arrayPosition = ( y * 4 + by ) * w + x * 8 + bx;
-                int m = filteredC[arrayPosition];
-                //filteredC[arrayPosition] = filteredC[arrayPosition] * 31;
-                imageRGBA[arrayPosition].r = ( filteredA[arrayPosition].r * m + filteredB[arrayPosition].r * ( 8 - m ) ) >> 3;
-                imageRGBA[arrayPosition].g = ( filteredA[arrayPosition].g * m + filteredB[arrayPosition].g * ( 8 - m ) ) >> 3;
-                imageRGBA[arrayPosition].b = ( filteredA[arrayPosition].b * m + filteredB[arrayPosition].b * ( 8 - m ) ) >> 3;
-                imageRGBA[arrayPosition].a = ( filteredA[arrayPosition].a * m + filteredB[arrayPosition].a * ( 8 - m ) ) >> 3;
-            }
-        }
-        
-        blockPtr++;
-    }
-    
-    blockPtr = block;
-    
-    for ( int z = 0; z < blockCount; z++ ) {
-        uint16_t x;
-        uint16_t y;
-        zUnorder( &y, &x, z );
-        
-        for ( int by = 0; by < 4; by++ ) {
-            for ( int bx = 0; bx < 8; bx++ ) {
-                int arrayPosition = ( y * 4 + by ) * w + x * 8 + bx;
-                filteredC[arrayPosition] = filteredC[arrayPosition] * 31;
-            }
-        }
-        
-        blockPtr++;
-    }
-    
-    pngWrite( "/Users/kwasmich/Desktop/Test/GLTC/_C.png", (uint8_t *)filteredC, w, h, 1 );
-    
-    free( filteredA );
-    filteredA = NULL;
-    free( filteredB );
-    filteredB = NULL;
-    
-    free( baseColorA );
-    baseColorA = NULL;
-    free( baseColorB );
-    baseColorB = NULL;
     
     free( block );
     block = NULL;
     
     *out_image = imageRGBA;
-    *out_width = w;
-    *out_height = h;
+    *out_width = header.width;
+    *out_height = header.height;
+    return true;
 }
 
 
@@ -391,11 +177,15 @@ bool pvrtcRead4BPPRGBA( const char in_FILE[], rgba8_t ** out_image, uint32_t * o
     rgba8_t blockRGBA[4][4];
     rgba8_t * imageRGBA = NULL;
     PVRTexHeader_t header;
+    uint8_t dummy[1024];
     
     FILE * inputPVRFileStream = fopen( in_FILE, "rb" );
     assert( inputPVRFileStream != NULL );
     itemsRead = fread( &header, sizeof( PVRTexHeader_t ), 1, inputPVRFileStream);
     assert( itemsRead == 1 );
+    assert( header.version == 0x03525650 );
+    itemsRead = fread( &dummy[0], sizeof( uint8_t ), header.metaDataSize, inputPVRFileStream);
+    assert( itemsRead == header.metaDataSize );
     blockCount = header.width * header.height / 16;                                                                     // FIXME : we have to round up w and h to multiple of 4
     const int stride = header.width / 4;
     // w >> 2 + ( w & 0x3 ) ? 1 : 0;
@@ -410,25 +200,24 @@ bool pvrtcRead4BPPRGBA( const char in_FILE[], rgba8_t ** out_image, uint32_t * o
     
     for ( int y = 0; y < stride; y++ ) {
         for ( int x = 0; x < stride; x++ ) {
-            PVRTC4Block_t blockPVR[2][2];
-            int z = 0;
-            int x1 = ( x + 1 ) bitand repeatMaskBlock;
-            int y1 = ( y + 1 ) bitand repeatMaskBlock;
-            z = zOrder( y, x );
-            blockPVR[0][0] = block[z];
-            z = zOrder( y, x1 );
-            blockPVR[0][1] = block[z];
-            z = zOrder( y1, x );
-            blockPVR[1][0] = block[z];
-            z = zOrder( y1, x1 );
-            blockPVR[1][1] = block[z];
+            PVRTC4Block_t blockPVR[3][3];
+            int xx, yy, zz;
+            
+            for ( int ny = 0; ny < 3; ny++ ) {
+                for ( int nx = 0; nx < 3; nx++ ) {
+                    xx = ( x + nx - 1 ) bitand repeatMaskBlock;
+                    yy = ( y + ny - 1 ) bitand repeatMaskBlock;
+                    zz = zOrder( yy, xx );
+                    blockPVR[ny][nx] = block[zz];
+                }
+            }
             
             pvrtcDecodeBlock4BPP( blockRGBA, blockPVR );
             
             for ( int by = 0; by < 4; by++ ) {
                 for ( int bx = 0; bx < 4; bx++ ) {
-                    int posY = ( y * 4 + by + 2 ) bitand repeatMask;
-                    int posX = ( x * 4 + bx + 2 ) bitand repeatMask;
+                    int posY = ( y * 4 + by ) bitand repeatMask;
+                    int posX = ( x * 4 + bx ) bitand repeatMask;
                     int pos = posY * header.width + posX;
                     imageRGBA[pos] = blockRGBA[by][bx];
                 }
@@ -442,6 +231,7 @@ bool pvrtcRead4BPPRGBA( const char in_FILE[], rgba8_t ** out_image, uint32_t * o
     *out_image = imageRGBA;
     *out_width = header.width;
     *out_height = header.height;
+    return true;
 }
 
 
@@ -515,7 +305,7 @@ bool pvrtcWrite4BPPRGBA( const char in_FILE[], const rgba8_t * in_IMAGE, const u
         }
     }
     
-    rgba8_t block[2][2];
+    rgba8_t block[3][3];
     rgba8_t blockRGBA;
     
     // upscale low-resolution image

@@ -22,7 +22,6 @@ typedef union {
         uint16_t b : 5;
         uint16_t g : 5;
         uint16_t r : 5;
-        uint16_t mode : 1;
     };
     
     uint16_t b16;
@@ -32,11 +31,9 @@ typedef union {
 
 typedef union {
     struct {
-        uint16_t modulation : 1;
         uint16_t b : 4;
         uint16_t g : 5;
         uint16_t r : 5;
-        uint16_t mode : 1;
     };
     
     uint16_t b16;
@@ -50,7 +47,6 @@ typedef union {
         uint16_t g : 4;
         uint16_t r : 4;
         uint16_t a : 3;
-        uint16_t mode : 1;
     };
     
     uint16_t b16;
@@ -60,12 +56,10 @@ typedef union {
 
 typedef union {
     struct {
-        uint16_t modulation : 1;
         uint16_t b : 3;
         uint16_t g : 4;
         uint16_t r : 4;
         uint16_t a : 3;
-        uint16_t mode : 1;
     };
     
     uint16_t b16;
@@ -89,13 +83,15 @@ typedef union {
 typedef union {
     struct {
         uint32_t mod;
-        uint16_t a;
-        uint16_t b;
+        uint32_t modMode : 1;
+        uint32_t a       : 14;  // RGB554 or ARGB3443
+        uint32_t aMode   : 1;
+        uint32_t b       : 15;    // RGB555 or ARGB3444
+        uint32_t bMode   : 1;
     };
     
     uint64_t b64;
 } PVRTC4Block_t;
-
 
 
 #endif
