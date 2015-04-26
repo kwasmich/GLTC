@@ -242,6 +242,7 @@ bool pngRead( const char * in_FILE, const bool in_FLIP_Y, uint8_t ** out_image, 
     png_read_image( png_ptr, png_rows );
 
 	free( png_rows );
+    png_rows = NULL;
 
 	*out_width = width;
 	*out_height = height;

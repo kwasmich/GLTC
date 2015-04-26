@@ -1,6 +1,6 @@
 CC=gcc
-CFLAGS=-c -g -Wall -O3 -I/opt/local/include
-LDFLAGS=-L/opt/local/lib -lpng
+CFLAGS=-c -g -Wall -std=gnu1x -O3 -I/opt/local/include
+LDFLAGS=-L/opt/local/lib -lm -lpng
 SOURCES=blockCompressionCommon.c\
         colorSpaceReduction.c\
         dxtc/DXTC.c\

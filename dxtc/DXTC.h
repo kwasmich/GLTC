@@ -20,7 +20,7 @@ bool dxtcReadDXT1RGB( const char in_FILE[], rgb8_t ** out_image, uint32_t * out_
 
 bool dxtcWriteDXT1RGB( const char in_FILE[], const rgb8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT );
 
-bool dxtcFreeRGB( rgb8_t ** in_out_image );
+void dxtcFreeRGB( rgb8_t ** in_out_image );
 
 
 
@@ -32,7 +32,7 @@ bool dxtcWriteDXT1RGBA( const char in_FILE[], const rgba8_t * in_IMAGE, const ui
 bool dxtcWriteDXT3RGBA( const char in_FILE[], const rgba8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT );
 bool dxtcWriteDXT5RGBA( const char in_FILE[], const rgba8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT );
 
-bool dxtcFreeRGBA( rgba8_t ** in_out_image );
+void dxtcFreeRGBA( rgba8_t ** in_out_image );
 
 
 

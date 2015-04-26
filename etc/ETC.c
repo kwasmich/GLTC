@@ -180,6 +180,10 @@ static bool writeRGB( const char in_FILE[], const rgb8_t * in_IMAGE, const uint3
     fwrite( &in_HEIGHT, sizeof( uint32_t ), 1, outputETCFileStream );
     fwrite( block, sizeof( ETCBlockColor_t ), blockCount, outputETCFileStream );
     fclose( outputETCFileStream );
+    
+    free_s( imageRGBA );
+    free_s( block );
+    
 	return true;
 }
 
@@ -377,6 +381,10 @@ bool etcWriteETC2RGBA8( const char in_FILE[], const rgba8_t * in_IMAGE, const ui
     fwrite( &in_HEIGHT, sizeof( uint32_t ), 1, outputETCFileStream );
     fwrite( block, sizeof( ETC2BlockRGBA_t ), blockCount, outputETCFileStream );
     fclose( outputETCFileStream );
+    
+    free_s( imageRGBA );
+    free_s( block );
+    
 	return true;
 }
 
@@ -409,6 +417,10 @@ bool etcWriteETC2RGB8A1( const char in_FILE[], const rgba8_t * in_IMAGE, const u
     fwrite( &in_HEIGHT, sizeof( uint32_t ), 1, outputETCFileStream );
     fwrite( block, sizeof( ETCBlockColor_t ), blockCount, outputETCFileStream );
     fclose( outputETCFileStream );
+    
+    free_s( imageRGBA );
+    free_s( block );
+    
 	return true;
 }
 

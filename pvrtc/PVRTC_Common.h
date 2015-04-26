@@ -10,11 +10,16 @@
 #ifndef GLTC_PVRTC_Common_h
 #define GLTC_PVRTC_Common_h
 
+
+#include "../colorSpaceReduction.h"
+
+#include <stdbool.h>
+
+
 // WARNING: bitfields are filled from lowest to highest bit
 // 565 : rrrrrggg gggbbbbb
 // 4444: rrrrggggbbbbaaaa
 // 5551: rrrrrgggggbbbbba
-
 
 
 typedef union {
@@ -86,12 +91,30 @@ typedef union {
         uint32_t modMode : 1;
         uint32_t a       : 14;  // RGB554 or ARGB3443
         uint32_t aMode   : 1;
-        uint32_t b       : 15;    // RGB555 or ARGB3444
+        uint32_t b       : 15;  // RGB555 or ARGB3444
         uint32_t bMode   : 1;
     };
     
     uint64_t b64;
 } PVRTC4Block_t;
+
+
+
+typedef struct {
+    rgba8_t a;
+    rgba8_t b;
+    bool aMode;
+    bool bMode;
+    bool modMode;
+    uint32_t mod;
+} PVRTCIntermediateBlock_t;
+
+
+
+typedef union {
+    rgba8_t linear[49];
+    rgba8_t block[7][7];
+} LinearBlock7x7RGBA_t;
 
 
 #endif

@@ -24,7 +24,7 @@ typedef enum {
 
 
 
-void decodeBaseColorA( rgba8_t * out_rgba, const bool in_OPAQUE, const uint16_t in_COLOR_A ) {
+static void decodeBaseColorA( rgba8_t * out_rgba, const bool in_OPAQUE, const uint16_t in_COLOR_A ) {
     if ( in_OPAQUE ) {
         rgb554_t colorA;
         colorA.b16 = in_COLOR_A;
@@ -44,7 +44,7 @@ void decodeBaseColorA( rgba8_t * out_rgba, const bool in_OPAQUE, const uint16_t 
 
 
 
-void decodeBaseColorB( rgba8_t * out_rgba, const bool in_OPAQUE, const uint16_t in_COLOR_B ) {
+static void decodeBaseColorB( rgba8_t * out_rgba, const bool in_OPAQUE, const uint16_t in_COLOR_B ) {
     if ( in_OPAQUE ) {
         rgb555_t colorB;
         colorB.b16 = in_COLOR_B;
@@ -61,6 +61,89 @@ void decodeBaseColorB( rgba8_t * out_rgba, const bool in_OPAQUE, const uint16_t 
         out_rgba->a = extend3to8bits( colorB.a );
     }
 }
+
+
+
+static void blockModulation( int8_t out_mod[4][8], const PVRTC4Block_t in_BLOCK_PVR ) {
+    bool modulationMode = in_BLOCK_PVR.modMode;
+    int rawMod = in_BLOCK_PVR.mod;
+    
+    for ( int by = 0; by < 4; by++ ) {
+        for ( int bx = 0; bx < 8; bx++ ) {
+            out_mod[by][bx] = -1;
+        }
+    }
+    
+    if ( modulationMode ) {
+        PVRInterpolation_t interpolationMode = HV;            // H & V
+        
+        // pixel (0, 0) has 1 bit accuracy it's least significant bit is used to tell that we are only using interpolation in one dimension
+        if ( rawMod bitand 0x1 ) {          // H or V only
+            // pixel (4, 2) has 1 bit accuracy it's least significant bit is used to tell in which direction to interpolate ( 0 = H, 1 = V )
+            if ( rawMod bitand 0x100000 ) { // V only
+                interpolationMode = V;
+            } else {                        // H only
+                interpolationMode = H;
+            }
+            
+            if ( rawMod bitand 0x200000 ) {
+                rawMod = rawMod bitor 0x300000;
+            } else {
+                rawMod = rawMod bitand 0xFFCFFFFF;
+            }
+        }
+        
+        // convert 1 bit accuracy to two bit accuracy;
+        if ( rawMod bitand 0x2 ) {
+            rawMod = rawMod bitor 0x3;
+        } else {
+            rawMod = rawMod bitand 0xFFFFFFFC;
+        }
+        
+        // fill in the checkerboard modulation
+        for ( int by = 0; by < 4; by++ ) {
+            const int start = by bitand 0x1;
+            
+            for ( int bx = start; bx < 8; bx += 2 ) {
+                switch ( rawMod bitand 0x3 ) {
+                    case 0:
+                        out_mod[by][bx] = 16;
+                        break;
+                        
+                    case 1:
+                        out_mod[by][bx] = 10;
+                        break;
+                        
+                    case 2:
+                        out_mod[by][bx] = 6;
+                        break;
+                        
+                    case 3:
+                        out_mod[by][bx] = 0;
+                        break;
+                }
+                
+                rawMod >>= 2;
+            }
+        }
+    } else {
+        for ( int by = 0; by < 4; by++ ) {
+            for ( int bx = 0; bx < 8; bx++ ) {
+                if ( rawMod bitand 0x1 ) {
+                    out_mod[by][bx] = 0;
+                } else {
+                    out_mod[by][bx] = 16;
+                }
+                
+                rawMod >>= 1;
+            }
+        }
+    }
+}
+
+
+
+#pragma mark - exposed interface
 
 
 
@@ -221,85 +304,6 @@ void pvrtcDecodeBlock4BPP( rgba8_t out_blockRGBA[4][4], const PVRTC4Block_t in_B
             }
             
             out_blockRGBA[by][bx] = c;
-        }
-    }
-}
-
-
-
-static void blockModulation( int8_t out_mod[4][8], const PVRTC4Block_t in_BLOCK_PVR ) {
-    bool modulationMode = in_BLOCK_PVR.modMode;
-    int rawMod = in_BLOCK_PVR.mod;
-    
-    for ( int by = 0; by < 4; by++ ) {
-        for ( int bx = 0; bx < 8; bx++ ) {
-            out_mod[by][bx] = -1;
-        }
-    }
-    
-    if ( modulationMode ) {
-        PVRInterpolation_t interpolationMode = HV;            // H & V
-        
-        // pixel (0, 0) has 1 bit accuracy it's least significant bit is used to tell that we are only using interpolation in one dimension
-        if ( rawMod bitand 0x1 ) {          // H or V only
-            // pixel (4, 2) has 1 bit accuracy it's least significant bit is used to tell in which direction to interpolate ( 0 = H, 1 = V )
-            if ( rawMod bitand 0x100000 ) { // V only
-                interpolationMode = V;
-            } else {                        // H only
-                interpolationMode = H;
-            }
-            
-            if ( rawMod bitand 0x200000 ) {
-                rawMod = rawMod bitor 0x300000;
-            } else {
-                rawMod = rawMod bitand 0xFFCFFFFF;
-            }
-        }
-        
-        // convert 1 bit accuracy to two bit accuracy;
-        if ( rawMod bitand 0x2 ) {
-            rawMod = rawMod bitor 0x3;
-        } else {
-            rawMod = rawMod bitand 0xFFFFFFFC;
-        }
-        
-        // fill in the checkerboard modulation
-        for ( int by = 0; by < 4; by++ ) {
-            const int start = by bitand 0x1;
-            
-            for ( int bx = start; bx < 8; bx += 2 ) {
-                switch ( rawMod bitand 0x3 ) {
-                    case 0:
-                        out_mod[by][bx] = 16;
-                        break;
-                        
-                    case 1:
-                        out_mod[by][bx] = 10;
-                        break;
-                        
-                    case 2:
-                        out_mod[by][bx] = 6;
-                        break;
-                        
-                    case 3:
-                        out_mod[by][bx] = 0;
-                        break;
-                }
-                
-                rawMod >>= 2;
-            }
-        }
-    } else {
-        for ( int by = 0; by < 4; by++ ) {
-            for ( int bx = 0; bx < 8; bx++ ) {
-                if ( rawMod bitand 0x1 ) {
-                    out_mod[by][bx] = 0;
-                } else {
-                    out_mod[by][bx] = 16;
-                }
-                
-                rawMod >>= 1;
-            }
         }
     }
 }

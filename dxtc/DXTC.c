@@ -19,9 +19,6 @@
 #include <iso646.h>
 #include <stdio.h>
 
-// those might be useful to be collected
-#define REINTERPRET(x) *(x *)&
-
 
 
 #pragma mark - block compression helper
@@ -48,7 +45,7 @@ colorComposition_t COLOR_LUT_6[kINVALID][256];
 
 
 
-void computeUniformColorsLUT() {
+static void computeUniformColorsLUT() {
     uint8_t c0 = 0;
     uint8_t c1 = 0;
     uint8_t c2 = 0;
@@ -345,7 +342,7 @@ void computeUniformColorsLUT() {
 }
 
 
-uint32_t computeColorPaletteErrorDXT1RGB( const rgb565_t in_C0, const rgb565_t in_C1, const rgb8_t in_BLOCK_RGB[4][4] ) {
+static uint32_t computeColorPaletteErrorDXT1RGB( const rgb565_t in_C0, const rgb565_t in_C1, const rgb8_t in_BLOCK_RGB[4][4] ) {
     rgb8_t palette[4];
     uint32_t error = 0xFFFFFFFF;
     uint32_t lowestPixelError = 0xFFFFFFFF;
@@ -378,7 +375,7 @@ uint32_t computeColorPaletteErrorDXT1RGB( const rgb565_t in_C0, const rgb565_t i
 
 
 
-uint32_t computeColorPaletteErrorDXT1RGBAOpaque( const rgb565_t in_C0, const rgb565_t in_C1, const rgba8_t in_BLOCK_RGBA[4][4] ) {
+static uint32_t computeColorPaletteErrorDXT1RGBAOpaque( const rgb565_t in_C0, const rgb565_t in_C1, const rgba8_t in_BLOCK_RGBA[4][4] ) {
     rgba8_t palette[4];
     uint32_t error = 0;
     uint32_t lowestPixelError = 0xFFFFFFFF;
@@ -413,7 +410,7 @@ uint32_t computeColorPaletteErrorDXT1RGBAOpaque( const rgb565_t in_C0, const rgb
 
 
 
-uint32_t computeColorPaletteErrorDXT1RGBATransparent( const rgb565_t in_C0, const rgb565_t in_C1, const rgba8_t in_BLOCK_RGBA[4][4] ) {
+static uint32_t computeColorPaletteErrorDXT1RGBATransparent( const rgb565_t in_C0, const rgb565_t in_C1, const rgba8_t in_BLOCK_RGBA[4][4] ) {
     rgba8_t palette[4];
     uint32_t error = 0;
     uint32_t lowestPixelError = 0xFFFFFFFF;
@@ -455,7 +452,7 @@ uint32_t computeColorPaletteErrorDXT1RGBATransparent( const rgb565_t in_C0, cons
 
 
 
-uint32_t computeColorPaletteErrorDXT3( const rgb565_t in_C0, const rgb565_t in_C1, const rgba8_t in_BLOCK_RGBA[4][4] ) {
+static uint32_t computeColorPaletteErrorDXT3( const rgb565_t in_C0, const rgb565_t in_C1, const rgba8_t in_BLOCK_RGBA[4][4] ) {
     rgba8_t palette[4];
     uint32_t error = 0;
     uint32_t lowestPixelError = 0xFFFFFFFF;
@@ -498,7 +495,7 @@ uint32_t computeColorPaletteErrorDXT3( const rgb565_t in_C0, const rgb565_t in_C
 
 
 // stupid linear force (r g b separately but in fact there are only 4 colors with rgb combined)
-void findColorPaletteBrutePerColorDXT1RGB( rgb565_t * in_out_bestC0, rgb565_t * in_out_bestC1, uint32_t * in_out_bestError, const rgb8_t in_BLOCK_RGB[4][4] ) {
+static void findColorPaletteBrutePerColorDXT1RGB( rgb565_t * in_out_bestC0, rgb565_t * in_out_bestC1, uint32_t * in_out_bestError, const rgb8_t in_BLOCK_RGB[4][4] ) {
     uint32_t error;
     uint32_t bruteError = 0xFFFFFFFF;
     rgb565_t bruteC0 = *in_out_bestC0;
@@ -581,7 +578,7 @@ void findColorPaletteBrutePerColorDXT1RGB( rgb565_t * in_out_bestC0, rgb565_t * 
 
 
 // stupid linear force (r g b separately but in fact there are only 4 colors with rgb combined)
-void findColorPaletteBrutePerColorDXT1RGBAOpaque( rgb565_t * in_out_bestC0, rgb565_t * in_out_bestC1, uint32_t * in_out_bestError, const rgba8_t in_BLOCK_RGBA[4][4] ) {
+static void findColorPaletteBrutePerColorDXT1RGBAOpaque( rgb565_t * in_out_bestC0, rgb565_t * in_out_bestC1, uint32_t * in_out_bestError, const rgba8_t in_BLOCK_RGBA[4][4] ) {
     uint32_t error;
     uint32_t bruteError = 0xFFFFFFFF;
     rgb565_t bruteC0 = *in_out_bestC0;
@@ -664,7 +661,7 @@ void findColorPaletteBrutePerColorDXT1RGBAOpaque( rgb565_t * in_out_bestC0, rgb5
 
 
 // stupid linear force (r g b separately but in fact there are only 4 colors with rgb combined)
-void findColorPaletteBrutePerColorDXT1RGBATransparent( rgb565_t * in_out_bestC0, rgb565_t * in_out_bestC1, uint32_t * in_out_bestError, const rgba8_t in_BLOCK_RGBA[4][4] ) {
+static void findColorPaletteBrutePerColorDXT1RGBATransparent( rgb565_t * in_out_bestC0, rgb565_t * in_out_bestC1, uint32_t * in_out_bestError, const rgba8_t in_BLOCK_RGBA[4][4] ) {
     uint32_t error;
     uint32_t bruteError = 0xFFFFFFFF;
     rgb565_t bruteC0 = *in_out_bestC0;
@@ -747,7 +744,7 @@ void findColorPaletteBrutePerColorDXT1RGBATransparent( rgb565_t * in_out_bestC0,
 
 
 // stupid linear force (r g b separately but in fact there are only 4 colors with rgb combined)
-void findColorPaletteBrutePerColorDXT3( rgb565_t * in_out_bestC0, rgb565_t * in_out_bestC1, uint32_t * in_out_bestError, const rgba8_t in_BLOCK_RGBA[4][4] ) {
+static void findColorPaletteBrutePerColorDXT3( rgb565_t * in_out_bestC0, rgb565_t * in_out_bestC1, uint32_t * in_out_bestError, const rgba8_t in_BLOCK_RGBA[4][4] ) {
     uint32_t error;
     uint32_t bruteError = 0xFFFFFFFF;
     rgb565_t bruteC0 = *in_out_bestC0;
@@ -831,14 +828,14 @@ void findColorPaletteBrutePerColorDXT3( rgb565_t * in_out_bestC0, rgb565_t * in_
 
 
 // iterative method (shift one end or pinch/expand both ends)
-void findColorPaletteIterativeDXT1RGB( rgb565_t * in_out_bestC0, rgb565_t * in_out_bestC1, uint32_t * in_out_bestError, const rgb8_t in_BLOCK_RGB[4][4], const uint32_t in_MAX_RANGE, const bool in_MORE_AGGRESSIVE ) {
+static void findColorPaletteIterativeDXT1RGB( rgb565_t * in_out_bestC0, rgb565_t * in_out_bestC1, uint32_t * in_out_bestError, const rgb8_t in_BLOCK_RGB[4][4], const uint32_t in_MAX_RANGE, const bool in_MORE_AGGRESSIVE ) {
     uint32_t bestError = *in_out_bestError;
     rgb565_t bestC0 = *in_out_bestC0;
     rgb565_t bestC1 = *in_out_bestC1;
     rgb565_t c0 = bestC0;
     rgb565_t c1 = bestC1;
-    rgb565_t c0tmp = { 0, 0, 0 };
-    rgb565_t c1tmp = { 0, 0, 0 };
+    rgb565_t c0tmp = { { 0, 0, 0 } };
+    rgb565_t c1tmp = { { 0, 0, 0 } };
     uint32_t error = 0;
     uint8_t failCount = 0;
     int stepSize = 1;
@@ -931,14 +928,14 @@ void findColorPaletteIterativeDXT1RGB( rgb565_t * in_out_bestC0, rgb565_t * in_o
 
 
 // iterative method (shift one end or pinch/expand both ends)
-void findColorPaletteIterativeDXT1RGBAOpaque( rgb565_t * in_out_bestC0, rgb565_t * in_out_bestC1, uint32_t * in_out_bestError, const rgba8_t in_BLOCK_RGBA[4][4], const uint32_t in_MAX_RANGE, const bool in_MORE_AGGRESSIVE ) {
+static void findColorPaletteIterativeDXT1RGBAOpaque( rgb565_t * in_out_bestC0, rgb565_t * in_out_bestC1, uint32_t * in_out_bestError, const rgba8_t in_BLOCK_RGBA[4][4], const uint32_t in_MAX_RANGE, const bool in_MORE_AGGRESSIVE ) {
     uint32_t bestError = *in_out_bestError;
     rgb565_t bestC0 = *in_out_bestC0;
     rgb565_t bestC1 = *in_out_bestC1;
     rgb565_t c0 = bestC0;
     rgb565_t c1 = bestC1;
-    rgb565_t c0tmp = { 0, 0, 0 };
-    rgb565_t c1tmp = { 0, 0, 0 };
+    rgb565_t c0tmp = { { 0, 0, 0 } };
+    rgb565_t c1tmp = { { 0, 0, 0 } };
     uint32_t error = 0;
     uint8_t failCount = 0;
     int stepSize = 1;
@@ -1031,14 +1028,14 @@ void findColorPaletteIterativeDXT1RGBAOpaque( rgb565_t * in_out_bestC0, rgb565_t
 
 
 // iterative method (shift one end or pinch/expand both ends)
-void findColorPaletteIterativeDXT1RGBATransparent( rgb565_t * in_out_bestC0, rgb565_t * in_out_bestC1, uint32_t * in_out_bestError, const rgba8_t in_BLOCK_RGBA[4][4], const uint32_t in_MAX_RANGE, const bool in_MORE_AGGRESSIVE ) {
+static void findColorPaletteIterativeDXT1RGBATransparent( rgb565_t * in_out_bestC0, rgb565_t * in_out_bestC1, uint32_t * in_out_bestError, const rgba8_t in_BLOCK_RGBA[4][4], const uint32_t in_MAX_RANGE, const bool in_MORE_AGGRESSIVE ) {
     uint32_t bestError = *in_out_bestError;
     rgb565_t bestC0 = *in_out_bestC0;
     rgb565_t bestC1 = *in_out_bestC1;
     rgb565_t c0 = bestC0;
     rgb565_t c1 = bestC1;
-    rgb565_t c0tmp = { 0, 0, 0 };
-    rgb565_t c1tmp = { 0, 0, 0 };
+    rgb565_t c0tmp = { { 0, 0, 0 } };
+    rgb565_t c1tmp = { { 0, 0, 0 } };
     uint32_t error = 0;
     uint8_t failCount = 0;
     int stepSize = 1;
@@ -1138,14 +1135,14 @@ void findColorPaletteIterativeDXT1RGBATransparent( rgb565_t * in_out_bestC0, rgb
 
 
 // iterative method (shift one end or pinch/expand both ends)
-void findColorPaletteIterativeDXT3( rgb565_t * in_out_bestC0, rgb565_t * in_out_bestC1, uint32_t * in_out_bestError, const rgba8_t in_BLOCK_RGBA[4][4], const uint32_t in_MAX_RANGE, const bool in_MORE_AGGRESSIVE ) {
+static void findColorPaletteIterativeDXT3( rgb565_t * in_out_bestC0, rgb565_t * in_out_bestC1, uint32_t * in_out_bestError, const rgba8_t in_BLOCK_RGBA[4][4], const uint32_t in_MAX_RANGE, const bool in_MORE_AGGRESSIVE ) {
     uint32_t bestError = *in_out_bestError;
     rgb565_t bestC0 = *in_out_bestC0;
     rgb565_t bestC1 = *in_out_bestC1;
     rgb565_t c0 = bestC0;
     rgb565_t c1 = bestC1;
-    rgb565_t c0tmp = { 0, 0, 0 };
-    rgb565_t c1tmp = { 0, 0, 0 };
+    rgb565_t c0tmp = { { 0, 0, 0 } };
+    rgb565_t c1tmp = { { 0, 0, 0 } };
     uint32_t error = 0;
     uint8_t failCount = 0;
     int stepSize = 1;
@@ -1240,11 +1237,11 @@ void findColorPaletteIterativeDXT3( rgb565_t * in_out_bestC0, rgb565_t * in_out_
 
 
 
-void findColorPaletteDXT1RGB( rgb565_t * out_c0, rgb565_t * out_c1, const rgb8_t in_BLOCK_RGB[4][4] ) {
+static void findColorPaletteDXT1RGB( rgb565_t * out_c0, rgb565_t * out_c1, const rgb8_t in_BLOCK_RGB[4][4] ) {
     rgb565_t c0;
     rgb565_t c1;
-    rgb8_t cMin = { 255, 255, 255 };
-    rgb8_t cMax = { 0, 0, 0 };
+    rgb8_t cMin = { { 255, 255, 255 } };
+    rgb8_t cMax = { { 0, 0, 0 } };
     
     for ( int by = 0; by < 4; by++ ) {
         for ( int bx = 0; bx < 4; bx++ ) {
@@ -1259,13 +1256,13 @@ void findColorPaletteDXT1RGB( rgb565_t * out_c0, rgb565_t * out_c1, const rgb8_t
     }
     
     uint32_t bestError = 0xFFFFFFFF;
-    rgb565_t bestC0 = { 0, 0, 0 };
-    rgb565_t bestC1 = { 0, 0, 0 };
+    rgb565_t bestC0 = { { 0, 0, 0 } };
+    rgb565_t bestC1 = { { 0, 0, 0 } };
     
     // initial guess : straight forward diagonal across the min-max-color-cube
     {
-        rgb8_t a = { 0, 0, 0 };
-        rgb8_t b = { 0, 0, 0 };
+        rgb8_t a = { { 0, 0, 0 } };
+        rgb8_t b = { { 0, 0, 0 } };
         
         for ( int i = 0; i < 8; i++ ) {
             a.r = ( i bitand 0x4 ) ? cMax.r : cMin.r;
@@ -1291,8 +1288,6 @@ void findColorPaletteDXT1RGB( rgb565_t * out_c0, rgb565_t * out_c1, const rgb8_t
             }
         }
     }
-    
-    uint32_t straightError = bestError;
     
     // brute force per color
     if ( false ) {
@@ -1358,11 +1353,11 @@ void findColorPaletteDXT1RGB( rgb565_t * out_c0, rgb565_t * out_c1, const rgb8_t
 
 
 
-void findColorPaletteDXT1RGBAOpaque( rgb565_t * out_c0, rgb565_t * out_c1, const rgba8_t in_BLOCK_RGBA[4][4] ) {
+static void findColorPaletteDXT1RGBAOpaque( rgb565_t * out_c0, rgb565_t * out_c1, const rgba8_t in_BLOCK_RGBA[4][4] ) {
     rgb565_t c0;
     rgb565_t c1;
-    rgb8_t cMin = { 255, 255, 255 };
-    rgb8_t cMax = { 0, 0, 0 };
+    rgb8_t cMin = { { 255, 255, 255 } };
+    rgb8_t cMax = { { 0, 0, 0 } };
     
     for ( int by = 0; by < 4; by++ ) {
         for ( int bx = 0; bx < 4; bx++ ) {
@@ -1377,13 +1372,13 @@ void findColorPaletteDXT1RGBAOpaque( rgb565_t * out_c0, rgb565_t * out_c1, const
     }
     
     uint32_t bestError = 0xFFFFFFFF;
-    rgb565_t bestC0 = { 0, 0, 0 };
-    rgb565_t bestC1 = { 0, 0, 0 };
+    rgb565_t bestC0 = { { 0, 0, 0 } };
+    rgb565_t bestC1 = { { 0, 0, 0 } };
     
     // initial guess : straight forward diagonal across the min-max-color-cube
     {
-        rgb8_t a = { 0, 0, 0 };
-        rgb8_t b = { 0, 0, 0 };
+        rgb8_t a = { { 0, 0, 0 } };
+        rgb8_t b = { { 0, 0, 0 } };
         
         for ( int i = 0; i < 8; i++ ) {
             a.r = ( i bitand 0x4 ) ? cMax.r : cMin.r;
@@ -1476,11 +1471,11 @@ void findColorPaletteDXT1RGBAOpaque( rgb565_t * out_c0, rgb565_t * out_c1, const
 
 
 
-void findColorPaletteDXT1RGBATransparent( rgb565_t * out_c0, rgb565_t * out_c1, const rgba8_t in_BLOCK_RGBA[4][4] ) {
-    rgb8_t cMin = { 255, 255, 255 };
-    rgb8_t cMax = { 0, 0, 0 };
-    rgb565_t c0 = { 0, 0, 0 };
-    rgb565_t c1 = { 0, 0, 0 };
+static void findColorPaletteDXT1RGBATransparent( rgb565_t * out_c0, rgb565_t * out_c1, const rgba8_t in_BLOCK_RGBA[4][4] ) {
+    rgb8_t cMin = { { 255, 255, 255 } };
+    rgb8_t cMax = { { 0, 0, 0 } };
+    rgb565_t c0 = { { 0, 0, 0 } };
+    rgb565_t c1 = { { 0, 0, 0 } };
     
     for ( int by = 0; by < 4; by++ ) {
         for ( int bx = 0; bx < 4; bx++ ) {
@@ -1496,13 +1491,13 @@ void findColorPaletteDXT1RGBATransparent( rgb565_t * out_c0, rgb565_t * out_c1, 
     }
     
     uint32_t bestError = 0xFFFFFFFF;
-    rgb565_t bestC0 = { 0, 0, 0 };
-    rgb565_t bestC1 = { 0, 0, 0 };
+    rgb565_t bestC0 = { { 0, 0, 0 } };
+    rgb565_t bestC1 = { { 0, 0, 0 } };
     
     // initial guess : straight forward diagonal across the min-max-color-cube
     {
-        rgb8_t a = { 0, 0, 0 };
-        rgb8_t b = { 0, 0, 0 };
+        rgb8_t a = { { 0, 0, 0 } };
+        rgb8_t b = { { 0, 0, 0 } };
         
         for ( int i = 0; i < 8; i++ ) {
             a.r = ( i bitand 0x4 ) ? cMax.r : cMin.r;
@@ -1528,8 +1523,6 @@ void findColorPaletteDXT1RGBATransparent( rgb565_t * out_c0, rgb565_t * out_c1, 
             }
         }
     }
-    
-    uint32_t straightError = bestError;
     
     // brute force per color
     if ( false ) {
@@ -1578,11 +1571,11 @@ void findColorPaletteDXT1RGBATransparent( rgb565_t * out_c0, rgb565_t * out_c1, 
 
 
 
-void findColorPaletteDXT3( rgb565_t * out_c0, rgb565_t * out_c1, const rgba8_t in_BLOCK_RGBA[4][4] ) {
+static void findColorPaletteDXT3( rgb565_t * out_c0, rgb565_t * out_c1, const rgba8_t in_BLOCK_RGBA[4][4] ) {
     rgb565_t c0;
     rgb565_t c1;
-    rgb8_t cMin = { 255, 255, 255 };
-    rgb8_t cMax = { 0, 0, 0 };
+    rgb8_t cMin = { { 255, 255, 255 } };
+    rgb8_t cMax = { { 0, 0, 0 } };
     
     for ( int by = 0; by < 4; by++ ) {
         for ( int bx = 0; bx < 4; bx++ ) {
@@ -1597,13 +1590,13 @@ void findColorPaletteDXT3( rgb565_t * out_c0, rgb565_t * out_c1, const rgba8_t i
     }
     
     uint32_t bestError = 0xFFFFFFFF;
-    rgb565_t bestC0 = { 0, 0, 0 };
-    rgb565_t bestC1 = { 0, 0, 0 };
+    rgb565_t bestC0 = { { 0, 0, 0 } };
+    rgb565_t bestC1 = { { 0, 0, 0 } };
     
     // initial guess : straight forward diagonal across the min-max-color-cube
     {
-        rgb8_t a = { 0, 0, 0 };
-        rgb8_t b = { 0, 0, 0 };
+        rgb8_t a = { { 0, 0, 0 } };
+        rgb8_t b = { { 0, 0, 0 } };
 
         for ( int i = 0; i < 8; i++ ) {
             a.r = ( i bitand 0x4 ) ? cMax.r : cMin.r;
@@ -1631,8 +1624,6 @@ void findColorPaletteDXT3( rgb565_t * out_c0, rgb565_t * out_c1, const rgba8_t i
 
         assert( bestC0.b16 > bestC1.b16 );
     }
-    
-    uint32_t straightError = bestError;
     
     // brute force per color
     if ( false ) {
@@ -1753,11 +1744,11 @@ void findColorPaletteDXT3( rgb565_t * out_c0, rgb565_t * out_c1, const rgba8_t i
 
 
 
-void compressDXT1BlockRGB( DXT1Block_t * in_out_block, const rgb8_t in_BLOCK_RGB[4][4] ) {
-    rgb8_t cMin = { 255, 255, 255 };
-    rgb8_t cMax = { 0, 0, 0 };
-    rgb565_t c0 = { 0, 0, 0 };
-    rgb565_t c1 = { 0, 0, 0 };
+static void compressDXT1BlockRGB( DXT1Block_t * in_out_block, const rgb8_t in_BLOCK_RGB[4][4] ) {
+    rgb8_t cMin = { { 255, 255, 255 } };
+    rgb8_t cMax = { { 0, 0, 0 } };
+    rgb565_t c0 = { { 0, 0, 0 } };
+    rgb565_t c1 = { { 0, 0, 0 } };
     
     for ( int by = 0; by < 4; by++ ) {
         for ( int bx = 0; bx < 4; bx++ ) {
@@ -1774,8 +1765,8 @@ void compressDXT1BlockRGB( DXT1Block_t * in_out_block, const rgb8_t in_BLOCK_RGB
     // Uniform Color
     if ( ( cMin.r == cMax.r ) and ( cMin.g == cMax.g ) and ( cMin.b == cMax.b ) ) {
         uint32_t bestError = 0xFFFFFFFF;
-        rgb565_t bestC0 = { 0, 0, 0 };
-        rgb565_t bestC1 = { 0, 0, 0 };
+        rgb565_t bestC0 = { { 0, 0, 0 } };
+        rgb565_t bestC1 = { { 0, 0, 0 } };
         colorCompositionCase_t bestType = kINVALID;
         
         for ( int j = 0; j < kINVALID; j++ ) {
@@ -1869,11 +1860,11 @@ void compressDXT1BlockRGB( DXT1Block_t * in_out_block, const rgb8_t in_BLOCK_RGB
 
 
 
-void compressDXT1BlockRGBA( DXT1Block_t * in_out_block, const rgba8_t in_BLOCK_RGBA[4][4] ) {
-    rgba8_t cMin = { 255, 255, 255, 255 };
-    rgba8_t cMax = { 0, 0, 0, 0 };
-    rgb565_t c0 = { 0, 0, 0 };
-    rgb565_t c1 = { 0, 0, 0 };
+static void compressDXT1BlockRGBA( DXT1Block_t * in_out_block, const rgba8_t in_BLOCK_RGBA[4][4] ) {
+    rgba8_t cMin = { { 255, 255, 255, 255 } };
+    rgba8_t cMax = { { 0, 0, 0, 0 } };
+    rgb565_t c0 = { { 0, 0, 0 } };
+    rgb565_t c1 = { { 0, 0, 0 } };
     
     for ( int by = 0; by < 4; by++ ) {
         for ( int bx = 0; bx < 4; bx++ ) {
@@ -1896,8 +1887,8 @@ void compressDXT1BlockRGBA( DXT1Block_t * in_out_block, const rgba8_t in_BLOCK_R
         // Uniform Color
         if ( ( cMin.r == cMax.r ) and ( cMin.g == cMax.g ) and ( cMin.b == cMax.b ) ) {
             uint32_t bestError = 0xFFFFFFFF;
-            rgb565_t bestC0 = { 0, 0, 0 };
-            rgb565_t bestC1 = { 0, 0, 0 };
+            rgb565_t bestC0 = { { 0, 0, 0 } };
+            rgb565_t bestC1 = { { 0, 0, 0 } };
             colorCompositionCase_t bestType = kINVALID;
             
             for ( int j = 0; j < kINVALID; j++ ) {
@@ -1997,8 +1988,8 @@ void compressDXT1BlockRGBA( DXT1Block_t * in_out_block, const rgba8_t in_BLOCK_R
         
         if ( ( cMin.r == cMax.r ) and ( cMin.g == cMax.g ) and ( cMin.b == cMax.b ) ) {
             uint32_t bestError = 0xFFFFFFFF;
-            rgb565_t bestC0 = { 0, 0, 0 };
-            rgb565_t bestC1 = { 0, 0, 0 };
+            rgb565_t bestC0 = { { 0, 0, 0 } };
+            rgb565_t bestC1 = { { 0, 0, 0 } };
             colorCompositionCase_t bestType = kINVALID;
             
             for ( int j = kZERO_HALFS; j < kINVALID; j++ ) {
@@ -2086,11 +2077,11 @@ void compressDXT1BlockRGBA( DXT1Block_t * in_out_block, const rgba8_t in_BLOCK_R
 
 
 
-void compressDXT3BlockRGB( DXT1Block_t * in_out_block, const rgba8_t in_BLOCK_RGBA[4][4] ) {
-    rgb8_t cMin = { 255, 255, 255 };
-    rgb8_t cMax = { 0, 0, 0 };
-    rgb565_t c0 = { 0, 0, 0 };
-    rgb565_t c1 = { 0, 0, 0 };
+static void compressDXT3BlockRGB( DXT1Block_t * in_out_block, const rgba8_t in_BLOCK_RGBA[4][4] ) {
+    rgb8_t cMin = { { 255, 255, 255 } };
+    rgb8_t cMax = { { 0, 0, 0 } };
+    rgb565_t c0 = { { 0, 0, 0 } };
+    rgb565_t c1 = { { 0, 0, 0 } };
     
     for ( int by = 0; by < 4; by++ ) {
         for ( int bx = 0; bx < 4; bx++ ) {
@@ -2106,8 +2097,8 @@ void compressDXT3BlockRGB( DXT1Block_t * in_out_block, const rgba8_t in_BLOCK_RG
     // Uniform Color
     if ( ( cMin.r == cMax.r ) and ( cMin.g == cMax.g ) and ( cMin.b == cMax.b ) ) {
         uint32_t bestError = 0xFFFFFFFF;
-        rgb565_t bestC0 = { 0, 0, 0 };
-        rgb565_t bestC1 = { 0, 0, 0 };
+        rgb565_t bestC0 = { { 0, 0, 0 } };
+        rgb565_t bestC1 = { { 0, 0, 0 } };
         colorCompositionCase_t bestType = kINVALID;
         
         for ( int j = 0; j < kZERO_HALFS; j++ ) {
@@ -2243,19 +2234,19 @@ bool dxtcReadDXT1RGB( const char in_FILE[], rgb8_t ** out_image, uint32_t * out_
         }
     }
     
-    free( block );
-    block = NULL;
+    free_s( block );
     
     *out_image = imageRGB;
     *out_width = w;
     *out_height = h;
+    
+    return true;
 }
 
 
 
-bool dxtcFreeRGB( rgb8_t ** in_out_image ) {
-    free( *in_out_image );
-    *in_out_image = NULL;
+void dxtcFreeRGB( rgb8_t ** in_out_image ) {
+    free_s( *in_out_image );
 }
 
 
@@ -2299,12 +2290,13 @@ bool dxtcReadDXT1RGBA( const char in_FILE[], rgba8_t ** out_image, uint32_t * ou
         }
     }
     
-    free( block );
-    block = NULL;
+    free_s( block );
     
     *out_image = imageRGBA;
     *out_width = w;
     *out_height = h;
+    
+    return true;
 }
 
 
@@ -2348,12 +2340,13 @@ bool dxtcReadDXT3RGBA( const char in_FILE[], rgba8_t ** out_image, uint32_t * ou
         }
     }
     
-    free( block );
-    block = NULL;
+    free_s( block );
     
     *out_image = imageRGBA;
     *out_width = w;
     *out_height = h;
+    
+    return true;
 }
 
 
@@ -2397,12 +2390,13 @@ bool dxtcReadDXT5RGBA( const char in_FILE[], rgba8_t ** out_image, uint32_t * ou
         }
     }
     
-    free( block );
-    block = NULL;
+    free_s( block );
     
     *out_image = imageRGBA;
     *out_width = w;
     *out_height = h;
+    
+    return true;
 }
 
 
@@ -2411,7 +2405,6 @@ bool dxtcWriteDXT1RGB( const char in_FILE[], const rgb8_t * in_IMAGE, const uint
     uint32_t w = in_WIDTH;
     uint32_t h = in_HEIGHT;
     uint32_t blockCount = 0;
-    size_t itemsRead = 0;
     DXT1Block_t * block = NULL;
     DXT1Block_t * blockPtr = NULL;
     rgb8_t blockRGB[4][4];
@@ -2443,6 +2436,10 @@ bool dxtcWriteDXT1RGB( const char in_FILE[], const rgb8_t * in_IMAGE, const uint
     fwrite( &h, sizeof( uint32_t ), 1, outputDXTFileStream );
     fwrite( block, sizeof( DXT3Block_t ), blockCount, outputDXTFileStream );
     fclose( outputDXTFileStream );
+    
+    free_s( block );
+    
+    return true;
 }
 
 
@@ -2451,11 +2448,10 @@ bool dxtcWriteDXT1RGBA( const char in_FILE[], const rgba8_t * in_IMAGE, const ui
     uint32_t w = in_WIDTH;
     uint32_t h = in_HEIGHT;
     uint32_t blockCount = 0;
-    size_t itemsRead = 0;
     DXT1Block_t * block = NULL;
     DXT1Block_t * blockPtr = NULL;
     rgba8_t blockRGBA[4][4];
-    rgba8_t transparent = { 0, 0, 0, 0 };
+    rgba8_t transparent = { { 0, 0, 0, 0 } };
     
     blockCount = in_WIDTH * in_HEIGHT / 16;                                                                             // FIXME : we have to round up w and h to multiple of 4
     block = malloc( blockCount * sizeof( DXT1Block_t ) );
@@ -2490,6 +2486,10 @@ bool dxtcWriteDXT1RGBA( const char in_FILE[], const rgba8_t * in_IMAGE, const ui
     fwrite( &h, sizeof( uint32_t ), 1, outputDXTFileStream );
     fwrite( block, sizeof( DXT3Block_t ), blockCount, outputDXTFileStream );
     fclose( outputDXTFileStream );
+    
+    free_s( block );
+    
+    return true;
 }
 
 
@@ -2498,7 +2498,6 @@ bool dxtcWriteDXT3RGBA( const char in_FILE[], const rgba8_t * in_IMAGE, const ui
     uint32_t w = in_WIDTH;
     uint32_t h = in_HEIGHT;
     uint32_t blockCount = 0;
-    size_t itemsRead = 0;
     DXT3Block_t * block = NULL;
     DXT3Block_t * blockPtr = NULL;
     rgba8_t blockRGBA[4][4];
@@ -2531,6 +2530,10 @@ bool dxtcWriteDXT3RGBA( const char in_FILE[], const rgba8_t * in_IMAGE, const ui
     fwrite( &h, sizeof( uint32_t ), 1, outputDXTFileStream );
     fwrite( block, sizeof( DXT3Block_t ), blockCount, outputDXTFileStream );
     fclose( outputDXTFileStream );
+    
+    free_s( block );
+    
+    return true;
 }
 
 
@@ -2539,7 +2542,6 @@ bool dxtcWriteDXT5RGBA( const char in_FILE[], const rgba8_t * in_IMAGE, const ui
     uint32_t w = in_WIDTH;
     uint32_t h = in_HEIGHT;
     uint32_t blockCount = 0;
-    size_t itemsRead = 0;
     DXT5Block_t * block = NULL;
     DXT5Block_t * blockPtr = NULL;
     rgba8_t blockRGBA[4][4];
@@ -2572,12 +2574,14 @@ bool dxtcWriteDXT5RGBA( const char in_FILE[], const rgba8_t * in_IMAGE, const ui
     fwrite( &h, sizeof( uint32_t ), 1, outputDXTFileStream );
     fwrite( block, sizeof( DXT3Block_t ), blockCount, outputDXTFileStream );
     fclose( outputDXTFileStream );
+    
+    free_s( block );
+    
+    return true;
 }
 
 
 
-bool dxtcFreeRGBA( rgba8_t ** in_out_image ) {
-    free( *in_out_image );
-    *in_out_image = NULL;
+void dxtcFreeRGBA( rgba8_t ** in_out_image ) {
+    free_s( *in_out_image );
 }
-

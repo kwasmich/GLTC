@@ -10,6 +10,7 @@
 #ifndef GLTC_PVRTC_h
 #define GLTC_PVRTC_h
 
+
 #include "../colorSpaceReduction.h"
 
 #include <stdbool.h>
@@ -21,7 +22,7 @@ bool pvrtcRead2BPPRGBA( const char in_FILE[], rgba8_t ** out_image, uint32_t * o
 bool pvrtcWrite4BPPRGBA( const char in_FILE[], const rgba8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT );
 bool pvrtcWrite2BPPRGBA( const char in_FILE[], const rgba8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT );
 
-bool pvrtcFreeRGBA( rgba8_t ** in_out_image );
+void pvrtcFreeRGBA( rgba8_t ** in_out_image );
 
 
 #endif

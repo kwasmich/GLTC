@@ -10,6 +10,10 @@
 #ifndef GLTC_lib_h
 #define GLTC_lib_h
 
+
+#include <stdlib.h>
+
+
 #define REINTERPRET(x) *(x *)&
 #define free_s(x) free(x);x = NULL
 
