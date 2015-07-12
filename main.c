@@ -242,7 +242,7 @@ int main( int argc, char * argv[] ) {
         switch ( type ) {
             case kRGB_DXT1:
             {
-                rgb8_t * imageData;
+                rgb8_t * imageData = NULL;
                 pngRead( optFArg, false, (uint8_t **)&imageData, (uint32_t *)&w, (uint32_t *)&h, &c );
                 assert( c == 3 );
                 dxtcWriteDXT1RGB( optOArg, imageData, w, h );
@@ -252,7 +252,7 @@ int main( int argc, char * argv[] ) {
                 
             case kRGBA_DXT1:
             {
-                rgba8_t * imageData;
+                rgba8_t * imageData = NULL;
                 pngRead( optFArg, false, (uint8_t **)&imageData, (uint32_t *)&w, (uint32_t *)&h, &c );
                 assert( c == 4 );
                 dxtcWriteDXT1RGBA( optOArg, imageData, w, h );
@@ -262,7 +262,7 @@ int main( int argc, char * argv[] ) {
                 
             case kRGBA_DXT3:
             {
-                rgba8_t * imageData;
+                rgba8_t * imageData = NULL;
                 pngRead( optFArg, false, (uint8_t **)&imageData, (uint32_t *)&w, (uint32_t *)&h, &c );
                 assert( c == 4 );
                 dxtcWriteDXT3RGBA( optOArg, imageData, w, h );
@@ -272,7 +272,7 @@ int main( int argc, char * argv[] ) {
                 
             case kRGBA_DXT5:
             {
-                rgba8_t * imageData;
+                rgba8_t * imageData = NULL;
                 pngRead( optFArg, false, (uint8_t **)&imageData, (uint32_t *)&w, (uint32_t *)&h, &c );
                 assert( c == 4 );
                 dxtcWriteDXT5RGBA( optOArg, imageData, w, h );
@@ -282,7 +282,7 @@ int main( int argc, char * argv[] ) {
 				
 			case kRGB_ETC1:
             {
-                rgb8_t * imageData;
+                rgb8_t * imageData = NULL;
                 pngRead( optFArg, false, (uint8_t **)&imageData, (uint32_t *)&w, (uint32_t *)&h, &c );
                 assert( c == 3 );
 				etcWriteETC1RGB( optOArg, imageData, w, h, optStrategy );
@@ -292,7 +292,7 @@ int main( int argc, char * argv[] ) {
 				
 			case kRGB_ETC2:
 			{
-                rgb8_t * imageData;
+                rgb8_t * imageData = NULL;
                 pngRead( optFArg, false, (uint8_t **)&imageData, (uint32_t *)&w, (uint32_t *)&h, &c );
                 assert( c == 3 );
 				etcWriteETC2RGB( optOArg, imageData, w, h, optStrategy );
@@ -302,7 +302,7 @@ int main( int argc, char * argv[] ) {
 				
 			case kRGBA_ETC2:
 			{
-                rgba8_t * imageData;
+                rgba8_t * imageData = NULL;
                 pngRead( optFArg, false, (uint8_t **)&imageData, (uint32_t *)&w, (uint32_t *)&h, &c );
                 assert( c == 4 );
 				etcWriteETC2RGBA8( optOArg, imageData, w, h, optStrategy );
@@ -312,7 +312,7 @@ int main( int argc, char * argv[] ) {
 				
 			case kRGBA_ETC2_PUNCH_THROUGH:
 			{
-                rgba8_t * imageData;
+                rgba8_t * imageData = NULL;
                 pngRead( optFArg, false, (uint8_t **)&imageData, (uint32_t *)&w, (uint32_t *)&h, &c );
                 assert( c == 4 );
 				etcWriteETC2RGB8A1( optOArg, imageData, w, h, optStrategy );
@@ -322,7 +322,7 @@ int main( int argc, char * argv[] ) {
                 
             case kRGBA_PVR4BPP:
             {
-                rgba8_t * imageData;
+                rgba8_t * imageData = NULL;
                 pngRead( optFArg, false, (uint8_t **)&imageData, (uint32_t *)&w, (uint32_t *)&h, &c );
                 assert( c == 4 );
                 pvrtcWrite4BPPRGBA( optOArg, imageData, w, h );

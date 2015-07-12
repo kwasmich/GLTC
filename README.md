@@ -96,7 +96,7 @@ For an exhaustive search for the optimum encoding of a 4x4 block of the input im
   * 16 values per channel (and 3 channels)
   * 8  table indices
 
-The sub total is 2 * 16 * 16 * 16 * 8 = 131,072 possible combinations to pick the optimum.
+The sub total is 2 * 2 * 16 * 16 * 16 * 8 = 131,072 possible combinations to pick the optimum.
 
 Sub-blocks with a uniform color can be constructed much easier by using a precomputed LUT (Look Up Table).
 One has just to pick the _Table-Index_ and _Palette-Index_ and look up the components value such the the error is a

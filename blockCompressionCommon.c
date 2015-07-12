@@ -22,6 +22,7 @@ void twiddleBlocksRGBA( rgba8_t * in_out_image, const uint32_t in_WIDTH, const u
     assert( in_HEIGHT % 4 == 0 );
     
     rgba8_t * copy = malloc( in_WIDTH * in_HEIGHT * sizeof( rgba8_t ) );
+    assert( copy );
     memcpy( copy, in_out_image, in_WIDTH * in_HEIGHT * sizeof( rgba8_t ) );
     
 #pragma mark TODO : parallelize with stripes of 4px height

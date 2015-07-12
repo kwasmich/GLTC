@@ -17,17 +17,11 @@
 #include "ETC_Compress_H.h"
 #include "ETC_Compress_P.h"
 #include "ETC_Decompress.h"
+#include "../endianness.h"
 
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-
-
-
-typedef union {
-	uint64_t i;
-	uint8_t  b[8];
-} endian64;
 
 
 
@@ -48,21 +42,6 @@ static void rgba2rgb( rgb8_t *out_rgb, const rgba8_t in_RGBA ) {
 
 
 
-static void switchEndianness( endian64 *in_out_BLOCK ) {
-	endian64 tmp;
-	tmp.i = in_out_BLOCK->i;
-	in_out_BLOCK->b[0] = tmp.b[7];
-	in_out_BLOCK->b[1] = tmp.b[6];
-	in_out_BLOCK->b[2] = tmp.b[5];
-	in_out_BLOCK->b[3] = tmp.b[4];
-	in_out_BLOCK->b[4] = tmp.b[3];
-	in_out_BLOCK->b[5] = tmp.b[2];
-	in_out_BLOCK->b[6] = tmp.b[1];
-	in_out_BLOCK->b[7] = tmp.b[0];
-}
-
-
-
 static bool readRGB( const char in_FILE[], rgb8_t ** out_image, uint32_t * out_width, uint32_t * out_height, void (*decompressBlockRGB)( rgba8_t[4][4], ETCBlockColor_t ) ) {
     uint32_t w = 0;
     uint32_t h = 0;
@@ -77,8 +56,10 @@ static bool readRGB( const char in_FILE[], rgb8_t ** out_image, uint32_t * out_w
     assert( inputETCFileStream != NULL );
     itemsRead = fread( &w, sizeof( uint32_t ), 1, inputETCFileStream );
     assert( itemsRead == 1 );
+    assert( w > 0 );
     itemsRead = fread( &h, sizeof( uint32_t ), 1, inputETCFileStream );
     assert( itemsRead == 1 );
+    assert( h > 0 );
     blockCount = w * h / 16;                                                                                            // FIXME : we have to round up w and h to multiple of 4
     // w >> 2 + ( w & 0x3 ) ? 1 : 0;
     block = malloc( blockCount * sizeof( ETCBlockColor_t ) );
@@ -91,7 +72,7 @@ static bool readRGB( const char in_FILE[], rgb8_t ** out_image, uint32_t * out_w
     
     for ( uint32_t y = 0; y < h; y += 4 ) {
         for ( uint32_t x = 0; x < w; x += 4 ) {
-			switchEndianness( REINTERPRET(endian64*)blockPtr );
+			betoh64( blockPtr->b64 );
 			ETCMode_t mode = etcGetBlockMode( *blockPtr, false );
 			
 			switch ( mode ) {
@@ -168,7 +149,7 @@ static bool writeRGB( const char in_FILE[], const rgb8_t * in_IMAGE, const uint3
     
     for ( uint32_t b = 0; b < blockCount; b++ ) {
         compressBlockRGB( blockPtr, imageRGBA_ptr->block, in_STRATEGY );
-        switchEndianness( REINTERPRET(endian64*)blockPtr );
+        htobe64( blockPtr->b64 );
         blockPtr++;
         imageRGBA_ptr++;
     }
@@ -253,8 +234,8 @@ bool etcReadETC2RGBA8( const char in_FILE[], rgba8_t ** out_image, uint32_t * ou
         for ( int x = 0; x < w; x += 4 ) {
 			ETCBlockAlpha_t *alpha = &(blockPtr->alpha);
 			ETCBlockColor_t *color = &(blockPtr->color);
-			switchEndianness( REINTERPRET(endian64*)alpha );
-			switchEndianness( REINTERPRET(endian64*)color );
+            betoh64( alpha->b64 );
+            betoh64( color->b64 );
 			
 			ETCMode_t mode = etcGetBlockMode( blockPtr->color, false );
 			
@@ -332,7 +313,7 @@ bool etcReadETC2RGB8A1( const char in_FILE[], rgba8_t ** out_image, uint32_t * o
     
     for ( int y = 0; y < h; y += 4 ) {
         for ( int x = 0; x < w; x += 4 ) {
-			switchEndianness( REINTERPRET(endian64*)blockPtr );
+            betoh64( blockPtr->b64 );
             decompressETC2BlockRGB8A1( imageRGBA_ptr->block, *blockPtr );
             blockPtr++;
             imageRGBA_ptr++;
@@ -368,8 +349,8 @@ bool etcWriteETC2RGBA8( const char in_FILE[], const rgba8_t * in_IMAGE, const ui
         compressETC2BlockRGBA8( blockPtr, imageRGBA_ptr->block, in_STRATEGY );
 		ETCBlockAlpha_t *alpha = &(blockPtr->alpha);
 		ETCBlockColor_t *color = &(blockPtr->color);
-		switchEndianness( REINTERPRET(endian64*)alpha );
-		switchEndianness( REINTERPRET(endian64*)color );
+        htobe64( alpha->b64 );
+        htobe64( color->b64 );
         blockPtr++;
         imageRGBA_ptr++;
     }
@@ -405,7 +386,7 @@ bool etcWriteETC2RGB8A1( const char in_FILE[], const rgba8_t * in_IMAGE, const u
     
     for ( uint32_t b = 0; b < blockCount; b++ ) {
         compressETC2BlockRGB8A1( blockPtr, imageRGBA_ptr->block, in_STRATEGY );
-		switchEndianness( REINTERPRET(endian64*)blockPtr );
+        htobe64( blockPtr->b64 );
         blockPtr++;
         imageRGBA_ptr++;
     }
@@ -484,7 +465,7 @@ bool etcResumeWriteETC1RGB( const char in_FILE[], const rgb8_t * in_IMAGE, const
             
 			if ( blockPtr->b64 == 0 ) {
 				compressETC1BlockRGB( blockPtr, (const rgb8_t(*)[4])blockRGB, in_STRATEGY );
-				switchEndianness( REINTERPRET(endian64*)blockPtr );
+				htobe64( blockPtr->b64 );
 			} else {
 				puts( "skipping" );
 			}
@@ -565,7 +546,7 @@ bool etcReadRGBCompare( const char in_FILE_I[], const char in_FILE_D[], const ch
 			
 			for ( int i = 0; i < 5; i++ ) {
 				blockPtr = &block[i][blockIndex];
-				switchEndianness( REINTERPRET(endian64*)blockPtr );
+                betoh64( blockPtr->b64 );
 				decompressETC2BlockRGB( blockRGB, block[i][blockIndex] );
 				
 				blockError = 0;
