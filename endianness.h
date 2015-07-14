@@ -21,7 +21,7 @@ uint16_t endianness_switch_16( uint16_t const in_DATA );
  * Convert Host to Big/Little Endian and vice versa
  */
 
-#ifdef __LITTLE_ENDIAN__
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 #warning Compiling on Little Endian Architecture
 #define htole64( X )
 #define htole32( X )
@@ -38,7 +38,7 @@ uint16_t endianness_switch_16( uint16_t const in_DATA );
 #endif
 
 
-#ifdef __BIG_ENDIAN__
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 #warning Compiling on Big Endian Architecture
 #define htole64( X ) X = endianness_switch_64( X )
 #define htole32( X ) X = endianness_switch_32( X )

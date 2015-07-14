@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-c -g -Wall -std=gnu1x -O3 -I/opt/local/include
-LDLIBS=-L/opt/local/lib -lm -lpng
+LDLIBS=-L/opt/local/lib -lm -lpng -pthread
 SOURCES=$(wildcard *.c)\
         $(wildcard */*.c)
 OBJECTS=$(SOURCES:%.c=%.o)

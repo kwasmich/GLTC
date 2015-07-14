@@ -18,6 +18,7 @@
 #include "ETC_Compress_P.h"
 #include "ETC_Decompress.h"
 #include "../endianness.h"
+#include "../parallelWorker.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -129,6 +130,21 @@ static bool readRGB( const char in_FILE[], rgb8_t ** out_image, uint32_t * out_w
 }
 
 
+typedef struct {
+    ETCBlockColor_t *out;
+    LinearBlock4x4RGBA_t *in;
+    Strategy_t strategy;
+    void (*compressBlockRGB)( ETCBlockColor_t *, const rgba8_t[4][4], const Strategy_t );
+} WorkArgs_s;
+
+
+void func( void *in_args ) {
+    WorkArgs_s *args = (WorkArgs_s*)in_args;
+    args->compressBlockRGB( args->out, args->in->block, args->strategy );
+    htobe64( args->out->b64 );
+}
+
+
 
 static bool writeRGB( const char in_FILE[], const rgb8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT, const Strategy_t in_STRATEGY, void (*compressBlockRGB)( ETCBlockColor_t *, const rgba8_t[4][4], const Strategy_t ) ) {
 	computeUniformColorLUT();
@@ -147,13 +163,31 @@ static bool writeRGB( const char in_FILE[], const rgb8_t * in_IMAGE, const uint3
     block = malloc( blockCount * sizeof( ETCBlockColor_t ) );
     blockPtr = block;
     
+//    for ( uint32_t b = 0; b < blockCount; b++ ) {
+//        compressBlockRGB( blockPtr, imageRGBA_ptr->block, in_STRATEGY );
+//        htobe64( blockPtr->b64 );
+//        blockPtr++;
+//        imageRGBA_ptr++;
+//    }
+
+    WorkArgs_s *args = malloc( blockCount * sizeof( WorkArgs_s ) );
+    WorkItem_s *queue = malloc( blockCount * sizeof( WorkItem_s ) );
+    
     for ( uint32_t b = 0; b < blockCount; b++ ) {
-        compressBlockRGB( blockPtr, imageRGBA_ptr->block, in_STRATEGY );
-        htobe64( blockPtr->b64 );
-        blockPtr++;
-        imageRGBA_ptr++;
+        args[b].out = &blockPtr[b];
+        args[b].in = &imageRGBA_ptr[b];
+        args[b].strategy = in_STRATEGY;
+        args[b].compressBlockRGB = compressBlockRGB;
+        queue[b].args = &args[b];
+        queue[b].func = func;
     }
-	
+    
+    pwForEach( queue, blockCount, 4 );
+    
+    //free( queue );
+    free( args );
+    
+    
 	printCounter();
     
     FILE * outputETCFileStream = fopen( in_FILE, "wb" );
