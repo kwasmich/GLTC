@@ -30,28 +30,44 @@ typedef union {
     uint8_t array[3];
 } rgb8_t;
 
-typedef struct {
-	uint16_t b : 5;
-	uint16_t g : 5;
-	uint16_t r : 5;
+typedef union {
+    struct {
+        uint16_t b : 5;
+        uint16_t g : 5;
+        uint16_t r : 5;
+    };
+    
+    uint16_t b16;
 } rgb5_t;
 
-typedef struct {
-	uint16_t b : 4;
-	uint16_t g : 4;
-	uint16_t r : 4;
+typedef union {
+    struct {
+        uint16_t b : 4;
+        uint16_t g : 4;
+        uint16_t r : 4;
+    };
+    
+    uint16_t b16;
 } rgb4_t;
 
-typedef struct {
-	int16_t b : 3;
-	int16_t g : 3;
-	int16_t r : 3;
+typedef union {
+    struct {
+        int16_t b : 3;
+        int16_t g : 3;
+        int16_t r : 3;
+    };
+    
+    uint16_t b16;
 } rgb3_t;
 
-typedef struct {
-	uint32_t b : 6;
-	uint32_t g : 7;
-	uint32_t r : 6;
+typedef union {
+    struct {
+        uint32_t b : 6;
+        uint32_t g : 7;
+        uint32_t r : 6;
+    };
+    
+    uint32_t b32;
 } rgb676_t;
 
 

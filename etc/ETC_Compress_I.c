@@ -354,7 +354,7 @@ static uint32_t modest( rgb4_t * out_c, int * out_t, uint8_t out_modulation[2][4
                         if ( center4.r + r + rgb < 0 ) continue;
                         if ( center4.r + r + rgb > 15 ) break;
                         
-                        col4 = (rgb4_t){ center4.b + b + rgb, center4.g + g + rgb, center4.r + r + rgb };
+                        col4 = (rgb4_t)RGB( center4.r + r + rgb, center4.g + g + rgb, center4.b + b + rgb );
                         convert444to888( &col8, col4 );
                         computeRGBColorPaletteCommonID( palette, col8, t, ETC_MODIFIER_TABLE );
                         error = computeSubBlockError( NULL, &in_SUB_BLOCK_RGB[0], palette );

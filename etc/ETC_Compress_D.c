@@ -118,7 +118,7 @@ static uint32_t bruteSubBlock( rgb5_t * out_c, int * out_t, uint8_t out_modulati
 		for ( b = 0; b < 32; b++ ) {
 			for ( g = 0; g < 32; g++ ) {
 				for ( r = 0; r < 32; r++ ) {
-					col5 = (rgb5_t){ b, g, r };
+					col5 = (rgb5_t)RGB( r, g, b );
 					convert555to8888( &col8, col5 );
 					computeRGBColorPaletteCommonID( palette, col8, t, ETC_MODIFIER_TABLE );
 					error = computeSubBlockError( NULL, &in_SUB_BLOCK_RGBA[0], palette );
