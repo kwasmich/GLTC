@@ -218,7 +218,7 @@ static uint32_t brute( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, const rgba
 	for ( r0 = 0; r0 < 16; r0++ ) {
 		for ( g0 = 0; g0 < 16; g0++ ) {
 			for ( b0 = 0; b0 < 16; b0++ ) {
-				c0 = (rgb4_t){ b0, g0, r0 };
+                c0 = (rgb4_t)RGB( r0, g0, b0 );
 				convert444to8888( &col8[0], c0 );
 				col0 = ( col8[0].r << 16 ) bitor ( col8[0].g << 8 ) bitor col8[0].b;
 				dR = center.r - col8[0].r;
@@ -229,7 +229,7 @@ static uint32_t brute( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, const rgba
 				for ( r1 = 0; r1 < 16; r1++ ) {
 					for ( g1 = 0; g1 < 16; g1++ ) {
 						for ( b1 = 0; b1 < 16; b1++ ) {
-							c1 = (rgb4_t){ b1, g1, r1 };
+                            c1 = (rgb4_t)RGB( r1, g1, b1 );
 							convert444to8888( &col8[1], c1 );
 							col1 = ( col8[1].r << 16 ) bitor ( col8[1].g << 8 ) bitor col8[1].b;
 							

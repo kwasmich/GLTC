@@ -58,11 +58,11 @@ static void buildBlock( ETCBlockColor_t * out_block, const rgb4_t in_C0, const r
 
 static uint32_t uniformColor( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, const rgba8_t in_BLOCK_RGBA[4][4], const bool in_OPAQUE ) {
 	rgba8_t col8;
-	rgb4_t col4 = { 0, 0, 0 };
+	rgb4_t col4 = RGB( 0, 0, 0 );
 	uint32_t error = 0;
 	uint32_t bestError = 0xFFFFFFFF;
 	uint32_t bestT = 0;
-	rgb4_t bestC = { 0, 0, 0 };
+	rgb4_t bestC = RGB( 0, 0, 0 );
 	ETCUniformColorComposition_t (* lut)[ETC_PALETTE_SIZE][256] = ( in_OPAQUE ) ? &ETC_UNIFORM_COLOR_LUT[0] : &ETC_UNIFORM_COLOR_LUT_NON_OPAQUE[0];
 	
 	computeBlockCenter( &col8, in_BLOCK_RGBA );
@@ -240,7 +240,7 @@ static uint32_t brute( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, const rgba
 	for ( r0 = 0; r0 < 16; r0++ ) {
 		for ( g0 = 0; g0 < 16; g0++ ) {
 			for ( b0 = 0; b0 < 16; b0++ ) {
-				c0 = (rgb4_t){ b0, g0, r0 };
+				c0 = (rgb4_t)RGB( r0, g0, b0 );
 				convert444to8888( &col8[0], c0 );
 				dR = center.r - col8[0].r;
 				dG = center.g - col8[0].g;
@@ -250,7 +250,7 @@ static uint32_t brute( rgb4_t * out_c0, rgb4_t * out_c1, int * out_d, const rgba
 				for ( r1 = 0; r1 < 16; r1++ ) {
 					for ( g1 = 0; g1 < 16; g1++ ) {
 						for ( b1 = 0; b1 < 16; b1++ ) {
-							c1 = (rgb4_t){ b1, g1, r1 };
+							c1 = (rgb4_t)RGB( r1, g1, b1 );
 							convert444to8888( &col8[1], c1 );
 							dR = center.r - col8[1].r;
 							dG = center.g - col8[1].g;

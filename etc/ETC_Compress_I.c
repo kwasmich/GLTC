@@ -42,11 +42,11 @@ static void buildBlock( ETCBlockColor_t * out_block, const rgb4_t in_C0, const r
 
 static uint32_t uniformColor( rgb4_t * out_c, int * out_t, uint8_t out_modulation[2][4], const rgba8_t in_SUB_BLOCK_RGBA[2][4] ) {
 	rgba8_t col8, palette[4];
-	rgb4_t col4 = { 0, 0, 0 };
+	rgb4_t col4 = RGB( 0, 0, 0 );
 	uint32_t error = 0;
 	uint32_t bestError = 0xFFFFFFFF;
 	int bestT = 0;
-	rgb4_t bestC = { 0, 0, 0 };
+	rgb4_t bestC = RGB( 0, 0, 0 );
 	
     computeSubBlockCenter( &col8, in_SUB_BLOCK_RGBA );
 		
@@ -116,7 +116,7 @@ static uint32_t brute( rgb4_t * out_c, int * out_t, uint8_t out_modulation[2][4]
 		for ( b = 0; b < 16; b++ ) {
 			for ( g = 0; g < 16; g++ ) {
 				for ( r = 0; r < 16; r++ ) {
-					col4 = (rgb4_t){ b, g, r };
+					col4 = (rgb4_t)RGB( r, g, b );
 					convert444to8888( &col8, col4 );
 					computeRGBColorPaletteCommonID( palette, col8, t, ETC_MODIFIER_TABLE );
                     
@@ -218,7 +218,7 @@ static uint32_t almostBrute( rgb4_t * out_c, int * out_t, uint8_t out_modulation
         for ( b = 0; b < 16; b++ ) {
             for ( g = 0; g < 16; g++ ) {
                 for ( r = 0; r < 16; r++ ) {
-                    col4 = (rgb4_t){ b, g, r };
+                    col4 = (rgb4_t)RGB( r, g, b );
                     convert444to8888( &col8, col4 );
                     computeRGBColorPaletteCommonID( palette, col8, t, ETC_MODIFIER_TABLE );
                     
@@ -260,7 +260,7 @@ static uint32_t almostBrute( rgb4_t * out_c, int * out_t, uint8_t out_modulation
         rgb4_t bestRGB;
         
         for ( r = 0; r < 16; r++ ) {
-            col4 = (rgb4_t){ r, r, r };
+            col4 = (rgb4_t)RGB( r, r, r );
             convert444to8888( &col8, col4 );
             computeRGBColorPaletteCommonID( palette, col8, t, ETC_MODIFIER_TABLE );
             error = computeSubBlockErrorColorComponent( &in_SUB_BLOCK_RGBA[0], palette, 0 );
@@ -296,14 +296,14 @@ static uint32_t almostBrute( rgb4_t * out_c, int * out_t, uint8_t out_modulation
         
         printf( "%d: %d6  %6d  %6d  %6d\n", t, bestError, bestErrorR, bestErrorG, bestErrorB );
         
-        col4 = (rgb4_t){ 13, 8, 7 };
+        col4 = (rgb4_t)RGB( 7, 8, 13 );
         convert444to8888( &col8, col4 );
         computeRGBColorPaletteCommonID( palette, col8, t, ETC_MODIFIER_TABLE );
         error = computeSubBlockError( NULL, &in_SUB_BLOCK_RGBA[0], palette, true );
         
         printf( "7 8 13: %d\n", error );
         
-        col4 = (rgb4_t){ 13, 8, 8 };
+        col4 = (rgb4_t)RGB( 8, 8, 13 );
         convert444to8888( &col8, col4 );
         computeRGBColorPaletteCommonID( palette, col8, t, ETC_MODIFIER_TABLE );
         error = computeSubBlockError( NULL, &in_SUB_BLOCK_RGBA[0], palette, true );

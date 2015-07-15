@@ -51,13 +51,13 @@ static void computeBaseColorsD( rgba8_t * out_c0, rgba8_t * out_c1, const rgb5_t
 void computeBaseColorsID( rgba8_t * out_c0, rgba8_t * out_c1, const ETCBlockColor_t in_BLOCK ) {
 	if ( in_BLOCK.differential ) {
 		ETCBlockD_t block = REINTERPRET(ETCBlockD_t)in_BLOCK;
-		rgb5_t bc0 = { block.b, block.g, block.r };
-		rgb3_t bc1 = { block.dB, block.dG, block.dR };
+		rgb5_t bc0 = RGB( block.r, block.g, block.b );
+		rgb3_t bc1 = RGB( block.dR, block.dG, block.dB );
 		computeBaseColorsD( out_c0, out_c1, bc0, bc1 );
 	} else {
 		ETCBlockI_t block = REINTERPRET(ETCBlockI_t)in_BLOCK;
-		rgb4_t bc0 = { block.b0, block.g0, block.r0 };
-		rgb4_t bc1 = { block.b1, block.g1, block.r1 };
+		rgb4_t bc0 = RGB( block.r0, block.g0, block.b0 );
+		rgb4_t bc1 = RGB( block.r1, block.g1, block.b1 );
 		convert444to8888( out_c0, bc0 );
 		convert444to8888( out_c1, bc1 );
 	}

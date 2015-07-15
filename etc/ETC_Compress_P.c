@@ -56,7 +56,7 @@ static void buildBlock( ETCBlockColor_t * out_block, const rgb676_t in_CO, const
 
 static uint32_t uniformColor( rgb676_t * out_cO, rgb676_t * out_cH, rgb676_t * out_cV, const rgba8_t in_BLOCK_RGBA[4][4] ) {
 	rgba8_t cAvg;
-	rgb676_t c = { 0, 0, 0 };
+	rgb676_t c = RGB( 0, 0, 0 );
 	
 	computeBlockCenter( &cAvg, in_BLOCK_RGBA );
 	
