@@ -13,6 +13,13 @@
 #include <iso646.h>
 #include <stdint.h>
 
+
+
+#define RGB( R, G, B ) { .r = R, .g = G, .b = B }
+#define RGBA( R, G, B, A ) { .r = R, .g = G, .b = B, .a = A }
+
+
+
 typedef union {
     struct {
         uint8_t r;

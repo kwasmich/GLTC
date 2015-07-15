@@ -87,10 +87,6 @@ void fillUniformColorPaletteLUTGaps( ETCUniformColorComposition_t in_out_lut[8][
 
 
 
-#warning compute error separately for each color comoponent
-
-
-
 // computes the error for a 4x2 RGB sub-block
 uint32_t computeSubBlockError( uint8_t out_modulation[2][4], const rgba8_t in_SUB_BLOCK_RGBA[2][4], const rgba8_t in_PALETTE[4], const bool in_OPAQUE ) {
 	uint32_t subBlockError = 0;
@@ -104,8 +100,6 @@ uint32_t computeSubBlockError( uint8_t out_modulation[2][4], const rgba8_t in_SU
 			lowestPixelError = 0xFFFFFFFF;
 			
 			if ( not in_OPAQUE and pixel.a < 128 ) {
-				lowestPixelError = 0;
-				
 				if ( out_modulation )
 					out_modulation[sby][sbx] = 2;
 				
@@ -293,8 +287,8 @@ uint64_t generateAlphaBitField( const uint8_t in_MODULATION[4][4] ) {
 
 void computeSubBlockMinMax( rgba8_t * out_min, rgba8_t * out_max, const rgba8_t in_SUB_BLOCK_RGBA[2][4] ) {
     rgba8_t pixel;
-	rgba8_t cMin = {{ 255, 255, 255, 255 }};
-	rgba8_t cMax = {{ 0, 0, 0, 0 }};
+	rgba8_t cMin = RGBA( 255, 255, 255, 255 );
+	rgba8_t cMax = RGBA( 0, 0, 0, 0 );
 	
 	for ( int sby = 0; sby < 2; sby++ ) {
 		for ( int sbx = 0; sbx < 4; sbx++ ) {
@@ -319,8 +313,8 @@ void computeSubBlockMinMax( rgba8_t * out_min, rgba8_t * out_max, const rgba8_t 
 
 
 void computeSubBlockCenter( rgba8_t * out_center, const rgba8_t in_SUB_BLOCK_RGBA[2][4] ) {
-	rgba8_t cMin = {{ 255, 255, 255, 255 }};
-	rgba8_t cMax = {{ 0, 0, 0, 0 }};
+	rgba8_t cMin = RGBA( 255, 255, 255, 255 );
+	rgba8_t cMax = RGBA( 0, 0, 0, 0 );
 	computeSubBlockMinMax( &cMin, &cMax, in_SUB_BLOCK_RGBA );
 	out_center->r = ( cMin.r + cMax.r + 1 ) >> 1;
 	out_center->g = ( cMin.g + cMax.g + 1 ) >> 1;
@@ -423,8 +417,8 @@ exit:
 
 void computeBlockMinMax( rgba8_t * out_min, rgba8_t * out_max, const rgba8_t in_BLOCK_RGBA[4][4] ) {
     rgba8_t pixel;
-	rgba8_t cMin = {{ 255, 255, 255, 255 }};
-	rgba8_t cMax = {{ 0, 0, 0, 0 }};
+	rgba8_t cMin = RGBA( 255, 255, 255, 255 );
+	rgba8_t cMax = RGBA( 0, 0, 0, 0 );
 	
 	for ( int by = 0; by < 4; by++ ) {
 		for ( int bx = 0; bx < 4; bx++ ) {
@@ -469,8 +463,8 @@ void computeAlphaBlockMinMax( uint8_t * out_min, uint8_t * out_max, const uint8_
 
 
 void computeBlockCenter( rgba8_t * out_center, const rgba8_t in_BLOCK_RGBA[4][4] ) {
-	rgba8_t cMin = {{ 255, 255, 255, 255 }};
-	rgba8_t cMax = {{ 0, 0, 0, 0 }};
+	rgba8_t cMin = RGBA( 255, 255, 255, 255 );
+	rgba8_t cMax = RGBA( 0, 0, 0, 0 );
 	computeBlockMinMax( &cMin, &cMax, in_BLOCK_RGBA );
 	out_center->r = ( cMin.r + cMax.r + 1 ) >> 1;
 	out_center->g = ( cMin.g + cMax.g + 1 ) >> 1;
@@ -910,8 +904,8 @@ static void _computeMinMaxAvgCenterMedian( rgb8_t * out_min, rgb8_t * out_max, r
 	uint8_t mB[8];
 	int index = 0;
 	int averageColor[3] = { 4, 4, 4 };
-	rgb8_t cMin = {{ 255, 255, 255 }};
-	rgb8_t cMax = {{ 0, 0, 0 }};
+	rgb8_t cMin = RGB( 255, 255, 255 );
+	rgb8_t cMax = RGB( 0, 0, 0 );
 	uint32_t dot;
 	uint32_t min = 0xFFFFFFFF;
 	uint32_t max = 0;

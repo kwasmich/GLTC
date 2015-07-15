@@ -148,7 +148,7 @@ void computeColorPaletteT( rgba8_t out_colorPalette[4], const rgba8_t in_C0, con
 	out_colorPalette[3].a = 255;
 	
 	if ( not in_OPAQUE )
-		out_colorPalette[2] = (rgba8_t){{ 0, 0, 0, 0 }};
+		out_colorPalette[2] = (rgba8_t)RGBA( 0, 0, 0, 0 );
 }
 
 
@@ -173,7 +173,7 @@ void computeColorPaletteH( rgba8_t out_colorPalette[4], const rgba8_t in_C0, con
 	out_colorPalette[3].a = 255;
 	
 	if ( not in_OPAQUE )
-		out_colorPalette[2] = (rgba8_t){{ 0, 0, 0, 0 }};
+		out_colorPalette[2] = (rgba8_t)RGBA( 0, 0, 0, 0 );
 }
 
 
@@ -420,7 +420,7 @@ static void decodeRGBABlockTH( rgba8_t out_blockRGBA[4][4], const rgba8_t in_PAL
 
 static void decompressETC2BlockP( rgba8_t out_blockRGBA[4][4], const ETCBlockColor_t in_BLOCK ) {
 	rgba8_t palette[3];
-	rgba8_t col = {{ 0, 0, 0, 255 }};
+    rgba8_t col = RGBA( 0, 0, 0, 255 );
 	computeBaseColorsP( &palette[0], &palette[1], &palette[2], REINTERPRET(ETCBlockP_t)in_BLOCK );
 	
 	for ( int by = 0; by < 4; by++ ) {

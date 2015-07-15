@@ -157,8 +157,8 @@ void initialGuess( PVRTCIntermediateBlock_t * out_block, const rgba8_t in_RGBA[7
     uint32_t min4[4] = { 0, 0, 0, 0 };
     uint32_t max4[4] = { 0, 0, 0, 0 };
     rgba8_t avg;
-    rgba8_t min = { { 255, 255, 255, 255 } };
-    rgba8_t max = { { 0, 0, 0, 0 } };
+    rgba8_t min = RGBA( 255, 255, 255, 255 );
+    rgba8_t max = RGBA( 0, 0, 0, 0 );
     
     for ( int mby = 0; mby < 7; mby++ ) {
         for ( int mbx = 0; mbx < 7; mbx++ ) {

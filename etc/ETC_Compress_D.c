@@ -163,7 +163,7 @@ static uint32_t bruteBlock( rgb5_t * out_c0, rgb5_t * out_c1, int * out_t0, int 
 	int distance[2], dR, dG, dB;
 	int t0, t1, bestT0, bestT1;
 	int r0, g0, b0, r1, g1, b1;
-    uint32_t errors[8][32][32][32];
+    uint32_t errors[8][32][32][32];  // 1MB Stack is huge
 	
     for ( t1 = 0; t1 < ETC_TABLE_COUNT; t1++ ) {
 		for ( b1 = 0; b1 < 32; b1++ ) {
