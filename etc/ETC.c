@@ -18,7 +18,10 @@
 #include "ETC_Compress_P.h"
 #include "ETC_Decompress.h"
 #include "../endianness.h"
+
+#ifdef PTHREAD
 #include "../parallelWorker.h"
+#endif
 
 #include <assert.h>
 #include <stdio.h>
@@ -130,6 +133,7 @@ static bool readRGB( const char in_FILE[], rgb8_t ** out_image, uint32_t * out_w
 }
 
 
+#ifdef PTHREAD
 typedef struct {
     ETCBlockColor_t *out;
     LinearBlock4x4RGBA_t *in;
@@ -138,12 +142,12 @@ typedef struct {
 } WorkArgs_s;
 
 
-void func( void *in_args ) {
+static void func( void *in_args ) {
     WorkArgs_s *args = (WorkArgs_s*)in_args;
     args->compressBlockRGB( args->out, args->in->block, args->strategy );
     htobe64( args->out->b64 );
 }
-
+#endif
 
 
 static bool writeRGB( const char in_FILE[], const rgb8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT, const Strategy_t in_STRATEGY, void (*compressBlockRGB)( ETCBlockColor_t *, const rgba8_t[4][4], const Strategy_t ) ) {
@@ -163,13 +167,7 @@ static bool writeRGB( const char in_FILE[], const rgb8_t * in_IMAGE, const uint3
     block = malloc( blockCount * sizeof( ETCBlockColor_t ) );
     blockPtr = block;
     
-//    for ( uint32_t b = 0; b < blockCount; b++ ) {
-//        compressBlockRGB( blockPtr, imageRGBA_ptr->block, in_STRATEGY );
-//        htobe64( blockPtr->b64 );
-//        blockPtr++;
-//        imageRGBA_ptr++;
-//    }
-
+#ifdef PTHREAD
     WorkArgs_s *args = malloc( blockCount * sizeof( WorkArgs_s ) );
     WorkItem_s *queue = malloc( blockCount * sizeof( WorkItem_s ) );
     
@@ -186,7 +184,15 @@ static bool writeRGB( const char in_FILE[], const rgb8_t * in_IMAGE, const uint3
     
     //free( queue );
     free( args );
-    
+#else
+    #pragma omp parallel for
+    for ( uint32_t b = 0; b < blockCount; b++ ) {
+        compressBlockRGB( blockPtr, imageRGBA_ptr->block, in_STRATEGY );
+        htobe64( blockPtr->b64 );
+        blockPtr++;
+        imageRGBA_ptr++;
+    }
+#endif
     
 	printCounter();
     
