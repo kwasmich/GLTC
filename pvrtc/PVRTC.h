@@ -16,13 +16,13 @@
 #include <stdbool.h>
 
 
-bool pvrtcRead4BPPRGBA( const char in_FILE[], rgba8_t ** out_image, uint32_t * out_width, uint32_t * out_height );
-bool pvrtcRead2BPPRGBA( const char in_FILE[], rgba8_t ** out_image, uint32_t * out_width, uint32_t * out_height );
+bool pvrtcRead4BPPRGBA(const char in_FILE[], rgba8_t **out_image, uint32_t *out_width, uint32_t *out_height);
+bool pvrtcRead2BPPRGBA(const char in_FILE[], rgba8_t **out_image, uint32_t *out_width, uint32_t *out_height);
 
-bool pvrtcWrite4BPPRGBA( const char in_FILE[], const rgba8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT );
-bool pvrtcWrite2BPPRGBA( const char in_FILE[], const rgba8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT );
+bool pvrtcWrite4BPPRGBA(const char in_FILE[], const rgba8_t *in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT);
+bool pvrtcWrite2BPPRGBA(const char in_FILE[], const rgba8_t *in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT);
 
-void pvrtcFreeRGBA( rgba8_t ** in_out_image );
+void pvrtcFreeRGBA(rgba8_t **in_out_image);
 
 
 #endif

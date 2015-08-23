@@ -14,8 +14,8 @@
 #include "ETC_Common.h"
 
 
-uint32_t compressH( ETCBlockColor_t * out_block, const rgba8_t in_BLOCK_RGBA[4][4], const Strategy_t in_STRATEGY, const bool in_OPAQUE );
+uint32_t compressH(ETCBlockColor_t *out_block, const rgba8_t in_BLOCK_RGBA[4][4], const Strategy_t in_STRATEGY, const bool in_OPAQUE);
 
-void printInfoH( ETCBlockColor_t * in_BLOCK );
+void printInfoH(ETCBlockColor_t *in_BLOCK);
 
 #endif

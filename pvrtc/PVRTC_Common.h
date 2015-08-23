@@ -28,7 +28,7 @@ typedef union {
         uint16_t g : 5;
         uint16_t r : 5;
     };
-    
+
     uint16_t b16;
 } rgb555_t;
 
@@ -40,7 +40,7 @@ typedef union {
         uint16_t g : 5;
         uint16_t r : 5;
     };
-    
+
     uint16_t b16;
 } rgb554_t;
 
@@ -53,7 +53,7 @@ typedef union {
         uint16_t r : 4;
         uint16_t a : 3;
     };
-    
+
     uint16_t b16;
 } argb3444_t;
 
@@ -66,7 +66,7 @@ typedef union {
         uint16_t r : 4;
         uint16_t a : 3;
     };
-    
+
     uint16_t b16;
 } argb3443_t;
 
@@ -79,7 +79,7 @@ typedef union {
         uint32_t r : 5;
         uint32_t a : 4;
     };
-    
+
     uint32_t b32;
 } argb4555_t;
 
@@ -94,7 +94,7 @@ typedef union {
         uint32_t b       : 15;  // RGB555 or ARGB3444
         uint32_t bMode   : 1;
     };
-    
+
     uint64_t b64;
 } PVRTC4Block_t;
 

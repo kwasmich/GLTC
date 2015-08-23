@@ -16,22 +16,22 @@
 #include <stdbool.h>
 
 
-bool etcReadETC1RGB( const char in_FILE[], rgb8_t ** out_image, uint32_t * out_width, uint32_t * out_height );
-bool etcReadETC2RGB( const char in_FILE[], rgb8_t ** out_image, uint32_t * out_width, uint32_t * out_height );
+bool etcReadETC1RGB(const char in_FILE[], rgb8_t **out_image, uint32_t *out_width, uint32_t *out_height);
+bool etcReadETC2RGB(const char in_FILE[], rgb8_t **out_image, uint32_t *out_width, uint32_t *out_height);
 
-bool etcWriteETC1RGB( const char in_FILE[], const rgb8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT, const Strategy_t in_STRATEGY );
-bool etcWriteETC2RGB( const char in_FILE[], const rgb8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT, const Strategy_t in_STRATEGY );
+bool etcWriteETC1RGB(const char in_FILE[], const rgb8_t *in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT, const Strategy_t in_STRATEGY);
+bool etcWriteETC2RGB(const char in_FILE[], const rgb8_t *in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT, const Strategy_t in_STRATEGY);
 
-void etcFreeRGB( rgb8_t ** in_out_image );
+void etcFreeRGB(rgb8_t **in_out_image);
 
 
-bool etcReadETC2RGBA8( const char in_FILE[], rgba8_t ** out_image, uint32_t * out_width, uint32_t * out_height );
-bool etcReadETC2RGB8A1( const char in_FILE[], rgba8_t ** out_image, uint32_t * out_width, uint32_t * out_height );
+bool etcReadETC2RGBA8(const char in_FILE[], rgba8_t **out_image, uint32_t *out_width, uint32_t *out_height);
+bool etcReadETC2RGB8A1(const char in_FILE[], rgba8_t **out_image, uint32_t *out_width, uint32_t *out_height);
 
-bool etcWriteETC2RGBA8( const char in_FILE[], const rgba8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT, const Strategy_t in_STRATEGY );
-bool etcWriteETC2RGB8A1( const char in_FILE[], const rgba8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT, const Strategy_t in_STRATEGY );
+bool etcWriteETC2RGBA8(const char in_FILE[], const rgba8_t *in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT, const Strategy_t in_STRATEGY);
+bool etcWriteETC2RGB8A1(const char in_FILE[], const rgba8_t *in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT, const Strategy_t in_STRATEGY);
 
-void etcFreeRGBA( rgba8_t ** in_out_image );
+void etcFreeRGBA(rgba8_t **in_out_image);
 
 
 

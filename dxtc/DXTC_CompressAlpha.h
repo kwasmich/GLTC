@@ -12,7 +12,7 @@
 
 #include "DXTC_Common.h"
 
-void compressDXT3BlockA( DXT3AlphaBlock_t * in_out_block, const rgba8_t in_BLOCK_RGBA[4][4] );
-void compressDXT5BlockA( DXT5AlphaBlock_t * in_out_block, const rgba8_t in_BLOCK_RGBA[4][4] );
+void compressDXT3BlockA(DXT3AlphaBlock_t *in_out_block, const rgba8_t in_BLOCK_RGBA[4][4]);
+void compressDXT5BlockA(DXT5AlphaBlock_t *in_out_block, const rgba8_t in_BLOCK_RGBA[4][4]);
 
 #endif

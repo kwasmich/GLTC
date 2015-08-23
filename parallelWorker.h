@@ -12,12 +12,12 @@
 
 typedef struct {
     void *args;
-    void (*func)(void*);
+    void (*func)(void *);
 } WorkItem_s;
 
 
 
-void pwForEach( WorkItem_s *in_out_queue, int const NUM_BLOCKS, int const NUM_THREADS );
+void pwForEach(WorkItem_s *in_out_queue, int const NUM_BLOCKS, int const NUM_THREADS);
 
 
 

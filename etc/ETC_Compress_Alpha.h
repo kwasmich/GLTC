@@ -14,8 +14,8 @@
 #include "ETC_Common.h"
 
 
-uint32_t compressAlpha( ETCBlockAlpha_t * out_block, const uint8_t in_BLOCK_A[4][4], const Strategy_t in_STRATEGY );
+uint32_t compressAlpha(ETCBlockAlpha_t *out_block, const uint8_t in_BLOCK_A[4][4], const Strategy_t in_STRATEGY);
 
-void printInfoAlpha( ETCBlockAlpha_t * in_BLOCK );
+void printInfoAlpha(ETCBlockAlpha_t *in_BLOCK);
 
 #endif

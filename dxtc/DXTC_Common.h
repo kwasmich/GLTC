@@ -26,7 +26,7 @@ typedef union {
         rgb565_t c1;
         uint32_t cBitField;
     };
-    
+
     uint64_t b64;
 } DXT1Block_t;
 
@@ -49,10 +49,10 @@ typedef union {
             uint8_t a0;
             uint8_t a1;
         };
-        
+
         uint64_t aBitField;    // actually 48-bit but there is no such data type. That is why we use the cheat with Union
     };
-    
+
     uint64_t b64;
 } DXT5AlphaBlock_t;
 

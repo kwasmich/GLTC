@@ -18,11 +18,11 @@
 #include "PVRTC_Common.h"
 
 
-void bilinearFilter4x4( rgba8_t * out_rgba, const int in_X, const int in_Y, const rgba8_t in_BLOCK[3][3] );
-void bilinearFilter8x4( rgba8_t * out_rgba, const int in_X, const int in_Y, const rgba8_t in_BLOCK[3][3] );
+void bilinearFilter4x4(rgba8_t *out_rgba, const int in_X, const int in_Y, const rgba8_t in_BLOCK[3][3]);
+void bilinearFilter8x4(rgba8_t *out_rgba, const int in_X, const int in_Y, const rgba8_t in_BLOCK[3][3]);
 
-void pvrtcDecodeBlock4BPP( rgba8_t out_blockRGBA[4][4], const PVRTC4Block_t in_BLOCK_PVR[3][3] );
-void pvrtcDecodeBlock2BPP( rgba8_t out_blockRGBA[4][8], const PVRTC4Block_t in_BLOCK_PVR[3][3] );
+void pvrtcDecodeBlock4BPP(rgba8_t out_blockRGBA[4][4], const PVRTC4Block_t in_BLOCK_PVR[3][3]);
+void pvrtcDecodeBlock2BPP(rgba8_t out_blockRGBA[4][8], const PVRTC4Block_t in_BLOCK_PVR[3][3]);
 
 
 #endif

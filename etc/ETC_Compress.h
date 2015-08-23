@@ -14,11 +14,11 @@
 #include "ETC_Common.h"
 
 
-void compressETC1BlockRGB( ETCBlockColor_t * out_block, const rgba8_t in_BLOCK_RGBA[4][4], const Strategy_t in_STRATEGY );
-void compressETC2BlockRGB( ETCBlockColor_t * out_block, const rgba8_t in_BLOCK_RGBA[4][4], const Strategy_t in_STRATEGY );
-void compressETC2BlockRGBA8( ETC2BlockRGBA_t * out_block, const rgba8_t in_BLOCK_RGBA[4][4], const Strategy_t in_STRATEGY );
-void compressETC2BlockRGB8A1( ETCBlockColor_t * out_block, const rgba8_t in_BLOCK_RGBA[4][4], const Strategy_t in_STRATEGY );
+void compressETC1BlockRGB(ETCBlockColor_t *out_block, const rgba8_t in_BLOCK_RGBA[4][4], const Strategy_t in_STRATEGY);
+void compressETC2BlockRGB(ETCBlockColor_t *out_block, const rgba8_t in_BLOCK_RGBA[4][4], const Strategy_t in_STRATEGY);
+void compressETC2BlockRGBA8(ETC2BlockRGBA_t *out_block, const rgba8_t in_BLOCK_RGBA[4][4], const Strategy_t in_STRATEGY);
+void compressETC2BlockRGB8A1(ETCBlockColor_t *out_block, const rgba8_t in_BLOCK_RGBA[4][4], const Strategy_t in_STRATEGY);
 
-void computeUniformColorLUT( void );
+void computeUniformColorLUT(void);
 
 #endif

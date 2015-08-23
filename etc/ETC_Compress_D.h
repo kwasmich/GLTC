@@ -14,10 +14,10 @@
 #include "ETC_Common.h"
 
 
-void computeUniformColorLUTD( void );
+void computeUniformColorLUTD(void);
 
-uint32_t compressD( ETCBlockColor_t * out_block, const rgba8_t in_BLOCK_RGBA[4][4], const Strategy_t in_STRATEGY, const bool in_OPAQUE );
+uint32_t compressD(ETCBlockColor_t *out_block, const rgba8_t in_BLOCK_RGBA[4][4], const Strategy_t in_STRATEGY, const bool in_OPAQUE);
 
-void printInfoD( ETCBlockColor_t * in_BLOCK );
+void printInfoD(ETCBlockColor_t *in_BLOCK);
 
 #endif

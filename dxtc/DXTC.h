@@ -16,23 +16,23 @@
 #include <stdbool.h>
 
 
-bool dxtcReadDXT1RGB( const char in_FILE[], rgb8_t ** out_image, uint32_t * out_width, uint32_t * out_height );
+bool dxtcReadDXT1RGB(const char in_FILE[], rgb8_t **out_image, uint32_t *out_width, uint32_t *out_height);
 
-bool dxtcWriteDXT1RGB( const char in_FILE[], const rgb8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT );
+bool dxtcWriteDXT1RGB(const char in_FILE[], const rgb8_t *in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT);
 
-void dxtcFreeRGB( rgb8_t ** in_out_image );
+void dxtcFreeRGB(rgb8_t **in_out_image);
 
 
 
-bool dxtcReadDXT1RGBA( const char in_FILE[], rgba8_t ** out_image, uint32_t * out_width, uint32_t * out_height );
-bool dxtcReadDXT3RGBA( const char in_FILE[], rgba8_t ** out_image, uint32_t * out_width, uint32_t * out_height );
-bool dxtcReadDXT5RGBA( const char in_FILE[], rgba8_t ** out_image, uint32_t * out_width, uint32_t * out_height );
+bool dxtcReadDXT1RGBA(const char in_FILE[], rgba8_t **out_image, uint32_t *out_width, uint32_t *out_height);
+bool dxtcReadDXT3RGBA(const char in_FILE[], rgba8_t **out_image, uint32_t *out_width, uint32_t *out_height);
+bool dxtcReadDXT5RGBA(const char in_FILE[], rgba8_t **out_image, uint32_t *out_width, uint32_t *out_height);
 
-bool dxtcWriteDXT1RGBA( const char in_FILE[], const rgba8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT );
-bool dxtcWriteDXT3RGBA( const char in_FILE[], const rgba8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT );
-bool dxtcWriteDXT5RGBA( const char in_FILE[], const rgba8_t * in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT );
+bool dxtcWriteDXT1RGBA(const char in_FILE[], const rgba8_t *in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT);
+bool dxtcWriteDXT3RGBA(const char in_FILE[], const rgba8_t *in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT);
+bool dxtcWriteDXT5RGBA(const char in_FILE[], const rgba8_t *in_IMAGE, const uint32_t in_WIDTH, const uint32_t in_HEIGHT);
 
-void dxtcFreeRGBA( rgba8_t ** in_out_image );
+void dxtcFreeRGBA(rgba8_t **in_out_image);
 
 
 
