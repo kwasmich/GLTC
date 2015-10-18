@@ -166,6 +166,10 @@ static uint32_t bruteBlock(rgb5_t *out_c0, rgb5_t *out_c1, int *out_t0, int *out
     int t0, t1, bestT0, bestT1;
     int r0, g0, b0, r1, g1, b1;
     uint32_t errors[8][32][32][32];  // 1MB Stack is huge
+    // an attempt to improve cache locality by using morton-order (z-order curve) improved performance by about 10% on
+    // platforms with a small cache. But degraded performance by about 30% on platforms with a big cache. This is
+    // perhaps due to the overhead of converting morton-order into R, G, B coordinates. Such optimizations will be left
+    // out here to keep code readable.
 
     for (t1 = 0; t1 < ETC_TABLE_COUNT; t1++) {
         for (b1 = 0; b1 < 32; b1++) {
